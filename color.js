@@ -436,7 +436,7 @@
     const updateColorHexDisplays = () => {
       document.getElementById("bgHex").value = currentBg;
       document.getElementById("fgHex").value = currentFg;
-      updateLockIcons(); // 追加: hex-display更新時にLockIconの色も更新
+      updateLockIcons();
     };
     const getContrast = (fg, bg) => {
       const lum = (hex) => {
@@ -447,7 +447,6 @@
       return ((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2)
     };
     function hexToHSL(hex) {
-      // hexが不正な場合は黒を返す
       if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) {
         return { h: 0, s: 0, l: 0 };
       }
@@ -457,7 +456,7 @@
       let max = Math.max(r,g,b), min = Math.min(r,g,b);
       let h, s, l = (max + min)/2;
       if(max == min){
-        h = s = 0; // 無彩色
+        h = s = 0;
       } else {
         let d = max - min;
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -470,7 +469,6 @@
       }
       return {h: Math.round(h), s: Math.round(s*100), l: Math.round(l*100)};
     }
-
     // --- Pickr関連・状態変数 ---
     const contrastEl = document.getElementById('contrastRatio');
     const updateContrast = () => (contrastEl.textContent = getContrast(currentFg, currentBg));
@@ -741,7 +739,7 @@
         bgPickr.setColor(val, !0)
       }
       bgPickr.show();
-      updateLockIcons(); // 追加
+      updateLockIcons();
     };
     document.getElementById('fgHexLoad').onclick = () => {
       const val = document.getElementById('fgHex').value.trim();
@@ -749,7 +747,7 @@
         fgPickr.setColor(val, !0)
       }
       fgPickr.show();
-      updateLockIcons(); // 追加
+      updateLockIcons();
     };
 
     function hslToHex(h, s, l) {
@@ -834,7 +832,7 @@
           updateSwatch(document.getElementById("fgSwatch"), savedFg, savedFg);
           updateContrast();
           updateColorHexDisplays();
-          updateLockIcons(); // 追加: ランダム色変更時にLockIconの色も更新
+          updateLockIcons();
           return
         }
       }
@@ -853,7 +851,7 @@
       updateContrast();
       window.__bgHSL = hexToHSL(currentBg);
       window.__fgHSL = hexToHSL(currentFg);
-      updateLockIcons(); // 追加: swap時にもLockIconの色を更新
+      updateLockIcons();
     };
 
     document.getElementById('pickrClose').onclick = () => {
@@ -874,7 +872,7 @@
       
       // Pickr を非表示にする
       container.style.display = 'none';
-      style.disabled = true; // style を無効化
+      style.disabled = true;
       window.__pickrLoaded = false;
     
       // pickrOpen クリック時に復元
