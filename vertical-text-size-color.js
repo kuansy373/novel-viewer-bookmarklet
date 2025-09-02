@@ -45,36 +45,318 @@
   padding: 0;
   overflow-x: hidden;
 `;
-  const scrollSlider = document.createElement('input');
-  scrollSlider.type = 'range';
-  scrollSlider.min = 0;
-  scrollSlider.max = 15;
-  scrollSlider.value = 0;
-  scrollSlider.style.border = 'initial';
-  scrollSlider.style.position = 'fixed';
-  scrollSlider.style.bottom = '-98vh';
-  scrollSlider.style.right = '30px';
-  scrollSlider.style.zIndex = '9999';
-  scrollSlider.style.width = '80px';
-  scrollSlider.style.opacity = '0.05';
-  scrollSlider.style.height = '200vh';
-  document.body.appendChild(scrollSlider);
-  const scroller = document.scrollingElement || document.documentElement;
-  let scrollSpeed = 0;
-  let lastTimestamp = null;
+// === 右スライダー（初期表示） ===
+const scrollSliderRight = document.createElement('input');
+scrollSliderRight.type = 'range';
+scrollSliderRight.min = 0;
+scrollSliderRight.max = 25;
+scrollSliderRight.value = 0;
+Object.assign(scrollSliderRight.style, {
+  all: 'unset',
+  position: 'fixed',
+  height: '210vh',
+  bottom: '-108vh',
+  right: '30px',
+  zIndex: '9999',
+  width: '80px',
+  opacity: '1',
+});
+document.body.appendChild(scrollSliderRight);
 
-  function forceScroll(timestamp) {
-    if (lastTimestamp !== null) {
-      const elapsed = timestamp - lastTimestamp;
-      scroller.scrollTop += (scrollSpeed * elapsed) / 1000
-    }
-    lastTimestamp = timestamp;
-    requestAnimationFrame(forceScroll)
+// === 左スライダー（初期表示） ===
+const scrollSliderLeft = document.createElement('input');
+scrollSliderLeft.type = 'range';
+scrollSliderLeft.min = 0;
+scrollSliderLeft.max = 25;
+scrollSliderLeft.value = 0;
+Object.assign(scrollSliderLeft.style, {
+  all: 'unset',
+  position: 'fixed',
+  height: '210vh',
+  bottom: '-108vh',
+  left: '30px',
+  zIndex: '9999',
+  width: '80px',
+  opacity: '1',
+  direction: 'rtl', // 左用は増加方向反転
+});
+document.body.appendChild(scrollSliderLeft);
+
+// === スクロール処理 ===
+const scroller = document.scrollingElement || document.documentElement;
+let scrollSpeed = 0;
+let lastTimestamp = null;
+
+function forceScroll(timestamp) {
+  if (lastTimestamp !== null) {
+    const elapsed = timestamp - lastTimestamp;
+    scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
   }
-  scrollSlider.addEventListener('input', () => {
-    scrollSpeed = parseFloat(scrollSlider.value) * 15
-  });
+  lastTimestamp = timestamp;
   requestAnimationFrame(forceScroll);
+}
+
+// スライダー入力に応じてスクロール速度を変更
+function syncScrollSpeed(value) {
+  scrollSpeed = parseInt(value, 10) * speedScale;
+}
+scrollSliderRight.addEventListener('input', () => {
+  syncScrollSpeed(scrollSliderRight.value);
+  scrollSliderLeft.value = scrollSliderRight.value;
+});
+scrollSliderLeft.addEventListener('input', () => {
+  syncScrollSpeed(scrollSliderLeft.value);
+  scrollSliderRight.value = scrollSliderLeft.value;
+});
+
+requestAnimationFrame(forceScroll);
+
+// === UI ===
+const scrollUI = document.createElement('div');
+Object.assign(scrollUI.style, {
+  all: 'initial',
+  position: 'fixed',
+  top: '10px',
+  left: '10px',
+  background: '#fff',
+  padding: '8px',
+  border: '1px solid',
+  borderRadius: '6px',
+  fontSize: '14px',
+  zIndex: '10002',
+  fontFamily: 'sans-serif',
+});
+scrollUI.innerHTML = `
+  <div style="margin-bottom:4px;">Slider Settings</div>
+  <label><input id="scrollB" class="scrollCheckbox" type="checkbox"> Show borders</label><br>
+  <label><input id="scrollHide" class="scrollCheckbox" type="checkbox"> Show blue ball</label><br>
+  <label><input id="scrollBoth" class="scrollCheckbox" type="checkbox"　checked> Both sides</label><br>
+  <label><input id="scrollRight" class="scrollCheckbox" type="checkbox"> Right side only</label><br>
+  <label><input id="scrollLeft" class="scrollCheckbox" type="checkbox"> Left side only</label><br>
+  <label>Position: <input id="scrollX" type="number" value="30" style="all:initial;width:60px;border:1px solid;"> px</label><br>
+  <label>Width: <input id="scrollW" type="number" value="80" style="all:initial;width:60px;border:1px solid;"> px</label><br>
+  <label>Opacity: <input id="scrollO" type="text" min="0" max="1" step="0.05" value="1" style="all:initial;width:60px;border:1px solid;"> (0~1)</label><br>
+  <label>Speed scale: <input id="scrollSpeedScale" type="number" min="0" max="20" step="1" value="10" style="all:initial;width:60px;border:1px solid;"> (0~20)</label><br>
+  <label>Touch sensitivity: <input id="scrollTouchSensitivity" type="number" min="-20" max="20" step="1" value="1" style="all:initial;width:60px;border:1px solid;"> ~|20|</label><br>
+`;
+document.body.appendChild(scrollUI);
+document.querySelectorAll('.scrollCheckbox').forEach(cb => {
+  Object.assign(cb.style, {
+    display: 'inline-block',
+    boxSizing: 'border-box',
+    webkitAppearance: 'auto',
+    height: '15px',
+    width: '15px',
+    cursor: 'pointer',
+  });
+});
+// === イベント ===
+// 枠線
+document.getElementById('scrollB').addEventListener('change', e => {
+  const border = e.target.checked ? '1px solid' : 'none';
+  scrollSliderRight.style.border = scrollSliderLeft.style.border = border;
+});
+// 右側、左側、両側
+const rightbox = document.getElementById('scrollRight');
+const leftbox = document.getElementById('scrollLeft');
+const bothbox = document.getElementById('scrollBoth');
+// 最初に「両側に表示」にチェック
+bothbox.checked = true;
+scrollSliderLeft.style.display = 'block';
+scrollSliderRight.style.display = 'block';
+// 右側に表示チェックイベント
+rightbox.addEventListener('change', e => {
+  if (e.target.checked) {
+    if (bothbox.checked) {
+      bothbox.checked = false;
+    }
+    if (leftbox.checked) {
+        leftbox.checked = false;
+      }
+    scrollSliderRight.style.display = 'block';
+    scrollSliderLeft.style.display = 'none';
+  }else {
+    scrollSliderRight.style.display = 'none';
+    scrollSliderLeft.style.display = 'none';
+  }
+});
+// 左側に表示チェックイベント
+leftbox.addEventListener('change', e => {
+  if (e.target.checked) {
+    if (bothbox.checked) {
+      bothbox.checked = false;
+    }
+    if (rightbox.checked) {
+      rightbox.checked = false;
+    }
+    scrollSliderRight.style.display = 'none';
+    scrollSliderLeft.style.display = 'block';
+  } else {
+    scrollSliderRight.style.display = 'none';
+    scrollSliderLeft.style.display = 'none';
+  }
+});
+// 両側に表示チェックイベント
+bothbox.addEventListener('change', e => {
+  if (e.target.checked) {
+    if (rightbox.checked) {
+      rightbox.checked = false;
+    }
+    if (leftbox.checked) {
+      leftbox.checked = false;
+    }
+    scrollSliderLeft.style.display = 'block';
+    scrollSliderRight.style.display = 'block';
+  } else if (!leftbox.checked) {
+    scrollSliderLeft.style.display = 'none';
+    scrollSliderRight.style.display = 'none';
+  } else {
+    scrollSliderLeft.style.display = 'none';
+    scrollSliderRight.style.display = 'none';
+  } 
+});
+  // 位置、長さ、透明度
+  document.getElementById('scrollX').addEventListener('input', e => {
+  const val = parseInt(e.target.value, 10);
+  scrollSliderRight.style.right = scrollSliderLeft.style.left = `${val}px`;
+});
+
+document.getElementById('scrollW').addEventListener('input', e => {
+  const val = parseInt(e.target.value, 10);
+  scrollSliderRight.style.width = scrollSliderLeft.style.width = `${val}px`;
+});
+
+document.getElementById('scrollO').addEventListener('input', e => {
+  const val = parseFloat(e.target.value);
+  scrollSliderRight.style.opacity = scrollSliderLeft.style.opacity = val;
+});
+const opacityInput = document.getElementById('scrollO');
+let lastValue = opacityInput.value; // 直前の値を保持
+opacityInput.addEventListener('input', e => {
+  const currentValue = e.target.value;
+  // 一瞬だけ「0」→「0.」に補完
+  if (currentValue === '0' && lastValue !== '0.') {
+    e.target.value = '0.';
+  }
+  const num = parseFloat(e.target.value);
+  if (!isNaN(num) && num >= 0 && num <= 1) {
+    scrollSliderRight.style.opacity = scrollSliderLeft.style.opacity = num;
+  }
+  lastValue = e.target.value; // 今の値を保存
+});
+// フォーカス時に 0 → 0. に補完（あれば）
+opacityInput.addEventListener('focus', e => {
+  if (e.target.value === '0') {
+    e.target.value = '0.';
+  }
+});
+// フォーカスが外れたときに 0. → 0
+opacityInput.addEventListener('blur', e => {
+  if (e.target.value === '0.' || e.target.value === '') {
+    e.target.value = '0';
+    scrollSliderRight.style.opacity = scrollSliderLeft.style.opacity = 0;
+  }
+});
+// スピードスケール  
+const speedScaleInput = document.getElementById('scrollSpeedScale');
+let speedScale = parseFloat(speedScaleInput.value);
+
+speedScaleInput.addEventListener('input', e => {
+  const num = parseFloat(e.target.value);
+  if (!isNaN(num)) {
+    speedScale = num;
+    syncScrollSpeed(scrollSliderRight.value);
+  }
+});
+  // タッチ感度調整
+let touchScrollSensitivity = 1;
+let lastTouchY = null;
+
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    lastTouchY = e.touches[0].clientY;
+  }
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && lastTouchY !== null) {
+    const currentY = e.touches[0].clientY;
+    const deltaY = (lastTouchY - currentY) * touchScrollSensitivity;
+    window.scrollBy(0, deltaY);
+    lastTouchY = currentY;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  lastTouchY = null;
+});
+// === タッチパッド / マウスホイール感度調整 ===
+document.addEventListener('wheel', e => {
+  e.preventDefault();
+  const deltaY = e.deltaY * touchScrollSensitivity;
+  window.scrollBy(0, deltaY);
+}, { passive: false });
+const touchScrollInput = document.getElementById('scrollTouchSensitivity');
+touchScrollSensitivity = parseFloat(touchScrollInput.value);
+
+touchScrollInput.addEventListener('input', e => {
+  const num = parseFloat(e.target.value);
+  if (!isNaN(num)) {
+    touchScrollSensitivity = num;
+  }
+});
+  // 「スライダー非表示」チェックボックスの処理
+document.getElementById('scrollHide').addEventListener('change', e => {
+  if (e.target.checked) {
+    scrollSliderRight.style.height = '200vh';
+    scrollSliderRight.style.bottom = '-98vh';
+    scrollSliderLeft.style.height = '200vh';
+    scrollSliderLeft.style.bottom = '-98vh';
+  } else {
+    scrollSliderRight.style.height = '210vh';
+    scrollSliderRight.style.bottom = '-108vh';
+    scrollSliderLeft.style.height = '210vh';
+    scrollSliderLeft.style.bottom = '-108vh';
+  }
+});
+// === UIトグルボタン ===
+const scrollUIToggle = document.createElement('button');
+scrollUIToggle.textContent = '△';
+Object.assign(scrollUIToggle.style, {
+  all: 'initial',
+  position: 'fixed',
+    top: '10px',
+    left: '10px',
+    padding: '0 8px',
+    fontSize: '14px',
+    opacity: '0.3',
+    cursor: 'pointer',
+    zIndex: '10001',
+    display: 'block'
+});
+document.body.appendChild(scrollUIToggle);
+
+scrollUI.style.display = 'none';
+  scrollUIToggle.addEventListener('click', () => {
+  scrollUI.style.display = 'block';
+});
+const scrollSCloseBtn = document.createElement('button');
+scrollSCloseBtn.textContent = '✕';
+Object.assign(scrollSCloseBtn.style, {
+  all: 'initial',
+  position: 'absolute',
+  top: '4px',
+  right: '4px',
+  cursor: 'pointer',
+  fontSize: '14px',
+});
+scrollUI.appendChild(scrollSCloseBtn);
+
+scrollSCloseBtn.addEventListener('click', () => {
+  scrollUI.style.display = 'none';
+});
+  
   ['fontSizeSlider', 'fontSizeLabel', 'fontSizeClose', 'fontSizeDecrease', 'fontSizeIncrease', 'fontSizeOpen'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.remove();
@@ -123,7 +405,6 @@
     fontSize: '14px',
     cursor: 'pointer',
     zIndex: '10001',
-    borderRadius: '4px',
     display: 'none'
   });
   const decreaseBtn = document.createElement('button');
@@ -170,7 +451,6 @@
     opacity: '0.3',
     cursor: 'pointer',
     zIndex: '10001',
-    borderRadius: '4px',
     display: 'block'
   });
   closeBtn.addEventListener('click', () => {
@@ -841,10 +1121,8 @@
               top: 132px;
               text-align: center;
             `;
-    
             // .pcr-result の右隣に追加
             resultInput.insertAdjacentElement('afterend', copyBtn);
-    
             // クリック時にクリップボードへコピー
           document.querySelectorAll(".pcr-copy").forEach(function(button){
             button.addEventListener("click", function(){
@@ -865,7 +1143,6 @@
         });
       });
     });
-
 
       pickr.on('change', (color) => {
         const hex = color.toHEXA().toString();
@@ -924,10 +1201,8 @@
         destroyAndRemove: () => {},
       }
     }
-
     // --- イベントハンドラ・UI操作 ---
     updateColorHexDisplays();
-
     // --- ロックアイコン制御 ---
     function updateLockIcons() {
       const bgLocked = document.getElementById('color-toggle-bg-lock').checked;
@@ -1071,12 +1346,10 @@
       window.__fgHSL = hexToHSL(currentFg);
       updateLockIcons();
     };
-
     // Pickr UI コンテナとスタイルを初期非表示にする
     container.style.display = 'none';
     style.disabled = true;
     window.__pickrLoaded = false;
-    
     // □ ボタンを作成して表示
     const pickrOpen = document.createElement('div');
     pickrOpen.id = 'pickrOpen';
@@ -1091,7 +1364,6 @@
       zIndex: '999999'
     });
     document.body.appendChild(pickrOpen);
-    
     // □ をクリックしたら Pickr UI を表示
     pickrOpen.onclick = () => {
       container.style.display = 'block';
@@ -1099,7 +1371,6 @@
       pickrOpen.remove();
       window.__pickrLoaded = true;
     };
-    
     // Pickr の閉じるボタンの処理
     document.getElementById('pickrClose').onclick = () => {
       // □ ボタンを再生成
@@ -1116,12 +1387,10 @@
         zIndex: '999999'
       });
       document.body.appendChild(pickrOpen);
-    
       // Pickr UI を非表示
       container.style.display = 'none';
       style.disabled = true;
       window.__pickrLoaded = false;
-    
       // □ をクリックしたら Pickr UI を復元
       pickrOpen.onclick = () => {
         container.style.display = 'block';
@@ -1130,7 +1399,6 @@
         window.__pickrLoaded = true;
       };
     };
-
   document.querySelectorAll(".copy-btn").forEach(function(button){
     button.addEventListener("click", function(){
       var targetId = button.getAttribute("data-target");
