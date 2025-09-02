@@ -130,8 +130,8 @@ scrollUI.innerHTML = `
   <div style="margin-bottom:4px;">Slider Settings</div>
   <label><input id="scrollB" class="scrollCheckbox" type="checkbox"> Show borders</label><br>
   <label><input id="scrollHide" class="scrollCheckbox" type="checkbox"> Show blue ball</label><br>
-  <label><input id="scrollBoth" class="scrollCheckbox" type="checkbox"　checked> Both sides</label><br>
-  <label><input id="scrollRight" class="scrollCheckbox" type="checkbox"> Right side only</label><br>
+  <label><input id="scrollBoth" class="scrollCheckbox" type="checkbox"> Both sides</label><br>
+  <label><input id="scrollRight" class="scrollCheckbox" type="checkbox" checked> Right side only</label><br>
   <label><input id="scrollLeft" class="scrollCheckbox" type="checkbox"> Left side only</label><br>
   <label>Position: <input id="scrollX" type="number" value="30" style="all:initial;width:60px;border:1px solid;"> px</label><br>
   <label>Width: <input id="scrollW" type="number" value="80" style="all:initial;width:60px;border:1px solid;"> px</label><br>
@@ -162,10 +162,10 @@ document.getElementById('scrollB').addEventListener('change', e => {
 const rightbox = document.getElementById('scrollRight');
 const leftbox = document.getElementById('scrollLeft');
 const bothbox = document.getElementById('scrollBoth');
-// 最初に「両側に表示」にチェック
-bothbox.checked = true;
-scrollSliderLeft.style.display = 'block';
+// 最初に「右側に表示」にチェック
+rightbox.checked = true;
 scrollSliderRight.style.display = 'block';
+scrollSliderLeft.style.display = 'none';
 // 右側に表示チェックイベント
 rightbox.addEventListener('change', e => {
   if (e.target.checked) {
