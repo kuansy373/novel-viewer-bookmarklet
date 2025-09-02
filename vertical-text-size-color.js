@@ -726,6 +726,7 @@ scrollSCloseBtn.addEventListener('click', () => {
       }
 
       #bgLockIcon, #fgLockIcon {
+        all: unset;
         font-size: 14px;
         margin: 0px 0px;
         display: inline-block;
@@ -848,7 +849,6 @@ scrollSCloseBtn.addEventListener('click', () => {
       </div>
     
       <div class="row">
-        <button id="randomColorBtn">🎨Random</button>
         <div class="label" style="margin-left:2px;font-weight: normal;font-size: 19px;">BG:</div>
         <label id="bgLockLabel" style="cursor:pointer;display:inline-flex;align-items:center;">
           <input type="checkbox" id="color-toggle-bg-lock" style="display:none;">
@@ -859,6 +859,7 @@ scrollSCloseBtn.addEventListener('click', () => {
           <input type="checkbox" id="color-toggle-fg-lock" style="display:none;">
           <span id="fgLockIcon">🔓</span>
         </label>
+        <button id="randomColorBtn">🎨Random</button>
       </div>
     
       <div class="row contrast-row" style="align-items: center;">
@@ -882,7 +883,7 @@ scrollSCloseBtn.addEventListener('click', () => {
           min="1"
           max="21"
           step="0.1"
-          value="21"
+          value="18"
           title="Maximum contrast ratio"
         >
       </div>
@@ -1318,12 +1319,12 @@ scrollSCloseBtn.addEventListener('click', () => {
       b = Math.round((b + m) * 255);
       return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("")
     }
-
+    // ランダムに生成される色のhsl範囲
     function getRandomHSL() {
       return {
         h: Math.floor(Math.random() * 360),
-        s: Math.floor(Math.random() * 80) + 20,
-        l: Math.floor(Math.random() * 80) + 10
+        s: Math.floor(Math.random() * 101) ,
+        l: Math.floor(Math.random() * 101)
       }
     }
 
