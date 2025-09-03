@@ -407,24 +407,27 @@ scrollSCloseBtn.addEventListener('click', () => {
   fontSlider.value = currentSize;
   fontSlider.style.webkitAppearance = 'auto';
   Object.assign(fontSlider.style, {
+    border: 'initial',
     padding: 'initial',
     position: 'fixed',
     top: '40px',
     right: '50px',
-    zIndex: '9999',
     width: '100px',
+    margin: '4px',
+    zIndex: '9999',
     display: 'none'
   });
   const label = document.createElement('div');
   label.id = 'fontSizeLabel';
-  label.textContent = `文字サイズ: ${fontSlider.value}px`;
+  label.textContent = `Font size: ${fontSlider.value}px`;
   Object.assign(label.style, {
+    all: 'initial',
     position: 'fixed',
     top: '10px',
     right: '47px',
-    background: '#fff',
     padding: '2px 6px',
     fontSize: '14px',
+    fontFamily: 'serif',
     zIndex: '10000',
     border: '1px solid #ccc',
     borderRadius: '4px',
@@ -510,7 +513,7 @@ scrollSCloseBtn.addEventListener('click', () => {
     if (size >= parseInt(fontSlider.min)) {
       fontSlider.value = size;
       target.style.fontSize = `${size}px`;
-      label.textContent = `文字サイズ: ${size}px`
+      label.textContent = `Font size: ${size}px`
     }
   });
   increaseBtn.addEventListener('click', () => {
@@ -518,12 +521,12 @@ scrollSCloseBtn.addEventListener('click', () => {
     if (size <= parseInt(fontSlider.max)) {
       fontSlider.value = size;
       target.style.fontSize = `${size}px`;
-      label.textContent = `文字サイズ: ${size}px`
+      label.textContent = `Font size: ${size}px`
     }
   });
   fontSlider.addEventListener('input', () => {
     target.style.fontSize = `${fontSlider.value}px`;
-    label.textContent = `文字サイズ: ${fontSlider.value}px`
+    label.textContent = `Font size: ${fontSlider.value}px`
   });
   document.body.appendChild(fontSlider);
   document.body.appendChild(label);
