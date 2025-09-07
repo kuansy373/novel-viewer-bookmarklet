@@ -1,9 +1,19 @@
 (() => {
+  
+// ==============================
+// Vertical text
+// ==============================
   let text = '';
   document.querySelectorAll('body > h1, body > h2, body > h3, .metadata, .main_text, .p-novel__title, .p-novel__text, .widget-episodeTitle, .widget-episodeBody p, .novel-title, .novel-body p, .chapter-title, .episode-title, #novelBody').forEach(node => {
-    text += node.innerHTML.replace(/<(\/?ruby|\/?rb|\/?rp|\/?rt)>/g, '___$1___').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/___([^_]+)___/g, '<$1>') + '　'
-  });
-  text = text.trim().replace(/(\r\n|\r)+/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '　').replace(/　{2,}/g, '　');
+  text += node.innerHTML
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<(?!\/?(ruby|rb|rp|rt)\b)[^>]+>/gi, '');
+    });
+  text = text.trim()
+    .replace(/(\r\n|\r)+/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .replace(/\n/g, '　')
+    .replace(/　{2,}/g, '　');
   document.querySelectorAll('body > *').forEach(node => {
     node.style.display = 'none'
   });
@@ -19,20 +29,70 @@
   document.head.appendChild(hideStyle);
   const container = document.createElement('div');
   container.id = 'novelDisplay';
-  container.innerHTML = text;
+  
+  //　<ruby>の外でspan分割する
+  function chunkHTMLSafe(html, chunkSize) {
+    const chunks = [];
+    const len = html.length;
+    let i = 0, last = 0, count = 0, rubyDepth = 0;
+  
+    while (i < len) {
+      const ch = html[i];
+  
+      if (ch === '<') {
+        // タグ終端を探す
+        const end = html.indexOf('>', i + 1);
+        if (end === -1) break; // 壊れたHTMLは打ち切り
+  
+        const tagContent = html.slice(i + 1, end); // 例: "ruby", "/ruby", "ruby class=..."
+        const isClosing = /^\s*\//.test(tagContent);
+        const nameMatch = tagContent.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
+        const name = nameMatch ? nameMatch[1].toLowerCase() : '';
+        // <ruby> の入れ子深さを管理（<rb>/<rt>/<rp>は ruby の内側なので深さは変えない）
+        if (name === 'ruby') {
+          rubyDepth += isClosing ? -1 : 1;
+          if (rubyDepth < 0) rubyDepth = 0; // 念のため
+        }
+        // タグ本体はそのままスキップ（文字数カウントしない）
+        i = end + 1;
+        continue;
+      }
+      // タグの外の実文字をカウント
+      count++;
+      i++;
+      // 分割：ruby の外にいるときだけ
+      if (count >= chunkSize && rubyDepth === 0) {
+        chunks.push(html.slice(last, i));
+        last = i;
+        count = 0;
+      }
+    }
+    // 端数を追加
+    if (last < len) chunks.push(html.slice(last));
+    return chunks;
+  }
+  // ここまでで text は「<ruby>は残し、他タグは削除」「改行は全角スペース化」済みとする
+  const chunkSize = 500;
+  const chunks = chunkHTMLSafe(text, chunkSize);
+  for (const c of chunks) {
+    const span = document.createElement('span');
+    span.innerHTML = c;         // ← ルビを正しく解釈させる
+    container.appendChild(span);
+  }
+  // スタイル
   container.style.cssText = `
-  writing-mode: vertical-rl;
-  white-space: nowrap;
-  letter-spacing: 0.25em;
-  line-height: 1.8;
-  font-size: 23px;
-  display: block;
-  padding: 2em;
-  contain: none;
-  content-visibility: visible;
-  will-change: transform;
-  transform: translateZ(0);
-`;
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    letter-spacing: 0.25em;
+    line-height: 1.8;
+    font-size: 23px;
+    display: block;
+    padding: 2em;
+    content-visibility: auto;
+    contain-intrinsic-size: 1000px;
+    will-change: transform;
+    transform: translateZ(0);
+  `;
   document.body.appendChild(container);
   document.body.style.cssText = `
   display: flex;
@@ -45,7 +105,7 @@
   padding: 0;
   overflow-x: hidden;
 `;
-// === 右スライダー（初期表示） ===
+// === 右スライダー ===
 const scrollSliderRight = document.createElement('input');
 scrollSliderRight.type = 'range';
 scrollSliderRight.min = 0;
@@ -62,8 +122,8 @@ Object.assign(scrollSliderRight.style, {
   opacity: '1',
 });
 document.body.appendChild(scrollSliderRight);
-
-// === 左スライダー（初期表示） ===
+  
+// === 左スライダー ===
 const scrollSliderLeft = document.createElement('input');
 scrollSliderLeft.type = 'range';
 scrollSliderLeft.min = 0;
@@ -108,65 +168,174 @@ scrollSliderLeft.addEventListener('input', () => {
   syncScrollSpeed(scrollSliderLeft.value);
   scrollSliderRight.value = scrollSliderLeft.value;
 });
-
 requestAnimationFrame(forceScroll);
-
-// === UI ===
+  
+// ==============================
+// Slider Settings
+// ==============================
 const scrollUI = document.createElement('div');
 Object.assign(scrollUI.style, {
-  all: 'initial',
+  all: 'unset',
   position: 'fixed',
   top: '10px',
   left: '10px',
   background: '#fff',
   padding: '8px',
   border: '1px solid',
-  borderRadius: '6px',
+  borderRadius: '4px',
   fontSize: '14px',
   zIndex: '10002',
   fontFamily: 'sans-serif',
 });
 scrollUI.innerHTML = `
-  <div style="margin-bottom:4px;">Slider Settings</div>
-  <label><input id="scrollB" class="scrollCheckbox" type="checkbox"> Show borders</label><br>
-  <label><input id="scrollHide" class="scrollCheckbox" type="checkbox"> Show blue ball</label><br>
-  <label><input id="scrollBoth" class="scrollCheckbox" type="checkbox"> Both sides</label><br>
-  <label><input id="scrollRight" class="scrollCheckbox" type="checkbox" checked> Right side only</label><br>
-  <label><input id="scrollLeft" class="scrollCheckbox" type="checkbox"> Left side only</label><br>
+  <div style="font-weight:bold;">< Slider Settings ></div>
+  <label><input id="scrollB" class="settingCheckbox" type="checkbox"><span class="labelText"> Border</span></label><br>
+  <label><input id="scrollC" class="settingCheckbox" type="checkbox"><span class="labelText"> Color in</span></label><br>
+  <!--
+  <label><input id="scrollCLock" class="settingCheckbox" type="checkbox"><span class="labelText"> Lock</span><input id="scrollBgHex" type="text" style="all:initial;width:70px;height:17px;border:1px solid;margin-left:34.5px;vertical-align:middle;font-family:monospace"></label><br>
+  -->
+  <label>Shadow:<input id="scrollS" type="number" value="0" style="all:initial;width:60px;border:1px solid;"> px</label><br>
+  <label><input id="scrollBoth" class="settingCheckbox" type="checkbox"><span class="labelText"> Both sides</span></label><br>
+  <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
+  <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
   <label>Position: <input id="scrollX" type="number" value="30" style="all:initial;width:60px;border:1px solid;"> px</label><br>
   <label>Width: <input id="scrollW" type="number" value="80" style="all:initial;width:60px;border:1px solid;"> px</label><br>
-  <label>Opacity: <input id="scrollO" type="text" min="0" max="1" step="0.05" value="1" style="all:initial;width:60px;border:1px solid;"> (0~1)</label><br>
+  <label>Opacity: <input id="scrollO" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1" style="all:initial;width:60px;border:1px solid;"> (0~1)</label><br>
   <label>Speed scale: <input id="scrollSpeedScale" type="number" min="0" max="20" step="1" value="10" style="all:initial;width:60px;border:1px solid;"> (0~20)</label><br>
-  <!--
-  <label>Touch sensitivity: <input id="scrollTouchSensitivity" type="number" min="-20" max="20" step="1" value="1" style="all:initial;width:60px;border:1px solid;"> ~|20|</label><br>
-  -->
+  <label><input id="scrollHide" class="settingCheckbox" type="checkbox"><span class="labelText"> Slider ball</span></label><br>
 `;
 document.body.appendChild(scrollUI);
-document.querySelectorAll('.scrollCheckbox').forEach(cb => {
+document.querySelectorAll('.settingCheckbox').forEach(cb => {
   Object.assign(cb.style, {
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    webkitAppearance: 'auto',
+    all: 'revert',
     height: '15px',
     width: '15px',
-    cursor: 'pointer',
+    verticalAlign: 'middle',
+  });
+});
+document.querySelectorAll('.labelText').forEach(span => {
+  Object.assign(span.style, {
+    position: 'fixed',
+    paddingTop: '1.5px',
   });
 });
 // === イベント ===
-// 枠線
+// Border
 document.getElementById('scrollB').addEventListener('change', e => {
-  const border = e.target.checked ? '1px solid' : 'none';
-  scrollSliderRight.style.border = scrollSliderLeft.style.border = border;
+if (e.target.checked) {
+    if (scrollC.checked) scrollC.checked = false;
+    scrollSliderRight.style.border = scrollSliderLeft.style.border = '1px solid';
+    scrollSliderRight.style.setProperty("background", "transparent", "important");
+    scrollSliderLeft.style.setProperty("background", "transparent", "important");
+  } else {
+    scrollSliderRight.style.border = scrollSliderLeft.style.border = 'none';
+  }
+});
+
+// Color in
+document.getElementById('scrollC').addEventListener('change', e => {
+  if (e.target.checked) {
+    if (scrollB.checked) scrollB.checked = false;
+    scrollSliderRight.style.border = scrollSliderLeft.style.border = 'none';
+    const borderColor = 'currentColor'; // border と同じ色
+    scrollSliderRight.style.setProperty("background", borderColor, "important");
+    scrollSliderLeft.style.setProperty("background", borderColor, "important");
+  } else {
+    scrollSliderRight.style.setProperty("background", "transparent", "important");
+    scrollSliderLeft.style.setProperty("background", "transparent", "important");
+  }
+});
+  
+/*
+const scrollC = document.getElementById("scrollC");
+const scrollBgHex = document.getElementById("scrollBgHex");
+// ページの文字色を取得
+const bodyColor = getComputedStyle(document.body).color; 
+const fgHex = document.getElementById("fgHex"); // 動的に文字色を変えるinput
+// bodyのスタイル変化を監視
+let lastBodyColor = getComputedStyle(document.body).color;
+const observer = new MutationObserver(() => {
+  const color = getComputedStyle(document.body).color;
+  if (color !== lastBodyColor) {
+    lastBodyColor = color;
+    scrollBgHex.value = rgbToHex(color);
+    if (scrollC.checked) updateSliderBackground();
+  }
+});
+observer.observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
+// Lock
+const scrollCLock = document.getElementById("scrollCLock");
+scrollCLock.addEventListener("change", () => {
+  if (scrollCLock.checked) {
+    observer.disconnect();
+  } else {
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
+  }
+});
+  
+// RGB → HEX 変換関数
+function rgbToHex(rgb) {
+  const result = rgb.match(/\d+/g);
+  if (!result) return '#ffffff';
+  return '#' + result.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
+}
+
+// 初期背景色をページ文字色に
+scrollBgHex.value = rgbToHex(bodyColor);
+// スライダー背景初期値は透明
+scrollSliderRight.style.setProperty("background", "transparent", "important");
+scrollSliderLeft.style.setProperty("background", "transparent", "important");
+// --- ヘルパー関数: Hexをスライダーに反映 ---
+function updateSliderBackground() {
+  const val = scrollBgHex.value.trim();
+  if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
+    scrollSliderRight.style.setProperty("background", val, "important");
+    scrollSliderLeft.style.setProperty("background", val, "important");
+  }
+}
+// チェックボックス変更時
+scrollC.addEventListener('change', e => {
+  if (e.target.checked) {
+    if (scrollB.checked) scrollB.checked = false;
+    updateSliderBackground();
+    scrollSliderRight.style.border = scrollSliderLeft.style.border = 'none';
+  } else {
+    scrollSliderRight.style.setProperty("background", "transparent", "important");
+    scrollSliderLeft.style.setProperty("background", "transparent", "important");
+  }
+});
+
+// Hex入力欄の変更時
+scrollBgHex.addEventListener("input", () => {
+  if (scrollC.checked) { // チェックONの場合のみ反映
+    updateSliderBackground();
+  }
+});
+*/
+  
+// Shadow
+const scrollS = document.getElementById('scrollS');
+scrollS.addEventListener('input', () => {
+  let val = Number(scrollS.value) || 0;
+  if (val < 0) {
+    // マイナス値のときは inset にして、値は絶対値に直す
+    scrollSliderRight.style.boxShadow = `inset 0 0 ${Math.abs(val)}px`;
+    scrollSliderLeft.style.boxShadow  = `inset 0 0 ${Math.abs(val)}px`;
+  } else {
+    // プラス値のときは通常
+    scrollSliderRight.style.boxShadow = `0 0 ${val}px`;
+    scrollSliderLeft.style.boxShadow  = `0 0 ${val}px`;
+  }
 });
 // 右側、左側、両側
 const rightbox = document.getElementById('scrollRight');
 const leftbox = document.getElementById('scrollLeft');
 const bothbox = document.getElementById('scrollBoth');
-// 最初に「右側に表示」にチェック
+// 最初に「Right side」にチェック
 rightbox.checked = true;
 scrollSliderRight.style.display = 'block';
 scrollSliderLeft.style.display = 'none';
-// 右側に表示チェックイベント
+// Rightチェックイベント
 rightbox.addEventListener('change', e => {
   if (e.target.checked) {
     if (bothbox.checked) {
@@ -182,7 +351,7 @@ rightbox.addEventListener('change', e => {
     scrollSliderLeft.style.display = 'none';
   }
 });
-// 左側に表示チェックイベント
+// Leftチェックイベント
 leftbox.addEventListener('change', e => {
   if (e.target.checked) {
     if (bothbox.checked) {
@@ -198,7 +367,7 @@ leftbox.addEventListener('change', e => {
     scrollSliderLeft.style.display = 'none';
   }
 });
-// 両側に表示チェックイベント
+// Bothチェックイベント
 bothbox.addEventListener('change', e => {
   if (e.target.checked) {
     if (rightbox.checked) {
@@ -271,78 +440,22 @@ speedScaleInput.addEventListener('input', e => {
     syncScrollSpeed(scrollSliderRight.value);
   }
 });
-  
-/* タッチ感度調整
-let touchScrollSensitivity = 1;
-let lastTouchY = null;
-
-document.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    lastTouchY = e.touches[0].clientY;
+// 入力値を 0 ～ 20 に制限
+speedScaleInput.addEventListener('input', e => {
+  let num = parseFloat(e.target.value);
+  if (isNaN(num)) return;
+  if (num > 20) {
+    num = 20;
+    e.target.value = 20;
+  } else if (num < 0) {
+    num = 0;
+    e.target.value = 0;
   }
-}, { passive: false });
-
-document.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && lastTouchY !== null) {
-    const currentY = e.touches[0].clientY;
-    const deltaY = (lastTouchY - currentY) * touchScrollSensitivity;
-    window.scrollBy(0, deltaY);
-    lastTouchY = currentY;
-    e.preventDefault();
-  }
-}, { passive: false });
-
-document.addEventListener('touchend', () => {
-  lastTouchY = null;
-});
-// === タッチパッド / マウスホイール感度調整 ===
-document.addEventListener('wheel', e => {
-  e.preventDefault();
-  const deltaY = e.deltaY * touchScrollSensitivity;
-  window.scrollBy(0, deltaY);
-}, { passive: false });
-const touchScrollInput = document.getElementById('scrollTouchSensitivity');
-touchScrollSensitivity = parseFloat(touchScrollInput.value);
-
-touchScrollInput.addEventListener('input', e => {
-  const num = parseFloat(e.target.value);
-  if (!isNaN(num)) {
-    touchScrollSensitivity = num;
-  }
-});
-let velocityY = 0;
-let momentumId;
-
-document.addEventListener('touchstart', e => {
-  if (momentumId) cancelAnimationFrame(momentumId); // 慣性スクロール停止
-  if (e.touches.length === 1) lastTouchY = e.touches[0].clientY;
+  speedScale = num;
+  syncScrollSpeed(scrollSliderRight.value);
 });
 
-document.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && lastTouchY !== null) {
-    const currentY = e.touches[0].clientY;
-    const deltaY = (lastTouchY - currentY) * touchScrollSensitivity;
-    window.scrollBy(0, deltaY);
-    velocityY = deltaY; // 移動量を速度として保持
-    lastTouchY = currentY;
-    e.preventDefault();
-  }
-});
-
-document.addEventListener('touchend', () => {
-  lastTouchY = null;
-  // 慣性アニメーション開始
-  const step = () => {
-    if (Math.abs(velocityY) < 0.1) return;
-    window.scrollBy(0, velocityY);
-    velocityY *= 0.95; // 減衰
-    momentumId = requestAnimationFrame(step);
-  };
-  momentumId = requestAnimationFrame(step);
-});
-*/
-  
-  // 「スライダー非表示」チェックボックスの処理
+// Slider ball 
 document.getElementById('scrollHide').addEventListener('change', e => {
   if (e.target.checked) {
     scrollSliderRight.style.height = '200vh';
@@ -356,7 +469,7 @@ document.getElementById('scrollHide').addEventListener('change', e => {
     scrollSliderLeft.style.bottom = '-108vh';
   }
 });
-// === UIトグルボタン ===
+// ===開閉ボタン ===
 const scrollUIToggle = document.createElement('button');
 scrollUIToggle.textContent = '△';
 Object.assign(scrollUIToggle.style, {
@@ -392,150 +505,267 @@ scrollUI.appendChild(scrollSCloseBtn);
 scrollSCloseBtn.addEventListener('click', () => {
   scrollUI.style.display = 'none';
 });
-  
-  ['fontSizeSlider', 'fontSizeLabel', 'fontSizeClose', 'fontSizeDecrease', 'fontSizeIncrease', 'fontSizeOpen'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-  });
-  const target = container;
-  const currentSize = parseInt(getComputedStyle(target).fontSize) || 23;
-  const fontSlider = document.createElement('input');
-  fontSlider.type = 'range';
-  fontSlider.id = 'fontSizeSlider';
-  fontSlider.min = 12;
-  fontSlider.max = 48;
-  fontSlider.value = currentSize;
-  fontSlider.style.webkitAppearance = 'auto';
-  Object.assign(fontSlider.style, {
-    border: 'initial',
-    padding: 'initial',
-    position: 'fixed',
-    top: '40px',
-    right: '50px',
-    width: '100px',
-    margin: '4px',
-    zIndex: '9999',
-    display: 'none'
-  });
-  const label = document.createElement('div');
-  label.id = 'fontSizeLabel';
-  label.textContent = `Font size: ${fontSlider.value}px`;
-  Object.assign(label.style, {
-    all: 'initial',
-    position: 'fixed',
-    top: '10px',
-    right: '47px',
+
+// ==============================
+// Font Control Panel
+// ==============================
+['fontPanel', 'fontOpenBtn'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+});
+
+// 操作対象は #novelDisplay
+const target = document.getElementById('novelDisplay');
+if (!target) {
+  console.error('#novelDisplay が見つかりません');
+}
+
+// パネルコンテナ
+const panel = document.createElement('div');
+panel.id = 'fontPanel';
+Object.assign(panel.style, {
+  position: 'fixed',
+  top: '10px',
+  right: '10px',
+  padding: '0 8px',
+  paddingBottom: '8px',
+  width: '270px',
+  height: '55px',
+  heighr: '50px', 
+  border: '1px solid',
+  borderRadius: '4px',
+  zIndex: '10000',
+  display: 'none',
+  fontFamily: 'sans-serif'
+});
+
+// モードボタン
+const modes = ['Font shadow','Font weight','Font size'];
+let currentMode = 'Font size';
+
+const modeContainer = document.createElement('div');
+Object.assign(modeContainer.style, {
+  display: 'block',
+  flexDirection: 'column',
+  gap: '4px',
+  marginBottom: '8px'
+});
+
+modes.forEach(mode => {
+  const btn = document.createElement('button');
+  btn.textContent = mode;
+  Object.assign(btn.style, {
     padding: '2px 6px',
-    fontSize: '14px',
-    fontFamily: 'serif',
-    zIndex: '10000',
-    border: '1px solid #ccc',
+    border: '1px solid',
     borderRadius: '4px',
-    display: 'none'
-  });
-  const closeBtn = document.createElement('div');
-  closeBtn.id = 'fontSizeClose';
-  closeBtn.textContent = '×';
-  Object.assign(closeBtn.style, {
-    position: 'fixed',
-    top: '10px',
-    right: '10px',
-    padding: '0 8px',
-    fontSize: '14px',
+    opacity: '0.5',
     cursor: 'pointer',
-    zIndex: '10001',
-    display: 'none'
+    textAlign: 'left',
   });
-  const decreaseBtn = document.createElement('button');
-  decreaseBtn.id = 'fontSizeDecrease';
-  decreaseBtn.textContent = '◀';
-  Object.assign(decreaseBtn.style, {
-    position: 'fixed',
-    top: '40px',
-    right: '170px',
-    zIndex: '9999',
-    fontSize: '16px',
-    padding: '0 6px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    background: '#eee',
-    cursor: 'pointer',
-    display: 'none'
+  if (mode === 'Font weight') {
+    btn.style.margin = '0 4px';
+  }
+  if (mode === currentMode) {
+    btn.style.border = '1px solid';   // 初期選択のスタイル
+    btn.style.opacity = '1';
+    btn.style.boxShadow = 'inset 0 0 3px';
+  }
+  btn.addEventListener('click', () => {
+    currentMode = mode;
+    [...modeContainer.children].forEach(c => {
+      c.style.border = '1px solid';   // 他のボタンに付ける
+      c.style.opacity = '0.6';
+      c.style.boxShadow = 'none';
+    });
+    btn.style.border = ' 1px solid';
+    btn.style.opacity = '1';
+    btn.style.boxShadow = 'inset 0 0 3px'; // 選択中に付ける
+    updateControls();
   });
-  const increaseBtn = document.createElement('button');
-  increaseBtn.id = 'fontSizeIncrease';
-  increaseBtn.textContent = '▶';
-  Object.assign(increaseBtn.style, {
-    position: 'fixed',
-    top: '40px',
-    right: '10px',
-    zIndex: '9999',
-    fontSize: '16px',
-    padding: '0 6px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    background: '#eee',
-    cursor: 'pointer',
-    display: 'none'
-  });
-  const openBtn = document.createElement('div');
-  openBtn.id = 'fontSizeOpen';
-  openBtn.textContent = '○';
-  Object.assign(openBtn.style, {
-    position: 'fixed',
-    top: '10px',
-    right: '10px',
-    padding: '0 8px',
-    fontSize: '14px',
-    opacity: '0.3',
-    cursor: 'pointer',
-    zIndex: '10001',
-    display: 'block'
-  });
-  closeBtn.addEventListener('click', () => {
-    fontSlider.style.display = 'none';
-    label.style.display = 'none';
-    closeBtn.style.display = 'none';
-    decreaseBtn.style.display = 'none';
-    increaseBtn.style.display = 'none';
-    openBtn.style.display = 'block'
-  });
-  openBtn.addEventListener('click', () => {
-    fontSlider.style.display = 'block';
-    label.style.display = 'block';
-    closeBtn.style.display = 'block';
-    decreaseBtn.style.display = 'block';
-    increaseBtn.style.display = 'block';
-    openBtn.style.display = 'none'
-  });
-  decreaseBtn.addEventListener('click', () => {
-    let size = parseInt(fontSlider.value) - 1;
-    if (size >= parseInt(fontSlider.min)) {
-      fontSlider.value = size;
-      target.style.fontSize = `${size}px`;
-      label.textContent = `Font size: ${size}px`
-    }
-  });
-  increaseBtn.addEventListener('click', () => {
-    let size = parseInt(fontSlider.value) + 1;
-    if (size <= parseInt(fontSlider.max)) {
-      fontSlider.value = size;
-      target.style.fontSize = `${size}px`;
-      label.textContent = `Font size: ${size}px`
-    }
-  });
-  fontSlider.addEventListener('input', () => {
-    target.style.fontSize = `${fontSlider.value}px`;
-    label.textContent = `Font size: ${fontSlider.value}px`
-  });
-  document.body.appendChild(fontSlider);
-  document.body.appendChild(label);
-  document.body.appendChild(closeBtn);
-  document.body.appendChild(decreaseBtn);
-  document.body.appendChild(increaseBtn);
-  document.body.appendChild(openBtn);
+  modeContainer.appendChild(btn);
+});
+
+// コントロールエリア
+const controlArea = document.createElement('div');
+Object.assign(controlArea.style, {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '6px'
+});
+
+// ラベル
+const label = document.createElement('div');
+Object.assign(label.style, {
+  fontSize: '14px',
+  marginBottom: '4px'
+});
   
-// ここからPickr
+// 増減ボタン
+const decreaseBtn = document.createElement('button');
+decreaseBtn.id = 'sliderDecrease';
+decreaseBtn.textContent = '◀';
+Object.assign(decreaseBtn.style, {
+  position: 'absolute',
+  left: '135px',
+  fontSize: '15px',
+  padding: '0 6px',
+  marginBottom:'3px',
+  borderRadius: '4px',
+  border: '1px solid',
+  cursor: 'pointer'
+});
+const increaseBtn = document.createElement('button');
+increaseBtn.id = 'sliderIncrease';
+increaseBtn.textContent = '▶';
+Object.assign(increaseBtn.style, {
+  position: 'absolute',
+  left: '255px',
+  fontSize: '15px',
+  padding: '0 6px',
+  marginBottom:'3px',
+  borderRadius: '4px',
+  border: '1px solid',
+  cursor: 'pointer'
+});
+decreaseBtn.addEventListener('click', () => {
+  let value = parseInt(slider.value) - parseInt(slider.step || 1);
+  if (value >= parseInt(slider.min)) {
+    slider.value = value;
+    slider.dispatchEvent(new Event('input')); // スライダーの処理を呼び出す
+  }
+});
+
+increaseBtn.addEventListener('click', () => {
+  let value = parseInt(slider.value) + parseInt(slider.step || 1);
+  if (value <= parseInt(slider.max)) {
+    slider.value = value;
+    slider.dispatchEvent(new Event('input')); // スライダーの処理を呼び出す
+  }
+});
+  
+// スライダー
+const slider = document.createElement('input');
+slider.type = 'range';
+Object.assign(slider.style, {
+  position: 'absolute',
+  width: '100px',
+  marginLeft: '151px',
+  marginBottom:'4px',
+  blockSize: '5px',
+});
+
+// 更新処理
+function updateControls() {
+  if (!target) return;
+
+  if (currentMode === 'Font size') {
+    slider.min = 10;
+    slider.max = 50;
+    slider.step = 1;
+    slider.value = parseInt(getComputedStyle(target).fontSize) || 23;
+    label.textContent = `Font size: ${slider.value}px`;
+    slider.oninput = () => {
+      target.style.fontSize = `${slider.value}px`;
+      label.textContent = `Font size: ${slider.value}px`;
+    };
+  }
+  else if (currentMode === 'Font weight') {
+    slider.min = 100;
+    slider.max = 900;
+    slider.step = 100;
+    slider.value = parseInt(getComputedStyle(target).fontWeight) || 400;
+    label.textContent = `Font weight: ${slider.value}`;
+    slider.oninput = () => {
+      target.style.fontWeight = slider.value;
+      label.textContent = `Font weight: ${slider.value}`;
+    };
+  }
+else if (currentMode === 'Font shadow') {
+  slider.min = 0;
+  slider.max = 30;
+  slider.step = 1;
+
+  // 現在のスライダー値を保持（前回の設定を使う）
+  let blur = parseInt(target.dataset.fontShadow || 0);
+  slider.value = blur;
+  label.textContent = `Font shadow: ${slider.value}px`;
+
+  slider.oninput = () => {
+    const b = slider.value;
+    if (b > 0) {
+      target.style.textShadow = `0 0 ${b}px`;
+    } else {
+      target.style.textShadow = 'none';
+    }
+    label.textContent = `Font shadow: ${b}px`;
+
+    // blur 値を保持しておく
+    target.dataset.fontShadow = b;
+  };
+}
+
+}
+// 横並び用コンテナを作る
+const sliderContainer = document.createElement('div');
+Object.assign(sliderContainer.style, {
+  display: 'flex',
+  alignItems: 'center', // ラベルとスライダーを中央揃え
+  gap: '8px'           // ラベルとスライダーの間の余白
+});
+// controlArea に横並びコンテナを追加
+controlArea.appendChild(sliderContainer);
+// ラベルとスライダーを横並びコンテナに追加
+sliderContainer.appendChild(label);        
+sliderContainer.appendChild(slider);
+sliderContainer.appendChild(decreaseBtn);
+sliderContainer.appendChild(increaseBtn);
+
+panel.appendChild(modeContainer);
+panel.appendChild(controlArea);
+document.body.appendChild(panel);
+
+// 開閉ボタン
+const openBtn = document.createElement('div');
+openBtn.id = 'fontOpenBtn';
+openBtn.textContent = '○';
+Object.assign(openBtn.style, {
+  position: 'fixed',
+  top: '10px',
+  right: '10px',
+  padding: '0 8px',
+  fontSize: '14px',
+  opacity: '0.3',
+  cursor: 'pointer',
+  zIndex: '10001'
+});
+openBtn.addEventListener('click', () => {
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  openBtn.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+document.body.appendChild(openBtn);
+  // 閉じるボタン ✕
+const closeBtn = document.createElement('div');
+closeBtn.textContent = '✕';
+Object.assign(closeBtn.style, {
+  position: 'absolute',
+  top: '0px',
+  right: '10px',
+  cursor: 'pointer',
+  fontSize: '14px',
+  opacity: '0.3',
+  color: '#333'
+});
+closeBtn.addEventListener('click', () => {
+  panel.style.display = 'none';
+  openBtn.style.display = 'block';
+});
+panel.appendChild(closeBtn);
+// 初期化
+updateControls();
+  
+// ==============================
+// Color Pickr
+// ============================== 
   if (window.__pickrLoaded) return;
   window.__pickrLoaded = !0;
   const load = (tag, attrs) => new Promise((res, rej) => {
@@ -560,13 +790,14 @@ scrollSCloseBtn.addEventListener('click', () => {
         top: 10px;
         right: 10px;
         z-index: 999999;
-        background: #C4EFF5 !important;
+        color: unset;
+        background: unset;
         padding: 7px;
         padding-bottom: 0;
-        border: 1px solid #ccc;
+        border: 1px solid;
         border-radius: 8px;
         font-family: sans-serif;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 0 4px;
       }
 
       #pickrContainer,
@@ -574,7 +805,6 @@ scrollSCloseBtn.addEventListener('click', () => {
       .pcr-app,
       .pcr-app * {
         line-height: initial !important;
-        color: #000000 !important;
       }
 
       #pickrContainer .row {
@@ -594,6 +824,7 @@ scrollSCloseBtn.addEventListener('click', () => {
         all: initial;
         font-size: 15px;
         font-weight: bolder;
+        color: unset;
         cursor: pointer;
         position: absolute;
         top: 5px;
@@ -732,6 +963,7 @@ scrollSCloseBtn.addEventListener('click', () => {
         all: unset;
         font-size: 14px;
         margin: 0px 0px;
+        border: 1px solid;
         display: inline-block;
       }
 
@@ -747,7 +979,8 @@ scrollSCloseBtn.addEventListener('click', () => {
         width: 310px !important;
         height: 150px !important;
         z-index: 1000000 !important;
-        background: #C4EFF5 !important;
+        background: unset !important;
+        border: 1px solid !important;
       }
 
       .pcr-selection {
@@ -756,6 +989,7 @@ scrollSCloseBtn.addEventListener('click', () => {
 
       .pcr-color-palette {
         height: auto !important;
+        border: 1px solid !important;
       }
 
       .pickr .pcr-button {
@@ -767,6 +1001,7 @@ scrollSCloseBtn.addEventListener('click', () => {
         padding: .5em;
         cursor: pointer;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        border: 1px solid;
         border-radius: 2px;
         background-size: 0;
         transition: all .3s;
@@ -775,6 +1010,7 @@ scrollSCloseBtn.addEventListener('click', () => {
       .pcr-color-preview {
         width: 22px !important;
         margin-right: 10px !important;
+        border: 1px solid; !important;
       }
 
       .pcr-color-chooser{
@@ -796,6 +1032,7 @@ scrollSCloseBtn.addEventListener('click', () => {
         font-family: monospace !important;
         font-size: 15px !important;
         background: #fff !important;
+        color: #000000 !important;
         box-shadow: initial !important;
         border: 1px solid #ccc !important;
         border-radius: 4px !important;
@@ -812,7 +1049,8 @@ scrollSCloseBtn.addEventListener('click', () => {
         padding: 0px !important;
         border: 1px solid #999 !important;
         border-radius: 4px !important;
-        background: #97DDC8!important
+        background: #97DDC8! important;
+        color: #000000 !important;
       }
 
       .pcr-save:active {
@@ -891,7 +1129,6 @@ scrollSCloseBtn.addEventListener('click', () => {
         >
       </div>
     `;
-
     document.body.appendChild(container);
 
     // --- ドラッグ処理 ---
@@ -964,7 +1201,10 @@ scrollSCloseBtn.addEventListener('click', () => {
         el.id = id;
         document.head.appendChild(el)
       }
-      el.textContent = `*:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {       ${prop}: ${value} !important;     }`
+      el.textContent = `
+  *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
+    ${prop}: ${value} !important;
+  }`
     };
     const updateSwatch = (swatch, current, saved) => {
       if (!swatch) return;
@@ -1151,6 +1391,7 @@ scrollSCloseBtn.addEventListener('click', () => {
               cursor: pointer;
               border: 1px solid #999;
               border-radius: 4px;
+              color: #000000;
               background: #F0FFEC;
               padding: initial;
               margin-top: 5px;
