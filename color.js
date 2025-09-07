@@ -1,4 +1,7 @@
 (function() {
+// ==============================
+// Color Pickr
+// ============================== 
   if (window.__pickrLoaded) return;
   window.__pickrLoaded = !0;
   const load = (tag, attrs) => new Promise((res, rej) => {
@@ -23,13 +26,14 @@
         top: 10px;
         right: 10px;
         z-index: 999999;
-        background: #C4EFF5 !important;
+        color: unset;
+        background: unset;
         padding: 7px;
         padding-bottom: 0;
-        border: 1px solid #ccc;
+        border: 1px solid;
         border-radius: 8px;
         font-family: sans-serif;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 0 4px;
       }
 
       #pickrContainer,
@@ -37,7 +41,6 @@
       .pcr-app,
       .pcr-app * {
         line-height: initial !important;
-        color: #000000 !important;
       }
 
       #pickrContainer .row {
@@ -57,6 +60,7 @@
         all: initial;
         font-size: 15px;
         font-weight: bolder;
+        color: unset;
         cursor: pointer;
         position: absolute;
         top: 5px;
@@ -192,8 +196,10 @@
       }
 
       #bgLockIcon, #fgLockIcon {
+        all: unset;
         font-size: 14px;
         margin: 0px 0px;
+        border: 1px solid;
         display: inline-block;
       }
 
@@ -209,7 +215,8 @@
         width: 310px !important;
         height: 150px !important;
         z-index: 1000000 !important;
-        background: #C4EFF5 !important;
+        background: unset !important;
+        border: 1px solid !important;
       }
 
       .pcr-selection {
@@ -218,6 +225,7 @@
 
       .pcr-color-palette {
         height: auto !important;
+        border: 1px solid !important;
       }
 
       .pickr .pcr-button {
@@ -229,6 +237,7 @@
         padding: .5em;
         cursor: pointer;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        border: 1px solid;
         border-radius: 2px;
         background-size: 0;
         transition: all .3s;
@@ -237,6 +246,7 @@
       .pcr-color-preview {
         width: 22px !important;
         margin-right: 10px !important;
+        border: 1px solid; !important;
       }
 
       .pcr-color-chooser{
@@ -258,6 +268,7 @@
         font-family: monospace !important;
         font-size: 15px !important;
         background: #fff !important;
+        color: #000000 !important;
         box-shadow: initial !important;
         border: 1px solid #ccc !important;
         border-radius: 4px !important;
@@ -274,7 +285,8 @@
         padding: 0px !important;
         border: 1px solid #999 !important;
         border-radius: 4px !important;
-        background: #97DDC8!important
+        background: #97DDC8! important;
+        color: #000000 !important;
       }
 
       .pcr-save:active {
@@ -314,7 +326,6 @@
       </div>
     
       <div class="row">
-        <button id="randomColorBtn">🎨Random</button>
         <div class="label" style="margin-left:2px;font-weight: normal;font-size: 19px;">BG:</div>
         <label id="bgLockLabel" style="cursor:pointer;display:inline-flex;align-items:center;">
           <input type="checkbox" id="color-toggle-bg-lock" style="display:none;">
@@ -325,6 +336,7 @@
           <input type="checkbox" id="color-toggle-fg-lock" style="display:none;">
           <span id="fgLockIcon">🔓</span>
         </label>
+        <button id="randomColorBtn">🎨Random</button>
       </div>
     
       <div class="row contrast-row" style="align-items: center;">
@@ -348,12 +360,11 @@
           min="1"
           max="21"
           step="0.1"
-          value="21"
+          value="18"
           title="Maximum contrast ratio"
         >
       </div>
     `;
-
     document.body.appendChild(container);
 
     // --- ドラッグ処理 ---
@@ -426,7 +437,10 @@
         el.id = id;
         document.head.appendChild(el)
       }
-      el.textContent = `*:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {       ${prop}: ${value} !important;     }`
+      el.textContent = `
+  *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
+    ${prop}: ${value} !important;
+  }`
     };
     const updateSwatch = (swatch, current, saved) => {
       if (!swatch) return;
@@ -613,6 +627,7 @@
               cursor: pointer;
               border: 1px solid #999;
               border-radius: 4px;
+              color: #000000;
               background: #F0FFEC;
               padding: initial;
               margin-top: 5px;
@@ -623,10 +638,8 @@
               top: 132px;
               text-align: center;
             `;
-    
             // .pcr-result の右隣に追加
             resultInput.insertAdjacentElement('afterend', copyBtn);
-    
             // クリック時にクリップボードへコピー
           document.querySelectorAll(".pcr-copy").forEach(function(button){
             button.addEventListener("click", function(){
@@ -647,7 +660,6 @@
         });
       });
     });
-
 
       pickr.on('change', (color) => {
         const hex = color.toHEXA().toString();
@@ -706,10 +718,8 @@
         destroyAndRemove: () => {},
       }
     }
-
     // --- イベントハンドラ・UI操作 ---
     updateColorHexDisplays();
-
     // --- ロックアイコン制御 ---
     function updateLockIcons() {
       const bgLocked = document.getElementById('color-toggle-bg-lock').checked;
@@ -789,12 +799,12 @@
       b = Math.round((b + m) * 255);
       return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("")
     }
-
+    // ランダムに生成される色のhsl範囲
     function getRandomHSL() {
       return {
         h: Math.floor(Math.random() * 360),
-        s: Math.floor(Math.random() * 80) + 20,
-        l: Math.floor(Math.random() * 80) + 10
+        s: Math.floor(Math.random() * 101) ,
+        l: Math.floor(Math.random() * 101)
       }
     }
 
@@ -854,8 +864,9 @@
       updateLockIcons();
     };
 
+    // Pickr の閉じるボタンの処理
     document.getElementById('pickrClose').onclick = () => {
-      // pickrOpen ボタンを生成
+      // □ ボタンを再生成
       const pickrOpen = document.createElement('div');
       pickrOpen.id = 'pickrOpen';
       pickrOpen.textContent = '□';
@@ -869,13 +880,11 @@
         zIndex: '999999'
       });
       document.body.appendChild(pickrOpen);
-      
-      // Pickr を非表示にする
+      // Pickr UI を非表示
       container.style.display = 'none';
       style.disabled = true;
       window.__pickrLoaded = false;
-    
-      // pickrOpen クリック時に復元
+      // □ をクリックしたら Pickr UI を復元
       pickrOpen.onclick = () => {
         container.style.display = 'block';
         style.disabled = false;
@@ -883,7 +892,6 @@
         window.__pickrLoaded = true;
       };
     };
-
   document.querySelectorAll(".copy-btn").forEach(function(button){
     button.addEventListener("click", function(){
       var targetId = button.getAttribute("data-target");
