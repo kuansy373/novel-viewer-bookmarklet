@@ -6,8 +6,14 @@
   document.querySelectorAll('body > h1, body > h2, body > h3, .metadata, .main_text, .p-novel__title, .p-novel__text, .widget-episodeTitle, .widget-episodeBody p, .novel-title, .novel-body p, .chapter-title, .episode-title, #novelBody').forEach(node => {
   text += node.innerHTML
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<(?!\/?(ruby|rb|rp|rt)\b)[^>]+>/gi, '');
+    .replace(/<(?!\/?(ruby|rb|rp|rt|em|span)\b)[^>]+>/gi, '');
     });
+  // カクヨムの傍点
+  text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
+  const chars = content.replace(/<\/?span>/gi, '');
+  return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
+});
+
   text = text.trim()
     .replace(/(\r\n|\r)+/g, '\n')
     .replace(/\n{2,}/g, '\n')
@@ -70,14 +76,134 @@
     if (last < len) chunks.push(html.slice(last));
     return chunks;
   }
+  
   // ここまでで text は「<ruby>は残し、他タグは削除」「改行は全角スペース化」済みとする
   const chunkSize = 500;
   const chunks = chunkHTMLSafe(text, chunkSize);
-  for (const c of chunks) {
-    const span = document.createElement('span');
-    span.innerHTML = c;         // ← ルビを正しく解釈させる
-    container.appendChild(span);
+  
+  // 可視文字長を測るための要素（DOM に挿さない、一時的な測定用）
+  const measurer = document.createElement('div');
+  
+  function visibleLength(html) {
+    measurer.innerHTML = html;
+    // textContent はタグを取り除いた可視テキスト長を返す
+    return measurer.textContent.length;
   }
+  
+  // 1パートあたりの上限（可視文字）
+  const MAX_PER_PART = 10000;
+  
+  // chunks を走査して、可視文字で約 MAX_PER_PART ごとに parts に分割する
+  const parts = [];
+  let currentPart = [];
+  let currentLen = 0;
+  
+  for (const c of chunks) {
+    const vlen = visibleLength(c);
+  
+    // 既に currentPart に何か入っていて、これを加えると閾値を超えるなら新しいパートに切り替え
+    if (currentPart.length > 0 && currentLen + vlen > MAX_PER_PART) {
+      parts.push(currentPart);
+      currentPart = [];
+      currentLen = 0;
+    }
+  
+    currentPart.push(c);
+    currentLen += vlen;
+  }
+  
+  // 余りを push
+  if (currentPart.length > 0) parts.push(currentPart);
+  
+  // デバッグ（必要ならコンソールで確認）
+  console.log('visibleTotalChars:', parts.reduce((acc, p) => {
+    return acc + p.map(html => (measurer.innerHTML = html, measurer.textContent.length)).reduce((a,b)=>a+b,0);
+  }, 0));
+  console.log('parts count:', parts.length);
+  
+  // レンダリング関数（DocumentFragment を使ってまとめて追加）
+  function renderPart(index) {
+    container.innerHTML = ''; // 前パートを全部消す（負荷軽減）
+    const frag = document.createDocumentFragment();
+    const list = parts[index] || [];
+  
+    for (const html of list) {
+      const span = document.createElement('span');
+      span.innerHTML = html; // ルビ等を正しく解釈させるため innerHTML
+      frag.appendChild(span);
+    }
+    container.appendChild(frag);
+  }
+  
+  // 初回表示
+  let currentIndex = 0;
+  renderPart(currentIndex);
+
+  //※ページ切り替え 
+  let promptShownForward = false; // 次へ
+  let promptShownBackward = false; // 前へ
+  let isSwitching = false; // ← 切替中フラグ
+  
+  window.addEventListener('scroll', () => {
+    if (isSwitching) return; // ← 切替処理中は無視
+  
+    const scrollBottom = window.scrollY + window.innerHeight;
+    const scrollTop = window.scrollY;
+    const bodyHeight = document.body.offsetHeight;
+  
+    // --- 下方向: 最下部で次パート ---
+    if (
+      text.length > 10000 &&
+      scrollBottom >= bodyHeight - 5 &&
+      currentIndex < parts.length - 1 &&
+      !promptShownForward
+    ) {
+      scrollSliderRight.value = 0;
+      scrollSliderLeft.value = 0;
+      scrollSpeed = 0;
+  
+      promptShownForward = true;
+      const ok = window.confirm("続きを読み込みますか？");
+      if (ok) {
+        isSwitching = true; // ← 切替開始
+        currentIndex++;
+        renderPart(currentIndex);
+        window.scrollTo(0, 0);
+        setTimeout(() => { isSwitching = false; }, 100); // 少し待って解除
+        promptShownForward = false;
+        promptShownBackward = false;
+      }
+    } else if (scrollBottom < bodyHeight - window.innerHeight / 100) {
+      promptShownForward = false;
+    }
+  
+    // --- 上方向: 最上部で前パート ---
+    if (
+      currentIndex > 0 &&
+      scrollTop <= 5 &&
+      !promptShownBackward
+    ) {
+      scrollSliderRight.value = 0;
+      scrollSliderLeft.value = 0;
+      scrollSpeed = 0;
+  
+      promptShownBackward = true;
+      const ok = window.confirm("前の文章に戻りますか？");
+      if (ok) {
+        isSwitching = true; // ← 切替開始
+        currentIndex--;
+        renderPart(currentIndex);
+        const prevPartHeight = container.scrollHeight;
+        window.scrollTo(0, prevPartHeight - window.innerHeight);
+        setTimeout(() => { isSwitching = false; }, 100); // 少し待って解除
+        promptShownForward = false;
+        promptShownBackward = false;
+      }
+    } else if (scrollTop > window.innerHeight / 100) {
+      promptShownBackward = false;
+    }
+  });
+
   // スタイル
   container.style.cssText = `
     writing-mode: vertical-rl;
@@ -89,8 +215,7 @@
     padding: 2em;
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
-    will-change: transform;
-    transform: translateZ(0);
+    will-change: scroll-position;
   `;
   document.body.appendChild(container);
   document.body.style.cssText = `
@@ -193,7 +318,7 @@ scrollUI.innerHTML = `
   <!--
   <label><input id="scrollCLock" class="settingCheckbox" type="checkbox"><span class="labelText"> Lock</span><input id="scrollBgHex" type="text" style="all:initial;width:70px;height:17px;border:1px solid;margin-left:34.5px;vertical-align:middle;font-family:monospace"></label><br>
   -->
-  <label>Shadow:<input id="scrollS" type="number" value="0" style="all:initial;width:60px;border:1px solid;"> px</label><br>
+  <label>Shadow: <input id="scrollS" type="number" value="0" style="all:initial;width:60px;border:1px solid;"> px</label><br>
   <label><input id="scrollBoth" class="settingCheckbox" type="checkbox"><span class="labelText"> Both sides</span></label><br>
   <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
   <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
