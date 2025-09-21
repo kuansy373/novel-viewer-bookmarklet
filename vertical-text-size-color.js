@@ -169,7 +169,7 @@
         currentIndex++;
         renderPart(currentIndex);
         window.scrollTo(0, 0);
-        setTimeout(() => { isSwitching = false; }, 100); // 少し待って解除
+        setTimeout(() => { isSwitching = false; }, 5000); // 少し待って解除
         promptShownForward = false;
         promptShownBackward = false;
       }
@@ -195,7 +195,7 @@
         renderPart(currentIndex);
         const prevPartHeight = container.scrollHeight;
         window.scrollTo(0, prevPartHeight - window.innerHeight);
-        setTimeout(() => { isSwitching = false; }, 100); // 少し待って解除
+        setTimeout(() => { isSwitching = false; }, 5000); // 少し待って解除
         promptShownForward = false;
         promptShownBackward = false;
       }
