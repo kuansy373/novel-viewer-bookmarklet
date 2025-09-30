@@ -2,26 +2,48 @@
 // ==============================
 // Vertical text
 // ==============================
-  let text = '';
-  document.querySelectorAll('body > h1, body > h2, body > h3, .metadata, .main_text, .p-novel__title, .p-novel__text, .widget-episodeTitle, .widget-episodeBody p, .novel-title, .novel-body p, .chapter-title, .episode-title, #novelBody').forEach(node => {
+let text = '';
+document.querySelectorAll(
+  // 青空文庫
+  'body > h1, ' +        // タイトル
+  'body > h2, ' +        // サブタイトル
+  'body > h3, ' +        // 小見出し
+  '.metadata, ' +        // メタ情報（作者名など）
+  '.main_text, ' +       // 本文テキスト
+  // 小説家になろう
+  '.p-novel__title, ' +  // 小説タイトル
+  '.p-novel__text, ' +   // 本文テキスト
+  // カクヨム
+  '.widget-episodeTitle, ' + // エピソードタイトル
+  '.widget-episodeBody p, ' +// 本文段落
+  // アルファポリス
+  '.novel-title, ' +     // 小説タイトル
+  '.novel-body p, ' +    // 本文段落
+  '.chapter-title, ' +   // 章タイトル
+  '.episode-title, ' +   // エピソードタイトル
+  '#novelBody'           // 本文全体コンテナ
+)
+.forEach(node => {
   text += node.innerHTML
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<(?!\/?(ruby|rb|rp|rt|em|span)\b)[^>]+>/gi, '');
+    .replace(/<br\s*\/?>/gi, '\n')  // <br> を \nに変換
+    .replace(/<(?!\/?(ruby|rb|rp|rt|em|span)\b)[^>]+>/gi, '');  // ruby、rb、rp、rt、em、span 以外のタグを削除
     });
   // カクヨムの傍点
   text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
   const chars = content.replace(/<\/?span>/gi, '');
   return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
 });
-
+  // 改行の処理 （ 改行を\nに統一、連続した複数の\nを1つの\nに圧縮、\nを全角スペースに置換、連続した全角スペースを1つに圧縮 ）
   text = text.trim()
     .replace(/(\r\n|\r)+/g, '\n')
     .replace(/\n{2,}/g, '\n')
     .replace(/\n/g, '　')
     .replace(/　{2,}/g, '　');
+  // body 直下のすべての要素を非表示
   document.querySelectorAll('body > *').forEach(node => {
     node.style.display = 'none'
   });
+  // 横スクロールやズームが起きない固定レイアウトにする処理
   let vp = document.querySelector('meta[name="viewport"]');
   if (!vp) {
     vp = document.createElement('meta');
@@ -29,9 +51,19 @@
     document.head.appendChild(vp)
   }
   vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+  // ページトップ、ヘッダー、フッターなどを非表示に
   const hideStyle = document.createElement('style');
-  hideStyle.textContent = `#pageTop, .c-navigater, .js-navigater-totop, .global-header, .global-footer { display: none !important; }`;
+  hideStyle.textContent = `
+    #pageTop,
+    .c-navigater,
+    .js-navigater-totop,
+    .global-header,
+    .global-footer {
+      display: none !important;
+    }
+  `;
   document.head.appendChild(hideStyle);
+
   const container = document.createElement('div');
   container.id = 'novelDisplay';
   
@@ -101,11 +133,26 @@
   for (const c of chunks) {
     const vlen = visibleLength(c);
   
-    // 既に currentPart に何か入っていて、これを加えると閾値を超えるなら新しいパートに切り替え
+    // 既に currentPart に何か入っていて、これを加えると閾値を超える場合
     if (currentPart.length > 0 && currentLen + vlen > MAX_PER_PART) {
-      parts.push(currentPart);
-      currentPart = [];
-      currentLen = 0;
+      // currentPart 内で最後の改行を探す
+      const combinedHTML = currentPart.join('') + c;
+      let lastNewlineIndex = combinedHTML.lastIndexOf('　'); // 改行は全角スペースに変換済み
+  
+      if (lastNewlineIndex !== -1 && lastNewlineIndex > 0) {
+        // 改行位置で分割
+        const partHTML = combinedHTML.slice(0, lastNewlineIndex);
+        const remainderHTML = combinedHTML.slice(lastNewlineIndex);
+        parts.push([partHTML]); // パートとして追加
+        currentPart = [remainderHTML]; // 残りは次のパートに
+        currentLen = visibleLength(remainderHTML);
+        continue; // 次の chunk はもう currentPart に入っているのでスキップ
+      } else {
+        // 改行がない場合は従来通り文字数ベースで分割
+        parts.push(currentPart);
+        currentPart = [];
+        currentLen = 0;
+      }
     }
   
     currentPart.push(c);
@@ -169,7 +216,7 @@
         currentIndex++;
         renderPart(currentIndex);
         window.scrollTo(0, 0);
-        setTimeout(() => { isSwitching = false; }, 5000); // 少し待って解除
+        setTimeout(() => { isSwitching = false; }, 5000); // 5秒待って解除
         promptShownForward = false;
         promptShownBackward = false;
       }
@@ -195,7 +242,7 @@
         renderPart(currentIndex);
         const prevPartHeight = container.scrollHeight;
         window.scrollTo(0, prevPartHeight - window.innerHeight);
-        setTimeout(() => { isSwitching = false; }, 5000); // 少し待って解除
+        setTimeout(() => { isSwitching = false; }, 5000); // 5秒待って解除
         promptShownForward = false;
         promptShownBackward = false;
       }
@@ -216,19 +263,23 @@
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
     will-change: scroll-position;
+    transform: translateZ(0);
   `;
   document.body.appendChild(container);
-  document.body.style.cssText = `
+  
+  const initialBodyStyle = `
   display: flex;
   justify-content: center;
   font-family: '游明朝', 'Yu Mincho', YuMincho, 'Hiragino Mincho Pro', serif;
   font-feature-settings: 'pkna';
+  text-shadow: 0 0 0px;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 `;
+document.body.style.cssText = initialBodyStyle;
 // === 右スライダー ===
 const scrollSliderRight = document.createElement('input');
 scrollSliderRight.type = 'range';
@@ -246,7 +297,6 @@ Object.assign(scrollSliderRight.style, {
   opacity: '1',
 });
 document.body.appendChild(scrollSliderRight);
-  
 // === 左スライダー ===
 const scrollSliderLeft = document.createElement('input');
 scrollSliderLeft.type = 'range';
@@ -303,8 +353,8 @@ Object.assign(scrollUI.style, {
   position: 'fixed',
   top: '10px',
   left: '10px',
-  background: '#fff',
   padding: '8px',
+  background: 'inherit',
   border: '1px solid',
   borderRadius: '4px',
   fontSize: '14px',
@@ -315,17 +365,14 @@ scrollUI.innerHTML = `
   <div style="font-weight:bold;">< Slider Settings ></div>
   <label><input id="scrollB" class="settingCheckbox" type="checkbox"><span class="labelText"> Border</span></label><br>
   <label><input id="scrollC" class="settingCheckbox" type="checkbox"><span class="labelText"> Color in</span></label><br>
-  <!--
-  <label><input id="scrollCLock" class="settingCheckbox" type="checkbox"><span class="labelText"> Lock</span><input id="scrollBgHex" type="text" style="all:initial;width:70px;height:17px;border:1px solid;margin-left:34.5px;vertical-align:middle;font-family:monospace"></label><br>
-  -->
-  <label>Shadow: <input id="scrollS" type="number" value="0" style="all:initial;width:60px;border:1px solid;"> px</label><br>
+  <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label><br>
   <label><input id="scrollBoth" class="settingCheckbox" type="checkbox"><span class="labelText"> Both sides</span></label><br>
   <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
   <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
-  <label>Position: <input id="scrollX" type="number" value="30" style="all:initial;width:60px;border:1px solid;"> px</label><br>
-  <label>Width: <input id="scrollW" type="number" value="80" style="all:initial;width:60px;border:1px solid;"> px</label><br>
-  <label>Opacity: <input id="scrollO" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1" style="all:initial;width:60px;border:1px solid;"> (0~1)</label><br>
-  <label>Speed scale: <input id="scrollSpeedScale" type="number" min="0" max="20" step="1" value="10" style="all:initial;width:60px;border:1px solid;"> (0~20)</label><br>
+  <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label><br>
+  <label>Width: <input id="scrollW" class="settingInputbox" type="number" value="80"> px</label><br>
+  <label>Opacity: <input id="scrollO" class="settingInputbox" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1"> (0~1)</label><br>
+  <label>Speed scale: <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</label><br>
   <label><input id="scrollHide" class="settingCheckbox" type="checkbox"><span class="labelText"> Slider ball</span></label><br>
 `;
 document.body.appendChild(scrollUI);
@@ -335,6 +382,14 @@ document.querySelectorAll('.settingCheckbox').forEach(cb => {
     height: '15px',
     width: '15px',
     verticalAlign: 'middle',
+  });
+});
+document.querySelectorAll('.settingInputbox').forEach(cb => {
+  Object.assign(cb.style, {
+    all: 'initial',
+    width: '60px',
+    border: '1px solid',
+    color: 'unset',
   });
 });
 document.querySelectorAll('.labelText').forEach(span => {
@@ -355,7 +410,6 @@ if (e.target.checked) {
     scrollSliderRight.style.border = scrollSliderLeft.style.border = 'none';
   }
 });
-
 // Color in
 document.getElementById('scrollC').addEventListener('change', e => {
   if (e.target.checked) {
@@ -369,74 +423,6 @@ document.getElementById('scrollC').addEventListener('change', e => {
     scrollSliderLeft.style.setProperty("background", "transparent", "important");
   }
 });
-  
-/*
-const scrollC = document.getElementById("scrollC");
-const scrollBgHex = document.getElementById("scrollBgHex");
-// ページの文字色を取得
-const bodyColor = getComputedStyle(document.body).color; 
-const fgHex = document.getElementById("fgHex"); // 動的に文字色を変えるinput
-// bodyのスタイル変化を監視
-let lastBodyColor = getComputedStyle(document.body).color;
-const observer = new MutationObserver(() => {
-  const color = getComputedStyle(document.body).color;
-  if (color !== lastBodyColor) {
-    lastBodyColor = color;
-    scrollBgHex.value = rgbToHex(color);
-    if (scrollC.checked) updateSliderBackground();
-  }
-});
-observer.observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
-// Lock
-const scrollCLock = document.getElementById("scrollCLock");
-scrollCLock.addEventListener("change", () => {
-  if (scrollCLock.checked) {
-    observer.disconnect();
-  } else {
-    observer.observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
-  }
-});
-  
-// RGB → HEX 変換関数
-function rgbToHex(rgb) {
-  const result = rgb.match(/\d+/g);
-  if (!result) return '#ffffff';
-  return '#' + result.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
-}
-
-// 初期背景色をページ文字色に
-scrollBgHex.value = rgbToHex(bodyColor);
-// スライダー背景初期値は透明
-scrollSliderRight.style.setProperty("background", "transparent", "important");
-scrollSliderLeft.style.setProperty("background", "transparent", "important");
-// --- ヘルパー関数: Hexをスライダーに反映 ---
-function updateSliderBackground() {
-  const val = scrollBgHex.value.trim();
-  if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
-    scrollSliderRight.style.setProperty("background", val, "important");
-    scrollSliderLeft.style.setProperty("background", val, "important");
-  }
-}
-// チェックボックス変更時
-scrollC.addEventListener('change', e => {
-  if (e.target.checked) {
-    if (scrollB.checked) scrollB.checked = false;
-    updateSliderBackground();
-    scrollSliderRight.style.border = scrollSliderLeft.style.border = 'none';
-  } else {
-    scrollSliderRight.style.setProperty("background", "transparent", "important");
-    scrollSliderLeft.style.setProperty("background", "transparent", "important");
-  }
-});
-
-// Hex入力欄の変更時
-scrollBgHex.addEventListener("input", () => {
-  if (scrollC.checked) { // チェックONの場合のみ反映
-    updateSliderBackground();
-  }
-});
-*/
-  
 // Shadow
 const scrollS = document.getElementById('scrollS');
 scrollS.addEventListener('input', () => {
@@ -510,17 +496,15 @@ bothbox.addEventListener('change', e => {
     scrollSliderRight.style.display = 'none';
   } 
 });
-  // 位置、長さ、透明度
-  document.getElementById('scrollX').addEventListener('input', e => {
+// 位置、長さ、透明度
+document.getElementById('scrollX').addEventListener('input', e => {
   const val = parseInt(e.target.value, 10);
   scrollSliderRight.style.right = scrollSliderLeft.style.left = `${val}px`;
 });
-
 document.getElementById('scrollW').addEventListener('input', e => {
   const val = parseInt(e.target.value, 10);
   scrollSliderRight.style.width = scrollSliderLeft.style.width = `${val}px`;
 });
-
 document.getElementById('scrollO').addEventListener('input', e => {
   const val = parseFloat(e.target.value);
   scrollSliderRight.style.opacity = scrollSliderLeft.style.opacity = val;
@@ -551,8 +535,7 @@ opacityInput.addEventListener('blur', e => {
     e.target.value = '0';
     scrollSliderRight.style.opacity = scrollSliderLeft.style.opacity = 0;
   }
-});
-  
+}); 
 // スピードスケール  
 const speedScaleInput = document.getElementById('scrollSpeedScale');
 let speedScale = parseFloat(speedScaleInput.value);
@@ -578,7 +561,6 @@ speedScaleInput.addEventListener('input', e => {
   speedScale = num;
   syncScrollSpeed(scrollSliderRight.value);
 });
-
 // Slider ball 
 document.getElementById('scrollHide').addEventListener('change', e => {
   if (e.target.checked) {
@@ -595,14 +577,18 @@ document.getElementById('scrollHide').addEventListener('change', e => {
 });
 // ===開閉ボタン ===
 const scrollUIToggle = document.createElement('button');
-scrollUIToggle.textContent = '△';
+scrollUIToggle.innerHTML = `
+<svg width="14" height="14" viewBox="0 0 24 24">
+  <polygon points="12,6.144 20,20 4,20" fill="none" stroke="currentColor" stroke-width="1"/>
+</svg>
+`;
 Object.assign(scrollUIToggle.style, {
   all: 'initial',
   position: 'fixed',
     top: '10px',
-    left: '10px',
-    padding: '0 8px',
+    left: '18px',
     fontSize: '14px',
+    color: 'unset',
     opacity: '0.3',
     cursor: 'pointer',
     zIndex: '10001',
@@ -623,6 +609,7 @@ Object.assign(scrollSCloseBtn.style, {
   right: '4px',
   cursor: 'pointer',
   fontSize: '14px',
+  color: 'unset',
 });
 scrollUI.appendChild(scrollSCloseBtn);
 
@@ -639,7 +626,7 @@ scrollSCloseBtn.addEventListener('click', () => {
 });
 
 // 操作対象は #novelDisplay
-const target = document.getElementById('novelDisplay');
+let target = document.getElementById('novelDisplay');
 if (!target) {
   console.error('#novelDisplay が見つかりません');
 }
@@ -648,13 +635,14 @@ if (!target) {
 const panel = document.createElement('div');
 panel.id = 'fontPanel';
 Object.assign(panel.style, {
+  lineHeight: 'initial',
   position: 'fixed',
   top: '10px',
   right: '10px',
   padding: '0 8px',
   paddingBottom: '8px',
   width: '270px',
-  height: '55px',
+  height: '87px',
   heighr: '50px', 
   border: '1px solid',
   borderRadius: '4px',
@@ -679,9 +667,12 @@ modes.forEach(mode => {
   const btn = document.createElement('button');
   btn.textContent = mode;
   Object.assign(btn.style, {
+    all: 'initial',
+    fontSize: '13px',
     padding: '2px 6px',
     border: '1px solid',
     borderRadius: '4px',
+    color: 'unset',
     opacity: '0.5',
     cursor: 'pointer',
     textAlign: 'left',
@@ -712,9 +703,6 @@ modes.forEach(mode => {
 // コントロールエリア
 const controlArea = document.createElement('div');
 Object.assign(controlArea.style, {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '6px'
 });
 
 // ラベル
@@ -810,7 +798,7 @@ else if (currentMode === 'Font shadow') {
   slider.step = 1;
 
   // 現在のスライダー値を保持（前回の設定を使う）
-  let blur = parseInt(target.dataset.fontShadow || 0);
+  let blur = parseInt(target.dataset.textShadow || 0);
   slider.value = blur;
   label.textContent = `Font shadow: ${slider.value}px`;
 
@@ -824,17 +812,16 @@ else if (currentMode === 'Font shadow') {
     label.textContent = `Font shadow: ${b}px`;
 
     // blur 値を保持しておく
-    target.dataset.fontShadow = b;
+    target.dataset.textShadow = b;
   };
 }
-
 }
 // 横並び用コンテナを作る
 const sliderContainer = document.createElement('div');
 Object.assign(sliderContainer.style, {
   display: 'flex',
-  alignItems: 'center', // ラベルとスライダーを中央揃え
-  gap: '8px'           // ラベルとスライダーの間の余白
+  alignItems: 'center',
+  marginBottom: '5px',
 });
 // controlArea に横並びコンテナを追加
 controlArea.appendChild(sliderContainer);
@@ -848,17 +835,98 @@ panel.appendChild(modeContainer);
 panel.appendChild(controlArea);
 document.body.appendChild(panel);
 
+// Font Family セレクトボックス
+const fontFamilyContainer = document.createElement('div');
+Object.assign(fontFamilyContainer.style, {
+  display: 'flex',
+});
+
+// ラベル
+const fontFamilyLabel = document.createElement('div');
+fontFamilyLabel.textContent = 'Font family:';
+Object.assign(fontFamilyLabel.style, {
+  fontSize: '14px',
+  marginBottom: '4px'
+});
+fontFamilyContainer.appendChild(fontFamilyLabel);
+
+// セレクトボックス
+const fontSelect = document.createElement('select');
+  Object.assign(fontSelect.style, {
+    all: 'initial',
+    alignItems: 'center',
+    border: '1px solid',
+    color: 'unset',
+    marginLeft: '10px',
+    width: '155px',
+    paddingLeft: '5px',
+    fontSize: '14px',
+});
+[
+  '游明朝',
+  'sans-serif',
+  'Zen Kurenaido',
+  'New Tegomin',
+  'Yuji Syuku',
+  'Kaisei Decol',
+  'Hachi Maru Pop',
+  'Stick',
+  'DotGothic16',
+  'Rampart One',
+].forEach(font => {
+  const opt = document.createElement('option');
+  opt.value = font;
+  opt.textContent = font;
+  fontSelect.appendChild(opt);
+});
+
+// セレクト切り替え時にフォント適用
+fontSelect.addEventListener('change', () => {
+  const font = fontSelect.value;
+  
+  if (font === '游明朝') {
+    document.body.style.cssText = initialBodyStyle;
+    if (target) target.style.fontFamily = '';
+    return;
+  }
+  if (font === 'sans-serif') {
+    if (target) target.style.fontFamily = 'sans-serif';
+    return;
+  }
+  
+  const id = "gf-font-" + font.replace(/\s+/g, '-');
+  if (!document.getElementById(id)) {
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=" + font.replace(/ /g, '+') + "&display=swap";
+    document.head.appendChild(link);
+  }
+
+  if (target) {
+    target.style.fontFamily = `'${font}', sans-serif`;
+  }
+});
+fontFamilyContainer.appendChild(fontSelect);
+
+// controlArea に追加
+controlArea.appendChild(fontFamilyContainer);
+
 // 開閉ボタン
 const openBtn = document.createElement('div');
 openBtn.id = 'fontOpenBtn';
-openBtn.textContent = '○';
+openBtn.innerHTML = `
+<svg width="14" height="14" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1"/>
+</svg>
+`;
 Object.assign(openBtn.style, {
+  all: 'initial',
   position: 'fixed',
   top: '10px',
-  right: '10px',
-  padding: '0 8px',
-  fontSize: '14px',
+  right: '18px',
   opacity: '0.3',
+  color: 'unset',
   cursor: 'pointer',
   zIndex: '10001'
 });
@@ -871,13 +939,13 @@ document.body.appendChild(openBtn);
 const closeBtn = document.createElement('div');
 closeBtn.textContent = '✕';
 Object.assign(closeBtn.style, {
+  all: 'initial',
   position: 'absolute',
   top: '0px',
-  right: '10px',
+  right: '7px',
   cursor: 'pointer',
   fontSize: '14px',
-  opacity: '0.3',
-  color: '#333'
+  color: 'unset',
 });
 closeBtn.addEventListener('click', () => {
   panel.style.display = 'none';
@@ -886,25 +954,38 @@ closeBtn.addEventListener('click', () => {
 panel.appendChild(closeBtn);
 // 初期化
 updateControls();
-  
+
 // ==============================
 // Color Pickr
 // ============================== 
-  if (window.__pickrLoaded) return;
-  window.__pickrLoaded = !0;
-  const load = (tag, attrs) => new Promise((res, rej) => {
-    const el = document.createElement(tag);
-    Object.entries(attrs).forEach(([k, v]) => (el[k] = v));
-    el.onload = res;
-    el.onerror = rej;
-    document.head.appendChild(el)
-  });
-  Promise.all([load('link', {
+if (window.__pickrLoaded) return;
+window.__pickrLoaded = true;
+
+const load = (tag, attrs) => new Promise((resolve, reject) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    // 属性として設定
+    el.setAttribute(k, v);
+  }
+  el.onload = resolve;
+  el.onerror = reject;
+  document.head.appendChild(el);
+});
+
+// バージョン固定とSRI対応可能な形に変更
+Promise.all([
+  load('link', {
     rel: 'stylesheet',
-    href: 'https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css',
-  }), load('script', {
-    src: 'https://cdn.jsdelivr.net/npm/@simonwep/pickr'
-  }), ]).then(() => {
+    href: 'https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.9.1/dist/themes/classic.min.css',
+    integrity: 'sha256-qj36GhivWJmT9StJECKY9O6UivAiwl7S+uckYeyYQ38=',
+    crossorigin: 'anonymous'
+  }),
+  load('script', {
+    src: 'https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.9.1/dist/pickr.min.js',
+    integrity: 'sha256-9C+4uiI+EoOmixe5tRD8hziXftaA5lBhVeF5bjvtqkY=',
+    crossorigin: 'anonymous'
+  })
+]).then(() => {
     const style = document.createElement('style');
     style.textContent = `
       /* ---- #pickrContainer 関連 ---- */
@@ -1316,7 +1397,7 @@ updateControls();
       const nums = rgb.match(/\d+/g)?.map(Number);
       return nums && nums.length >= 3 ? '#' + nums.slice(0, 3).map((n) => n.toString(16).padStart(2, '0')).join('') : null
     };
-    const applyStyle = (prop, value) => {
+    window.applyStyle = (prop, value) => {
       if (!value) return;
       const id = prop === 'color' ? '__fgOverride' : '__bgOverride';
       let el = document.getElementById(id);
@@ -1326,9 +1407,9 @@ updateControls();
         document.head.appendChild(el)
       }
       el.textContent = `
-  *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
-    ${prop}: ${value} !important;
-  }`
+      *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
+        ${prop}: ${value};
+      }`
     };
     const updateSwatch = (swatch, current, saved) => {
       if (!swatch) return;
@@ -1758,14 +1839,19 @@ updateControls();
     // □ ボタンを作成して表示
     const pickrOpen = document.createElement('div');
     pickrOpen.id = 'pickrOpen';
-    pickrOpen.textContent = '□';
+    pickrOpen.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24">
+      <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+    </svg>
+    `;
     Object.assign(pickrOpen.style, {
       all: 'initial',
       cursor: 'pointer',
       position: 'fixed',
       top: '80px',
-      right: '17.5px',
+      right: '18px',
       opacity: '0.3',
+      color: 'unset',
       zIndex: '999999'
     });
     document.body.appendChild(pickrOpen);
@@ -1781,14 +1867,19 @@ updateControls();
       // □ ボタンを再生成
       const pickrOpen = document.createElement('div');
       pickrOpen.id = 'pickrOpen';
-      pickrOpen.textContent = '□';
+      pickrOpen.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+        </svg>
+        `;
       Object.assign(pickrOpen.style, {
         all: 'initial',
         cursor: 'pointer',
         position: 'fixed',
         top: '80px',
-        right: '17.5px',
+        right: '18px',
         opacity: '0.3',
+        color: 'unset',
         zIndex: '999999'
       });
       document.body.appendChild(pickrOpen);
@@ -1824,4 +1915,317 @@ updateControls();
     alert("Pickr の読み込みに失敗しました。CSP によってブロックされている可能性があります。");
     console.error("Pickr load error:", err);
 });
+  
+// ==============================
+// ローカルサーバーで各値を保存/反映
+// ============================== 
+const straddleUI = document.createElement('div');
+Object.assign(straddleUI.style, {
+  all: 'unset',
+  position: 'fixed',
+  top: '80px',
+  left: '10px',
+  padding: '8px',
+  border: '1px solid',
+  borderRadius: '4px',
+  fontSize: '14px',
+  background: 'inherit',
+  zIndex: '10002',
+  fontFamily: 'sans-serif',
+  display: 'none',
+  width: '160px',
+});
+
+straddleUI.innerHTML = `
+  <div class="ui-header">
+    <span>Apply with One Tap</span>
+    <button id="closeUIBtn" style="border:none;">✕</button>
+  </div>
+  <div class="ui-buttons">
+    <!-- 1セット目 -->
+    <div class="button-set">
+      <span class="label">1.</span>
+      <button id="saveBtn1" style="padding: 2px 4px;">SAVE</button>
+      <span class="label">⇒</span>
+      <button id="applyBtn1" style="padding: 2px 4px;">APPLY</button>
+    </div>
+    <!-- 2セット目 -->
+    <div class="button-set">
+      <span class="label">2.</span>
+      <button id="saveBtn2" style="padding: 2px 4px;">SAVE</button>
+      <span class="label">⇒</span>
+      <button id="applyBtn2" style="padding: 2px 4px;">APPLY</button>
+    </div>
+    <!-- 3セット目 -->
+    <div class="button-set">
+      <span class="label">3.</span>
+      <button id="saveBtn3" style="padding: 2px 4px;">SAVE</button>
+      <span class="label">⇒</span>
+      <button id="applyBtn3" style="padding: 2px 4px;">APPLY</button>
+    </div>
+    <!-- 4セット目 -->
+    <div class="button-set">
+      <span class="label">4.</span>
+      <button id="saveBtn4" style="padding: 2px 4px;">SAVE</button>
+      <span class="label">⇒</span>
+      <button id="applyBtn4" style="padding: 2px 4px;">APPLY</button>
+    </div>
+  </div>
+`;
+// ヘッダーのスタイル
+const header = straddleUI.querySelector('.ui-header');
+Object.assign(header.style, {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  fontWeight: 'bold',
+  marginBottom: '8px', // 下にスペースを追加
+});
+// ボタン群のスタイル
+const buttons = straddleUI.querySelector('.ui-buttons');
+Object.assign(buttons.style, {
+  display: 'flex',
+  flexDirection: 'column',
+  marginLeft: '5px',
+  gap: '10px',
+  borderRadius: '2px',
+  fontSize: '14px',
+});
+  //label
+  document.querySelectorAll('.label').forEach(span => {
+  span.style.all = 'initial',
+  span.style.color = 'inherit';
+  span.style.background = 'inherit';
+  span.style.fontSize = '14px';
+});
+// ☆ ボタン
+const toggleBtn = document.createElement('button');
+toggleBtn.innerHTML = `
+<svg width="14" height="14" viewBox="0 0 24 24">
+  <polygon points="12,2 15,10 23,10 17,15 19,23 12,18 5,23 7,15 1,10 9,10" fill="none" stroke="currentColor" stroke-width="1"/>
+</svg>
+`;
+Object.assign(toggleBtn.style, {
+  all: 'initial',
+  position: 'fixed',
+  top: '80px',
+  left: '18px',
+  zIndex: '10001',
+  opacity: '0.3',
+});
+document.body.appendChild(toggleBtn);
+document.body.appendChild(straddleUI);
+
+// --- ボタンごとのイベント登録 ---
+document.getElementById('saveBtn1').onclick = () => saveStyle('style1');
+document.getElementById('applyBtn1').onclick = () => applyStyleByName('style1');
+document.getElementById('saveBtn2').onclick = () => saveStyle('style2');
+document.getElementById('applyBtn2').onclick = () => applyStyleByName('style2');
+document.getElementById('saveBtn3').onclick = () => saveStyle('style3');
+document.getElementById('applyBtn3').onclick = () => applyStyleByName('style3');
+document.getElementById('saveBtn4').onclick = () => saveStyle('style4');
+document.getElementById('applyBtn4').onclick = () => applyStyleByName('style4');
+  
+// APPLYボタンの色を先に取得
+async function initApplyButtonStyle() {
+  const styles = ['style1', 'style2', 'style3', 'style4'];
+
+  for (const styleName of styles) {
+    try {
+      const res = await fetch(`http://localhost:3000/get/${styleName}`);
+      const data = await res.json();
+      const applyBtn = document.getElementById(`applyBtn${styleName.slice(-1)}`);
+      if (applyBtn && data) {
+        if (data.color) applyBtn.style.color = data.color;
+        if (data.backgroundColor) applyBtn.style.backgroundColor = data.backgroundColor;
+      }
+    } catch (e) {
+      console.log(`${styleName} の取得に失敗`, e);
+    }
+  }
+}
+// ページ読み込み時に呼ぶ
+initApplyButtonStyle();
+
+
+// ☆ UIを開く
+toggleBtn.onclick = () => {
+  straddleUI.style.display = 'block';
+};
+// ✕ UIを閉じる
+document.getElementById('closeUIBtn').onclick = () => {
+  straddleUI.style.display = 'none';
+};
+
+// RGB → HEX 変換関数
+function rgbToHex(rgb) {
+  const result = rgb.match(/\d+/g);
+  if (!result) return rgb; // マッチしなければそのまま返す
+  let r = parseInt(result[0], 10).toString(16).padStart(2, "0");
+  let g = parseInt(result[1], 10).toString(16).padStart(2, "0");
+  let b = parseInt(result[2], 10).toString(16).padStart(2, "0");
+  return `#${r}${g}${b}`;
+}
+
+async function saveStyle(name) {
+  const target = document.getElementById('novelDisplay');
+  if (!target) return alert('対象要素が見つかりません');
+  
+  const computed = window.getComputedStyle(target);
+  let { color, backgroundColor, fontSize, fontWeight, textShadow } = computed;
+  const fontFamily = fontSelect.value;
+
+  // blur 値を抽出
+  let blur = null;
+  const match = textShadow.match(/(-?\d+)px$/);
+  if (match) {
+    blur = parseInt(match[1], 10);
+  }
+  // HEX に変換
+  color = rgbToHex(color);
+  backgroundColor = rgbToHex(backgroundColor);
+
+  // === スクロールUIの値を取得 ===
+  const scrollSettings = {
+    border: document.getElementById('scrollB').checked,
+    colorIn: document.getElementById('scrollC').checked,
+    shadow: Number(document.getElementById('scrollS').value),
+    both: document.getElementById('scrollBoth').checked,
+    right: document.getElementById('scrollRight').checked,
+    left: document.getElementById('scrollLeft').checked,
+    position: Number(document.getElementById('scrollX').value),
+    width: Number(document.getElementById('scrollW').value),
+    opacity: parseFloat(document.getElementById('scrollO').value),
+    speedScale: parseFloat(document.getElementById('scrollSpeedScale').value),
+    hideBall: document.getElementById('scrollHide').checked,
+  };
+
+  // 確認ダイアログを出す
+  const confirmMessage =
+    `☆ http://localhost:3000 に保存しますか？\n\n` +
+    `--- スタイル設定 ---\n` +
+    `BG: ${backgroundColor}\n` +
+    `FG: ${color}\n` +
+    `FontSize: ${fontSize}\n` +
+    `FontWeight: ${fontWeight}\n` +
+    `FontShadow: ${blur}px\n` +
+    `FontFamily: ${fontFamily}\n\n` +
+    `--- スライダー設定 ---\n` +
+    JSON.stringify(scrollSettings, null, 2);
+
+  if (!confirm(confirmMessage)) {
+    return; // 「いいえ」の場合は中断
+  }
+
+  try {
+    await fetch('http://localhost:3000/save', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ 
+        name,
+        color, 
+        backgroundColor, 
+        fontSize, 
+        fontWeight, 
+        textShadow: blur,
+        fontFamily,
+        scrollSettings
+      })
+    });
+    // 保存成功後にAPPLYボタンに色を反映
+    const applyBtn = document.getElementById(
+    name === 'style1' ? 'applyBtn1' :
+    name === 'style2' ? 'applyBtn2' :
+    name === 'style3' ? 'applyBtn3' :
+    'applyBtn4'
+  );
+  if (applyBtn) {
+    applyBtn.style.color = color;
+    applyBtn.style.backgroundColor = backgroundColor;
+  }
+    alert(`☆ ${name} を保存しました！`);
+  } catch(e) {
+    if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
+      alert('ローカルサーバーが見つかりません。\nhttp://localhost:3000 を立ち上げてから再試行してください。');
+    } else {
+      alert('保存に失敗しました: ' + e);
+    }
+  }
+};
+
+// 反映ボタンの動作
+async function applyStyleByName(name) {
+  const target = document.getElementById('novelDisplay');
+  if (!target) return alert('対象要素が見つかりません');
+
+  try {
+    const res = await fetch(`http://localhost:3000/get/${name}`);
+    const data = await res.json();
+    if (!data) return alert(`${name} は保存されていません`);
+    
+    // --- 文字スタイル反映 ---
+    if (data.color) {
+      applyStyle('color', data.color);
+      const fgHex = document.getElementById('fgHex');
+      if (fgHex) fgHex.value = data.color;  // ← 文字色を入力欄へ反映
+    }
+    if (data.backgroundColor) {
+      applyStyle('background-color', data.backgroundColor);
+      const bgHex = document.getElementById('bgHex');
+      if (bgHex) bgHex.value = data.backgroundColor;  // ← 背景色を入力欄へ反映
+    }
+    if (data.fontSize) target.style.fontSize = data.fontSize;
+    if (data.fontWeight) target.style.fontWeight = data.fontWeight;
+    if (data.textShadow !== null && data.textShadow !== undefined) {
+      target.style.textShadow = data.textShadow > 0 ? `0 0 ${data.textShadow}px` : 'none';
+      target.dataset.textShadow = data.textShadow;
+    }
+    if (data.fontFamily && fontSelect) {
+      fontSelect.value = data.fontFamily;
+      fontSelect.dispatchEvent(new Event('change'));
+    }
+
+    // --- スクロールUIを反映 ---
+    if (data.scrollSettings) {
+      const s = data.scrollSettings;
+
+      document.getElementById('scrollB').checked = s.border;
+      document.getElementById('scrollC').checked = s.colorIn;
+      document.getElementById('scrollS').value = s.shadow;
+      document.getElementById('scrollBoth').checked = s.both;
+      document.getElementById('scrollRight').checked = s.right;
+      document.getElementById('scrollLeft').checked = s.left;
+      document.getElementById('scrollX').value = s.position;
+      document.getElementById('scrollW').value = s.width;
+      document.getElementById('scrollO').value = s.opacity;
+      document.getElementById('scrollSpeedScale').value = s.speedScale;
+      document.getElementById('scrollHide').checked = s.hideBall;
+
+      // 値をUIに反映するためイベントを強制発火
+      document.getElementById('scrollB').dispatchEvent(new Event('change'));
+      document.getElementById('scrollC').dispatchEvent(new Event('change'));
+      document.getElementById('scrollS').dispatchEvent(new Event('input'));
+      document.getElementById('scrollRight').dispatchEvent(new Event('change'));
+      document.getElementById('scrollLeft').dispatchEvent(new Event('change'));
+      document.getElementById('scrollBoth').dispatchEvent(new Event('change'));
+      document.getElementById('scrollX').dispatchEvent(new Event('input'));
+      document.getElementById('scrollW').dispatchEvent(new Event('input'));
+      document.getElementById('scrollO').dispatchEvent(new Event('input'));
+      document.getElementById('scrollSpeedScale').dispatchEvent(new Event('input'));
+      document.getElementById('scrollHide').dispatchEvent(new Event('change'));
+    }
+
+    updateControls();
+
+    alert(`☆ ${name} を反映します！`);
+    straddleUI.style.display = 'none';
+  } catch(e) {
+    if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
+      alert('ローカルサーバーが見つかりません。\nhttp://localhost:3000 を立ち上げてから再試行してください。');
+    } else {
+      alert('データの取得に失敗しました: ' + e);
+    }
+  }
+};
+
 })()
