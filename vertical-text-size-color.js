@@ -1933,7 +1933,6 @@ Object.assign(straddleUI.style, {
   zIndex: '10002',
   fontFamily: 'sans-serif',
   display: 'none',
-  width: '160px',
 });
 
 straddleUI.innerHTML = `
@@ -2158,7 +2157,7 @@ async function applyStyleByName(name) {
   if (!target) return alert('対象要素が見つかりません');
 
   // --- ユーザーに確認 ---
-  const proceed = confirm(`☆ ${name} を反映しますか？`);
+  const proceed = confirm(`☆ ${name} を反映します！`);
   if (!proceed) return;
 
   try {
