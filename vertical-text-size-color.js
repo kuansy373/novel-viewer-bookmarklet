@@ -1938,7 +1938,7 @@ Object.assign(straddleUI.style, {
 
 straddleUI.innerHTML = `
   <div class="ui-header">
-    <span>Apply with One Tap</span>
+    <span>Apply Style with One Tap</span>
     <button id="closeUIBtn" style="border:none;">✕</button>
   </div>
   <div class="ui-buttons">
@@ -2158,6 +2158,10 @@ async function applyStyleByName(name) {
   const target = document.getElementById('novelDisplay');
   if (!target) return alert('対象要素が見つかりません');
 
+  // --- ユーザーに確認 ---
+  const proceed = confirm(`${name} を反映しますか？`);
+  if (!proceed) return;  // 「いいえ」なら処理中止
+
   try {
     const res = await fetch(`http://localhost:3000/get/${name}`);
     const data = await res.json();
@@ -2167,12 +2171,12 @@ async function applyStyleByName(name) {
     if (data.color) {
       applyStyle('color', data.color);
       const fgHex = document.getElementById('fgHex');
-      if (fgHex) fgHex.value = data.color;  // ← 文字色を入力欄へ反映
+      if (fgHex) fgHex.value = data.color;
     }
     if (data.backgroundColor) {
       applyStyle('background-color', data.backgroundColor);
       const bgHex = document.getElementById('bgHex');
-      if (bgHex) bgHex.value = data.backgroundColor;  // ← 背景色を入力欄へ反映
+      if (bgHex) bgHex.value = data.backgroundColor;
     }
     if (data.fontSize) target.style.fontSize = data.fontSize;
     if (data.fontWeight) target.style.fontWeight = data.fontWeight;
@@ -2201,7 +2205,7 @@ async function applyStyleByName(name) {
       document.getElementById('scrollSpeedScale').value = s.speedScale;
       document.getElementById('scrollHide').checked = s.hideBall;
 
-      // 値をUIに反映するためイベントを強制発火
+      // イベント強制発火
       document.getElementById('scrollB').dispatchEvent(new Event('change'));
       document.getElementById('scrollC').dispatchEvent(new Event('change'));
       document.getElementById('scrollS').dispatchEvent(new Event('input'));
