@@ -1938,7 +1938,7 @@ Object.assign(straddleUI.style, {
 straddleUI.innerHTML = `
   <div class="ui-header">
     <span>Apply Style with One Tap</span>
-    <button id="closeUIBtn" style="border:none;">✕</button>
+    <button id="closeUIBtn" style="border:none; padding-left:10px;">✕</button>
   </div>
   <div class="ui-buttons">
     <!-- 1セット目 -->
