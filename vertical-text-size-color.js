@@ -2066,7 +2066,7 @@ function rgbToHex(rgb) {
   let b = parseInt(result[2], 10).toString(16).padStart(2, "0");
   return `#${r}${g}${b}`;
 }
-
+// SAVEボタン
 async function saveStyle(name) {
   const target = document.getElementById('novelDisplay');
   if (!target) return alert('対象要素が見つかりません');
@@ -2099,8 +2099,7 @@ async function saveStyle(name) {
     speedScale: parseFloat(document.getElementById('scrollSpeedScale').value),
     hideBall: document.getElementById('scrollHide').checked,
   };
-
-  // 確認ダイアログを出す
+// --- ユーザーに確認 ---
   const confirmMessage =
     `☆ http://localhost:3000 に保存しますか？\n\n` +
     `--- スタイル設定 ---\n` +
@@ -2153,14 +2152,14 @@ async function saveStyle(name) {
   }
 };
 
-// 反映ボタンの動作
+// APPLYボタン
 async function applyStyleByName(name) {
   const target = document.getElementById('novelDisplay');
   if (!target) return alert('対象要素が見つかりません');
 
   // --- ユーザーに確認 ---
-  const proceed = confirm(`${name} を反映しますか？`);
-  if (!proceed) return;  // 「いいえ」なら処理中止
+  const proceed = confirm(`☆ ${name} を反映しますか？`);
+  if (!proceed) return;
 
   try {
     const res = await fetch(`http://localhost:3000/get/${name}`);
@@ -2220,8 +2219,6 @@ async function applyStyleByName(name) {
     }
 
     updateControls();
-
-    alert(`☆ ${name} を反映します！`);
     straddleUI.style.display = 'none';
   } catch(e) {
     if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
