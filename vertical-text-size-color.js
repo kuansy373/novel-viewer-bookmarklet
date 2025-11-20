@@ -3,46 +3,84 @@
 // Vertical text
 // ==============================
 let text = '';
-document.querySelectorAll(
-  // 青空文庫
-  'body > h1, ' +        // タイトル
-  'body > h2, ' +        // サブタイトル
-  'body > h3, ' +        // 小見出し
-  '.metadata, ' +        // メタ情報（作者名など）
-  '.main_text, ' +       // 本文テキスト
-  // 小説家になろう
-  '.p-novel__title, ' +  // 小説タイトル
-  '.p-novel__text, ' +   // 本文テキスト
-  // カクヨム
-  '.widget-episodeTitle, ' + // エピソードタイトル
-  '.widget-episodeBody p, ' +// 本文段落
-  // アルファポリス
-  '.novel-title, ' +     // 小説タイトル
-  '.novel-body p, ' +    // 本文段落
-  '.chapter-title, ' +   // 章タイトル
-  '.episode-title, ' +   // エピソードタイトル
-  '#novelBody'           // 本文全体コンテナ
-)
-.forEach(node => {
-  text += node.innerHTML
-    .replace(/<br\s*\/?>/gi, '\n')  // <br> を \nに変換
-    .replace(/<(?!\/?(ruby|rb|rp|rt|em|span)\b)[^>]+>/gi, '');  // ruby、rb、rp、rt、em、span 以外のタグを削除
-    });
+  
+  // ruby / rb / rp / rt / em / span のみを保持する関数
+  function extractWithRubyTags(node) {
+    let result = '';
+    
+    function traverse(el) {
+      for (const child of el.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          // テキストノードはそのまま追加
+          result += child.textContent;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          const tagName = child.tagName.toLowerCase();
+          
+          // 保持するタグの場合はタグごと追加
+          if (['ruby', 'rb', 'rp', 'rt', 'em', 'span'].includes(tagName)) {
+            const attrs = Array.from(child.attributes)
+              .map(attr => ` ${attr.name}="${attr.value}"`)
+              .join('');
+            result += `<${tagName}${attrs}>`;
+            traverse(child);
+            result += `</${tagName}>`;
+          } else if (tagName === 'br') {
+            // br タグは改行に変換
+            result += '\n';
+          } else {
+            // それ以外のタグは中身だけ処理
+            traverse(child);
+          }
+        }
+      }
+    }
+    
+    traverse(node);
+    return result;
+  }
+  
+  document.querySelectorAll(
+    // 青空文庫
+    'body > h1, ' +        // タイトル
+    'body > h2, ' +        // サブタイトル
+    'body > h3, ' +        // 小見出し
+    '.metadata, ' +        // メタ情報（作者名など）
+    '.main_text, ' +       // 本文テキスト
+    // 小説家になろう
+    '.p-novel__title, ' +  // 小説タイトル
+    '.p-novel__text, ' +   // 本文テキスト
+    // カクヨム
+    '.widget-episodeTitle, ' + // エピソードタイトル
+    '.widget-episodeBody p, ' +// 本文段落
+    // アルファポリス
+    '.novel-title, ' +     // 小説タイトル
+    '.novel-body p, ' +    // 本文段落
+    '.chapter-title, ' +   // 章タイトル
+    '.episode-title, ' +   // エピソードタイトル
+    '#novelBody'           // 本文全体コンテナ
+  )
+  .forEach(node => {
+    text += extractWithRubyTags(node);
+  });
+  
   // カクヨムの傍点
   text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
-  const chars = content.replace(/<\/?span>/gi, '');
-  return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
-});
-  // 改行の処理 （ 改行を\nに統一、連続した複数の\nを1つの\nに圧縮、\nを全角スペースに置換、連続した全角スペースを1つに圧縮 ）
+    const chars = content.replace(/<\/?span>/gi, '');
+    return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
+  });
+  
+  // 改行の処理
   text = text.trim()
     .replace(/(\r\n|\r)+/g, '\n')
     .replace(/\n{2,}/g, '\n')
     .replace(/\n/g, '　')
     .replace(/　{2,}/g, '　');
+  
   // body 直下のすべての要素を非表示
   document.querySelectorAll('body > *').forEach(node => {
     node.style.display = 'none'
   });
+  
   // 横スクロールやズームが起きない固定レイアウトにする処理
   let vp = document.querySelector('meta[name="viewport"]');
   if (!vp) {
@@ -51,6 +89,7 @@ document.querySelectorAll(
     document.head.appendChild(vp)
   }
   vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+  
   // ページトップ、ヘッダー、フッターなどを非表示に
   const hideStyle = document.createElement('style');
   hideStyle.textContent = `
@@ -63,11 +102,33 @@ document.querySelectorAll(
     }
   `;
   document.head.appendChild(hideStyle);
-
+  
   const container = document.createElement('div');
   container.id = 'novelDisplay';
   
-  //　<ruby>の外でspan分割する
+  // 可視文字長を測るための要素
+  const measurer = document.createElement('div');
+  
+  function visibleLength(html) {
+    measurer.innerHTML = html;
+    return measurer.textContent.length;
+  }
+  
+  // 総文字数を取得
+  const totalVisibleChars = visibleLength(text);
+  console.log('総文字数:', totalVisibleChars);
+  
+  // 1ページあたりの上限文字数
+  const MAX_PER_PAGE = 10000;
+  
+  // 必要なページ数を計算（文字数均等分割）
+  const numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
+  const charsPerPage = Math.ceil(totalVisibleChars / numPages);
+  
+  console.log('ページ数:', numPages);
+  console.log('1ページあたりの目標文字数:', charsPerPage);
+  
+  // <ruby>の外でspan分割する
   function chunkHTMLSafe(html, chunkSize) {
     const chunks = [];
     const len = html.length;
@@ -77,106 +138,155 @@ document.querySelectorAll(
       const ch = html[i];
   
       if (ch === '<') {
-        // タグ終端を探す
         const end = html.indexOf('>', i + 1);
-        if (end === -1) break; // 壊れたHTMLは打ち切り
+        if (end === -1) break;
   
-        const tagContent = html.slice(i + 1, end); // 例: "ruby", "/ruby", "ruby class=..."
+        const tagContent = html.slice(i + 1, end);
         const isClosing = /^\s*\//.test(tagContent);
         const nameMatch = tagContent.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
         const name = nameMatch ? nameMatch[1].toLowerCase() : '';
-        // <ruby> の入れ子深さを管理（<rb>/<rt>/<rp>は ruby の内側なので深さは変えない）
+  
         if (name === 'ruby') {
           rubyDepth += isClosing ? -1 : 1;
-          if (rubyDepth < 0) rubyDepth = 0; // 念のため
+          if (rubyDepth < 0) rubyDepth = 0;
         }
-        // タグ本体はそのままスキップ（文字数カウントしない）
         i = end + 1;
         continue;
       }
-      // タグの外の実文字をカウント
       count++;
       i++;
-      // 分割：ruby の外にいるときだけ
+  
       if (count >= chunkSize && rubyDepth === 0) {
         chunks.push(html.slice(last, i));
         last = i;
         count = 0;
       }
     }
-    // 端数を追加
     if (last < len) chunks.push(html.slice(last));
     return chunks;
   }
   
-  // ここまでで text は「<ruby>は残し、他タグは削除」「改行は全角スペース化」済みとする
+  // 小さめのチャンクに分割
   const chunkSize = 500;
   const chunks = chunkHTMLSafe(text, chunkSize);
   
-  // 可視文字長を測るための要素（DOM に挿さない、一時的な測定用）
-  const measurer = document.createElement('div');
-  
-  function visibleLength(html) {
-    measurer.innerHTML = html;
-    // textContent はタグを取り除いた可視テキスト長を返す
-    return measurer.textContent.length;
+  // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
+  function buildPositionMap(html) {
+    const map = []; // [{visiblePos, htmlPos}]
+    let htmlPos = 0;
+    let visiblePos = 0;
+    let inTag = false;
+    
+    while (htmlPos < html.length) {
+      const ch = html[htmlPos];
+      
+      if (ch === '<') {
+        inTag = true;
+        htmlPos++;
+        continue;
+      }
+      
+      if (ch === '>') {
+        inTag = false;
+        htmlPos++;
+        continue;
+      }
+      
+      if (!inTag) {
+        map.push({ visiblePos, htmlPos });
+        visiblePos++;
+      }
+      
+      htmlPos++;
+    }
+    
+    map.push({ visiblePos, htmlPos: html.length }); // 最後の位置
+    return map;
   }
   
-  // 1パートあたりの上限（可視文字）
-  const MAX_PER_PART = 10000;
-  
-  // chunks を走査して、可視文字で約 MAX_PER_PART ごとに parts に分割する
-  const parts = [];
-  let currentPart = [];
-  let currentLen = 0;
-  
-  for (const c of chunks) {
-    const vlen = visibleLength(c);
-  
-    // 既に currentPart に何か入っていて、これを加えると閾値を超える場合
-    if (currentPart.length > 0 && currentLen + vlen > MAX_PER_PART) {
-      // currentPart 内で最後の改行を探す
-      const combinedHTML = currentPart.join('') + c;
-      let lastNewlineIndex = combinedHTML.lastIndexOf('　'); // 改行は全角スペースに変換済み
-  
-      if (lastNewlineIndex !== -1 && lastNewlineIndex > 0) {
-        // 改行位置で分割
-        const partHTML = combinedHTML.slice(0, lastNewlineIndex);
-        const remainderHTML = combinedHTML.slice(lastNewlineIndex);
-        parts.push([partHTML]); // パートとして追加
-        currentPart = [remainderHTML]; // 残りは次のパートに
-        currentLen = visibleLength(remainderHTML);
-        continue; // 次の chunk はもう currentPart に入っているのでスキップ
-      } else {
-        // 改行がない場合は従来通り文字数ベースで分割
-        parts.push(currentPart);
-        currentPart = [];
-        currentLen = 0;
+  // 可視文字位置からHTML位置を取得
+  function getHtmlPos(map, targetVisiblePos) {
+    for (let i = 0; i < map.length; i++) {
+      if (map[i].visiblePos >= targetVisiblePos) {
+        return map[i].htmlPos;
       }
     }
-  
-    currentPart.push(c);
-    currentLen += vlen;
+    return map[map.length - 1].htmlPos;
   }
   
-  // 余りを push
-  if (currentPart.length > 0) parts.push(currentPart);
+  // 全チャンクを結合
+  const fullHTML = chunks.join('');
+  measurer.innerHTML = fullHTML;
+  const fullText = measurer.textContent;
   
-  // デバッグ（必要ならコンソールで確認）
-  console.log('visibleTotalChars:', parts.reduce((acc, p) => {
-    return acc + p.map(html => (measurer.innerHTML = html, measurer.textContent.length)).reduce((a,b)=>a+b,0);
-  }, 0));
-  console.log('parts count:', parts.length);
+  // 位置マップを作成
+  const posMap = buildPositionMap(fullHTML);
   
-  // レンダリング関数（DocumentFragment を使ってまとめて追加）
+  // 均等分割でパートを作成
+  const parts = [];
+  
+  let prevEndVisiblePos = 0;  // 前ページの終わり位置を保持
+  const overlap = 10;           // 重複させたい文字数
+  
+  for (let i = 0; i < numPages; i++) {
+    let startVisiblePos = prevEndVisiblePos;
+    if (i > 0) {
+        startVisiblePos = Math.max(0, prevEndVisiblePos - overlap);
+    }
+    let endVisiblePos = startVisiblePos + charsPerPage;
+    
+    // 最後のページは残り全部
+    if (i === numPages - 1) {
+      endVisiblePos = fullText.length;
+    } else {
+      // 目標位置付近で改行を探す（ページ切り替え位置以降の5%、500文字の範囲）
+      const searchStart = endVisiblePos;
+      const searchEnd = Math.min(fullText.length, endVisiblePos + Math.floor(charsPerPage * 0.05));
+      
+      let bestPos = endVisiblePos;
+      
+      for (let j = searchStart; j < searchEnd; j++) {
+        if (fullText[j] === '　') {
+          bestPos = j;  // 最初の後方改行に合わせる
+          break;
+        }
+      }
+      
+      endVisiblePos = bestPos;
+    }
+    
+    // HTML位置に変換
+    const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
+    const endHtmlPos = getHtmlPos(posMap, endVisiblePos);
+    
+    let partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
+    // 重複文字7文字に透明度を指定
+    if (i > 0 && overlap > 0) {
+        // 重複部分の HTML 位置
+        const overlapStartHtmlPos = getHtmlPos(posMap, startVisiblePos);
+        const overlapEndHtmlPos   = getHtmlPos(posMap, startVisiblePos + overlap);
+        
+        const beforeOverlap = partHTML.slice(0, overlapEndHtmlPos - startHtmlPos);
+        const afterOverlap  = partHTML.slice(overlapEndHtmlPos - startHtmlPos);
+        
+        partHTML = `<span style="opacity:0.5;">${beforeOverlap}</span>${afterOverlap}`;
+    }
+    parts.push([partHTML]);
+    prevEndVisiblePos = endVisiblePos;
+    
+    const actualLen = visibleLength(partHTML);
+    console.log(`パート${i + 1}: ${actualLen}文字`);
+  }
+  
+  // レンダリング関数
   function renderPart(index) {
-    container.innerHTML = ''; // 前パートを全部消す（負荷軽減）
+    container.innerHTML = '';
     const frag = document.createDocumentFragment();
     const list = parts[index] || [];
   
     for (const html of list) {
       const span = document.createElement('span');
-      span.innerHTML = html; // ルビ等を正しく解釈させるため innerHTML
+      span.innerHTML = html;
       frag.appendChild(span);
     }
     container.appendChild(frag);
@@ -185,38 +295,38 @@ document.querySelectorAll(
   // 初回表示
   let currentIndex = 0;
   renderPart(currentIndex);
-
-  //※ページ切り替え 
-  let promptShownForward = false; // 次へ
-  let promptShownBackward = false; // 前へ
-  let isSwitching = false; // ← 切替中フラグ
+  
+  // ページ切り替え
+  let promptShownForward = false;
+  let promptShownBackward = false;
+  let isSwitching = false;
   
   window.addEventListener('scroll', () => {
-    if (isSwitching) return; // ← 切替処理中は無視
+    if (isSwitching) return;
   
     const scrollBottom = window.scrollY + window.innerHeight;
     const scrollTop = window.scrollY;
     const bodyHeight = document.body.offsetHeight;
   
-    // --- 下方向: 最下部で次パート ---
+    // 下方向: 最下部で次パート
     if (
-      text.length > 10000 &&
+      totalVisibleChars > 10000 &&
       scrollBottom >= bodyHeight - 5 &&
       currentIndex < parts.length - 1 &&
       !promptShownForward
     ) {
-      scrollSliderRight.value = 0;
-      scrollSliderLeft.value = 0;
-      scrollSpeed = 0;
+      if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
+      if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
+      if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
   
       promptShownForward = true;
       const ok = window.confirm("続きを読み込みますか？");
       if (ok) {
-        isSwitching = true; // ← 切替開始
+        isSwitching = true;
         currentIndex++;
         renderPart(currentIndex);
         window.scrollTo(0, 0);
-        setTimeout(() => { isSwitching = false; }, 5000); // 5秒待って解除
+        setTimeout(() => { isSwitching = false; }, 5000);
         promptShownForward = false;
         promptShownBackward = false;
       }
@@ -224,25 +334,25 @@ document.querySelectorAll(
       promptShownForward = false;
     }
   
-    // --- 上方向: 最上部で前パート ---
+    // 上方向: 最上部で前パート
     if (
       currentIndex > 0 &&
       scrollTop <= 5 &&
       !promptShownBackward
     ) {
-      scrollSliderRight.value = 0;
-      scrollSliderLeft.value = 0;
-      scrollSpeed = 0;
+      if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
+      if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
+      if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
   
       promptShownBackward = true;
       const ok = window.confirm("前の文章に戻りますか？");
       if (ok) {
-        isSwitching = true; // ← 切替開始
+        isSwitching = true;
         currentIndex--;
         renderPart(currentIndex);
         const prevPartHeight = container.scrollHeight;
         window.scrollTo(0, prevPartHeight - window.innerHeight);
-        setTimeout(() => { isSwitching = false; }, 5000); // 5秒待って解除
+        setTimeout(() => { isSwitching = false; }, 5000);
         promptShownForward = false;
         promptShownBackward = false;
       }
@@ -2038,9 +2148,7 @@ async function initApplyButtonStyle() {
         if (data.color) applyBtn.style.color = data.color;
         if (data.backgroundColor) applyBtn.style.backgroundColor = data.backgroundColor;
       }
-    } catch (e) {
-      console.log(`${styleName} の取得に失敗`, e);
-    }
+    } catch (e) {}
   }
 }
 // ページ読み込み時に呼ぶ
