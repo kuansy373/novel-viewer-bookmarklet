@@ -166,10 +166,6 @@ let text = '';
     return chunks;
   }
   
-  // 小さめのチャンクに分割
-  const chunkSize = 500;
-  const chunks = chunkHTMLSafe(text, chunkSize);
-  
   // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
   function buildPositionMap(html) {
     const map = []; // [{visiblePos, htmlPos}]
@@ -214,8 +210,7 @@ let text = '';
     return map[map.length - 1].htmlPos;
   }
   
-  // 全チャンクを結合
-  const fullHTML = chunks.join('');
+  const fullHTML = text;
   measurer.innerHTML = fullHTML;
   const fullText = measurer.textContent;
   
@@ -271,7 +266,9 @@ let text = '';
         
         partHTML = `<span style="opacity:0.5;">${beforeOverlap}</span>${afterOverlap}`;
     }
-    parts.push([partHTML]);
+    // partHTML を 50文字ごとの小チャンクに分割
+    const smallChunks = chunkHTMLSafe(partHTML, 50);
+    parts.push(smallChunks); // parts[ページ番号][小チャンク番号]
     prevEndVisiblePos = endVisiblePos;
     
     const actualLen = visibleLength(partHTML);
@@ -279,18 +276,20 @@ let text = '';
   }
   
   // レンダリング関数
-  function renderPart(index) {
+  function renderPart(pageIndex) {
     container.innerHTML = '';
     const frag = document.createDocumentFragment();
-    const list = parts[index] || [];
+    const pageChunks = parts[pageIndex] || [];
   
-    for (const html of list) {
+    for (const chunkHTML of pageChunks) {
       const span = document.createElement('span');
-      span.innerHTML = html;
+      span.innerHTML = chunkHTML;
       frag.appendChild(span);
     }
+  
     container.appendChild(frag);
   }
+
   
   // 初回表示
   let currentIndex = 0;
