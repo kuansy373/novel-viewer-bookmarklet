@@ -255,7 +255,7 @@ let text = '';
     const endHtmlPos = getHtmlPos(posMap, endVisiblePos);
     
     let partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
-    // 重複文字7文字に透明度を指定
+    // 重複文字10文字に透明度を指定
     if (i > 0 && overlap > 0) {
         // 重複部分の HTML 位置
         const overlapStartHtmlPos = getHtmlPos(posMap, startVisiblePos);
@@ -389,6 +389,7 @@ let text = '';
   overflow-x: hidden;
 `;
 document.body.style.cssText = initialBodyStyle;
+
 // === 右スライダー ===
 const scrollSliderRight = document.createElement('input');
 scrollSliderRight.type = 'range';
