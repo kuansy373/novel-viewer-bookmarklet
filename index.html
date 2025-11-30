@@ -1,36 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" />
   <title>My GitHub Repository</title>
+  <style>
+    /* 全体のフォントと背景 */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ページの中央にコンテンツを配置 */
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
+    }
+
+    h1 {
+      color: #0073e6;
+      text-align: center;
+    }
+
+    a {
+      color: #0073e6;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    p {
+      margin-bottom: 1em;
+    }
+
+    /* 箇条書き風の強調部分 */
+    .highlight {
+      background-color: #e0f7fa;
+      padding: 10px;
+      border-left: 5px solid #0073e6;
+      border-radius: 5px;
+    }
+
+    /* Youtubeリンクを目立たせる */
+    .youtube-link {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #ff0000;
+      color: #fff;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .youtube-link:hover {
+      background-color: #cc0000;
+    }
+  </style>
 </head>
 <body>
-  <h1>My GitHub Repository Page</h1>
-  <p>This is a verification page for Google Search Console.</p>
-  
-  <a href="https://github.com/kuansy373/bookmarklet-release">
-    View this project on GitHub
-  </a>
+  <div class="container">
+    <h1>My GitHub Repository Page</h1>
+    <p class="highlight">これはGoogle Search Console用の確認ページです。</p>
+    
+    <p>
+      <a href="https://github.com/kuansy373/bookmarklet-release">View this project on GitHub</a>
+    </p>
 
-  <p>このページは、bookmarklet-releaseリポジトリがGoogleの検索エンジンに引っかかりやすくするためのものです。<br>
-    <br>
-    リポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびGitHub Pages経由でブックマークレットから実行するコードを提供しています（READMEにあるやつ）。<br>
-    <br>
-    貼り付ける「Javascript:」がちゃんとソースコードに結びついているか？が不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください<br>
-    <br>
-    例：@v1.3.0なら、「432307e」がコミットハッシュです。<br>
-    <br>
-    また、READMEにも書いているように、AIを使いツギハギして作ったので、変なところあると思います。<br>
-    <br>
-    LICENCEはUnlicenseなので、なにも表記、報告無しで改変、配布、利益が絡む使用などしてOKです。ただし、使用しているサードパーティ・ライブラリはそれらのライセンスに帰属します。<br>
-    <br>
-    不具合の発見、修正などしてくれた方は、READMEがリンクしてるYoutubeの動画のコメント欄またはPull requestsに報告欲しいです。<br>
-    <br>
-    ここにも載せときます。https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl
-    <br>
-    Youtubeの動画のコメント欄にはそれ以外にも、ブックマークレットの方法やSAVE→APPLYワンタップの仕方など、質問だったり自由にコメントしてください！使ってもらえてることが知れるとうれしいです。
-  </p>
-
+    <p>
+      このページは、bookmarklet-releaseリポジトリがGoogleの検索エンジンに引っかかりやすくするためのものです。<br><br>
+      リポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびGitHub Pages経由でブックマークレットから実行するコードを提供しています（READMEにあるやつ）。<br><br>
+      貼り付ける「Javascript:」がちゃんとソースコードに結びついているか？が不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください。<br><br>
+      例：@v1.3.0なら、「432307e」がコミットハッシュです。<br><br>
+      また、READMEにも書いているように、AIが書いたコードをツギハギして作ったので、変なところあると思います。<br><br>
+      LICENCEはUnlicenseなので、なにも表記、報告無しで改変、配布、利益が絡む使用などしてOKです。ただし、使用しているサードパーティ・ライブラリはそれらのライセンスに帰属します。<br><br>
+      不具合の発見、修正などしてくれた方は、READMEがリンクしてるYoutubeの動画のコメント欄またはPull requestsに報告欲しいです。<br><br>
+      <a class="youtube-link" href="https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl" target="_blank">Youtube動画はこちら</a>
+    </p>
+  </div>
 </body>
 </html>
