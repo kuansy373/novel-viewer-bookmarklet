@@ -5,21 +5,17 @@
   <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" />
   <title>My GitHub Repository</title>
   <style>
+    html{
+      overscroll-behavior: none;
+    }
+
     /* 全体のフォントと背景 */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f4ef;
+      background-color: #fff;
       color: #333;
-      line-height: 1.7;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* ページの中央にコンテンツを配置 */
-    .container {
       margin: auto;
       padding: 30px 40px;
-      background-color: #fff;
     }
 
     /* タイトル */
@@ -31,11 +27,12 @@
       font-size: 28px;
     }
 
-    /* リンクをボタン風に */
+    /* GitHubリンク*/
     .github-link {
       color: #009688;
       transition: color 0.3s;
       font-weight: bold;
+      margin-left: 30px;
     }
 
     .github-link:hover {
@@ -61,24 +58,29 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       padding: 10px;
-      margin: 20px 0;
+      margin-bottom: 40px;
       overflow-x: auto; /* 横スクロール可能に */
       font-family: 'Courier New', monospace;
       scrollbar-width: thin;
       white-space: nowrap;
     }
 
+    .button-wrapper {
+      display: flex;               /* フレックスで横並び制御 */
+      justify-content: flex-end;   /* 右寄せ */
+      margin-bottom: 5px;          /* コード枠との隙間 */
+    }
+
     .copy-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background-color: #0C1F0E;
+      text-align: right;
+      background-color: #254f28;
       color: white;
       border: none;
       padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
+      float: right;
     }
 
     .copy-btn:hover {
@@ -97,7 +99,6 @@
   </style>
 </head>
 <body>
-  <div class="container">
     <h1>My GitHub Repository Page</h1>
 
     <p class="highlight">ここはGoogle Search Console用の確認ページです。</p>
@@ -111,7 +112,9 @@
     <ul>
       <li>このページは、bookmarklet-releaseリポジトリがGoogleの検索エンジンに引っかかりやすくするためのものです。</li><br>
       <li>リポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびGitHub Pages経由でブックマークレットから実行するコードを提供しています（READMEにあるやつ）。</li>
-      <button class="copy-btn">コピー</button>
+      <div class="button-wrapper">
+        <button class="copy-btn">コピー</button>
+      </div>
       <div class="code-container">
         <code id="bookmarklet-code">
       javascript:(function(){
@@ -144,6 +147,5 @@
       <li>不具合の発見、修正などしてくれた方は、READMEがリンクしてるYoutubeの動画のコメント欄またはPull requestsに報告欲しいです。</li>
         <p>ここにも載せときます。<a class="youtube-link" href="https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl" target="_blank">Youtubeの動画</a></p>
     </ul>
-  </div>
 </body>
 </html>
