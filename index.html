@@ -55,6 +55,35 @@
       border-radius: 5px;
     }
 
+    .code-container {
+      position: relative;
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 20px 0;
+      overflow-x: auto; /* 横スクロール可能に */
+      font-family: 'Courier New', monospace;
+      white-space: pre; /* 横スクロール用 */
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: #0C1F0E;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .copy-btn:hover {
+      background-color: #153022;
+    }
+
     /* Youtubeリンク */
     .youtube-link {
       color: #009688;
@@ -81,8 +110,32 @@
     <ul>
       <li>このページは、bookmarklet-releaseリポジトリがGoogleの検索エンジンに引っかかりやすくするためのものです。</li><br>
       <li>リポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびGitHub Pages経由でブックマークレットから実行するコードを提供しています（READMEにあるやつ）。</li>
-      <pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/bookmarklet-release@v1.3.0/vertical-text-size-color.js';document.body.appendChild(s);})();
-      </code></pre>
+      <div class="code-container">
+        <button class="copy-btn">コピー</button>
+        <code id="bookmarklet-code">
+      javascript:(function(){
+        var s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/gh/kuansy373/bookmarklet-release@v1.3.0/vertical-text-size-color.js';
+        document.body.appendChild(s);
+      })();
+        </code>
+      </div>
+      
+      <script>
+        const copyBtn = document.querySelector('.copy-btn');
+        const code = document.getElementById('bookmarklet-code');
+      
+        copyBtn.addEventListener('click', () => {
+          // テキストをコピー
+          navigator.clipboard.writeText(code.innerText).then(() => {
+            copyBtn.innerText = 'コピー完了！';
+            setTimeout(() => copyBtn.innerText = 'コピー', 1500);
+          }).catch(err => {
+            alert('コピーに失敗しました: ' + err);
+          });
+        });
+      </script>
+      
       <li>貼り付ける「Javascript:」がちゃんとソースコードに結びついているか？が不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください。</li><br>
         <p>例：@v1.3.0なら、「432307e」がコミットハッシュです。</p>
       <li>READMEにも書いているように、AIが書いたコードをツギハギして作ったので、変なところあると思います。</li><br>
