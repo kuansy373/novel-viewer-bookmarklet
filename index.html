@@ -64,7 +64,8 @@
       margin: 20px 0;
       overflow-x: auto; /* 横スクロール可能に */
       font-family: 'Courier New', monospace;
-      white-space: pre; /* 横スクロール用 */
+      scrollbar-width: thin;
+      white-space: nowrap;
     }
 
     .copy-btn {
@@ -110,8 +111,8 @@
     <ul>
       <li>このページは、bookmarklet-releaseリポジトリがGoogleの検索エンジンに引っかかりやすくするためのものです。</li><br>
       <li>リポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびGitHub Pages経由でブックマークレットから実行するコードを提供しています（READMEにあるやつ）。</li>
+      <button class="copy-btn">コピー</button>
       <div class="code-container">
-        <button class="copy-btn">コピー</button>
         <code id="bookmarklet-code">
       javascript:(function(){
         var s=document.createElement('script');
