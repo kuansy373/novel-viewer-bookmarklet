@@ -8,47 +8,58 @@
     /* 全体のフォントと背景 */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f0f4ef;
       color: #333;
-      line-height: 1.6;
+      line-height: 1.7;
       margin: 0;
       padding: 0;
     }
 
     /* ページの中央にコンテンツを配置 */
     .container {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
+      max-width: 850px;
+      margin: 60px auto;
+      padding: 30px 40px;
       background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      border-radius: 12px;
     }
 
+    /* タイトルを右上に */
     h1 {
-      color: #0073e6;
-      text-align: center;
+      color: #0C1F0E;
+      text-align: left;
+      margin-top: 0;
+      margin-bottom: 30px;
+      font-size: 28px;
     }
 
-    a {
-      color: #0073e6;
+    /* リンクをボタン風に */
+    .github-link {
+      display: inline-block;
+      padding: 10px 18px;
+      background-color: #0C1F0E;
+      color: #fff;
+      border-radius: 6px;
       text-decoration: none;
       font-weight: bold;
+      transition: background-color 0.3s;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .github-link:hover {
+      background-color: #153022;
     }
 
+    /* 段落とハイライト */
     p {
-      margin-bottom: 1em;
+      margin-bottom: 1.5em;
+      font-size: 16px;
     }
 
-    /* 箇条書き風の強調部分 */
     .highlight {
       background-color: #e0f7fa;
-      padding: 10px;
-      border-left: 5px solid #0073e6;
+      padding: 12px;
+      border-left: 5px solid #0C1F0E;
       border-radius: 5px;
     }
 
@@ -72,10 +83,13 @@
 <body>
   <div class="container">
     <h1>My GitHub Repository Page</h1>
+
     <p class="highlight">これはGoogle Search Console用の確認ページです。</p>
-    
+
     <p>
-      <a href="https://github.com/kuansy373/bookmarklet-release">View this project on GitHub</a>
+      <a class="github-link" href="https://github.com/kuansy373/bookmarklet-release" target="_blank">
+        View this project on GitHub
+      </a>
     </p>
 
     <p>
