@@ -1088,29 +1088,29 @@
         label.textContent = `Font weight: ${slider.value}`;
       };
     }
-  else if (currentMode === 'Font shadow') {
-    slider.min = 0;
-    slider.max = 30;
-    slider.step = 1;
-  
-    // 現在のスライダー値を保持（前回の設定を使う）
-    let blur = parseInt(target.dataset.textShadow || 0);
-    slider.value = blur;
-    label.textContent = `Font shadow: ${slider.value}px`;
-  
-    slider.oninput = () => {
-      const b = slider.value;
-      if (b > 0) {
-        target.style.textShadow = `0 0 ${b}px`;
-      } else {
-        target.style.textShadow = 'none';
-      }
-      label.textContent = `Font shadow: ${b}px`;
-  
-      // blur 値を保持しておく
-      target.dataset.textShadow = b;
-    };
-  }
+    else if (currentMode === 'Font shadow') {
+      slider.min = 0;
+      slider.max = 30;
+      slider.step = 1;
+    
+      // 現在のスライダー値を保持（前回の設定を使う）
+      let blur = parseInt(target.dataset.textShadow || 0);
+      slider.value = blur;
+      label.textContent = `Font shadow: ${slider.value}px`;
+    
+      slider.oninput = () => {
+        const b = slider.value;
+        if (b > 0) {
+          target.style.textShadow = `0 0 ${b}px`;
+        } else {
+          target.style.textShadow = 'none';
+        }
+        label.textContent = `Font shadow: ${b}px`;
+    
+        // blur 値を保持しておく
+        target.dataset.textShadow = b;
+      };
+    }
   }
   // 横並び用コンテナを作る
   const sliderContainer = doc.createElement('div');
@@ -2249,7 +2249,7 @@
     </div>
     <div class="ui-buttons">
       <div class="button-set">
-        <input id="bulkJsonInput" class="json-input" placeholder="全てのJSONを貼り付け" />
+        <input id="bulkJsonInput" class="json-input" placeholder="複数のJSONを貼り付け" />
         <span class="label">⇒</span>
         <button id="bulkSaveBtn" class="button">SAVE</button>
       </div>
@@ -2398,11 +2398,8 @@
     const fontFamily = fontSelect.value;
   
     // blur 値を抽出
-    let blur = null;
-    const match = textShadow.match(/(-?\d+)px$/);
-    if (match) {
-      blur = parseInt(match[1], 10);
-    }
+    const match = textShadow?.match(/(-?\d+)px$/);
+    const blur = match ? parseInt(match[1], 10) : 0;
   
     // HEX に変換
     color = rgbToHex(color);
@@ -2807,28 +2804,40 @@
           <style>
             body { font-family: sans-serif; padding: 16px; }
             pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; padding: 12px; border-radius: 4px; }
-            .controls { margin-bottom: 16px; }
-            button { margin-left: 8px; cursor: pointer; }
+            .controls { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+            .controls-left { display: flex; align-items: center; }
+            button { margin-left: 8px; font-size: 15px; cursor: pointer; }
+            button:disabled { opacity: 0.5; cursor: not-allowed; }
+            #jsonDisplay[contenteditable="true"] { border: 3px dashed #000000; border-radius: 0px; }
           </style>
         </head>
         <body>
           <div class="controls">
-            <label>
-              <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
-            </label>
-            <button id="copyJsonBtn">コピー</button>
+            <div class="controls-left">
+              <label id="prettyPrintLabel">
+                <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
+              </label>
+              <button id="copyJsonBtn">コピー</button>
+            </div>
+            <button id="editBtn">編集</button>
           </div>
           <pre id="jsonDisplay"></pre>
           <script>
             const savedStyles = ${JSON.stringify(savedStyles)};
+            let currentJson = savedStyles;
             const jsonDisplay = document.getElementById('jsonDisplay');
             const prettyCheckbox = document.getElementById('prettyPrintCheckbox');
+            const prettyLabel = document.getElementById('prettyPrintLabel');
             const copyJsonBtn = document.getElementById('copyJsonBtn');
+            const editBtn = document.getElementById('editBtn');
+            let isEditing = false;
   
             const updateJsonDisplay = () => {
+              if (isEditing) return;
               const jsonText = prettyCheckbox.checked
-                ? JSON.stringify(savedStyles, null, 2)
-                : JSON.stringify(savedStyles);
+                ? JSON.stringify(currentJson, null, 2)
+                : JSON.stringify(currentJson);
+            
               jsonDisplay.textContent = jsonText;
             };
   
@@ -2841,6 +2850,28 @@
                 alert('JSONをコピーしました！');
               } catch (err) {
                 alert('コピーに失敗しました: ' + err);
+              }
+            });
+
+            editBtn.addEventListener('click', () => {
+              isEditing = !isEditing;
+              if (isEditing) {
+                editBtn.textContent = '編集中…';
+                jsonDisplay.contentEditable = 'true';
+                prettyCheckbox.disabled = true;
+                prettyLabel.style.opacity = "0.5";
+                copyJsonBtn.disabled = true;
+              } else {
+                editBtn.textContent = '編集';
+                jsonDisplay.contentEditable = 'false';
+                prettyCheckbox.disabled = false;
+                prettyLabel.style.opacity = "1";
+                copyJsonBtn.disabled = false;
+                try {
+                  currentJson = JSON.parse(jsonDisplay.textContent);
+                } catch (e) {
+                  alert("JSONの形式が正しくありません");
+                }
               }
             });
   
