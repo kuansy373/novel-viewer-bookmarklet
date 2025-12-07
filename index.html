@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" >
+  <meta name="description" content="WEB小説を縦一行にして読むブックマークレット配布ページ">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WEB小説を縦一行にするブックマークレット</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overscroll-behavior: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+      color: #2c3e50;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #0C1F0E;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 28px;
+      border-bottom: 3px solid #0C1F0E;
+      padding-bottom: 15px;
+    }
+
+    .alert-box {
+      background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+      padding: 20px;
+      border-left: 5px solid #0C1F0E;
+      border-radius: 8px;
+      margin: 25px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .alert-box p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .section {
+      margin: 30px 0;
+    }
+
+    .section-title {
+      color: #0C1F0E;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-title::before {
+      content: "▶";
+      margin-right: 10px;
+      color: #009688;
+    }
+
+    .github-link, .youtube-link {
+      color: #009688;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .github-link:hover, .youtube-link:hover {
+      color: #254F28;
+      border-bottom-color: #254F28;
+    }
+
+    .code-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 2px solid #e0e0e0;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .code-label {
+      font-weight: 600;
+      color: #0C1F0E;
+    }
+
+    .copy-btn {
+      background: linear-gradient(135deg, #254f28 0%, #0C1F0E 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+
+    .code-container {
+      background: white;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      white-space: nowrap;
+      scrollbar-width: thin;
+      scrollbar-color: #009688 #f0f0f0;
+    }
+
+    .code-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .code-container::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+
+    .code-container::-webkit-scrollbar-thumb {
+      background: #009688;
+      border-radius: 4px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #fafafa;
+      margin: 15px 0;
+      padding: 18px;
+      border-left: 4px solid #009688;
+      border-radius: 6px;
+      transition: all 0.3s;
+    }
+
+    li:hover {
+      background: #f0f8f7;
+      transform: translateX(5px);
+    }
+
+    .note {
+      background: #fff9e6;
+      border-left: 4px solid #ffc107;
+      padding: 12px 18px;
+      margin: 10px 0 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 25px 20px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .code-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .copy-btn {
+        align-self: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応）</small></h1>
+
+    <div class="alert-box">
+      <p>📌 このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の Google Search Console 用確認ページです。</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">リポジトリはこちら</div>
+      <p>
+        READMEやソースコード、編集履歴は以下のGitHubリポジトリで確認できます：<br>
+        <a class="github-link" href="https://github.com/kuansy373/novel-viewer-bookmarklet" target="_blank">
+          https://github.com/kuansy373/novel-viewer-bookmarklet
+        </a>
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ブックマークレットについて</div>
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-label">📋 ブックマークレットコード（READMEにあるのと同じ）</span>
+        <button class="copy-btn">コピー</button>
+      </div>
+      <div class="code-container">
+        <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">使用上の注意と情報</div>
+      <ul>
+        <li>
+          貼り付ける「Javascript:」がちゃんとソースコードに結びついているか不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください。
+          <div class="note">
+            💡 例：@v1.3.0なら、「432307e」がコミットハッシュです
+          </div>
+        </li>
+        
+        <li>
+          READMEにも書いているように、AIが書いたコードをツギハギして作ったので、変なところがあると思います。
+        </li>
+        
+        <li>
+          <strong>ライセンス：</strong>Unlicenseなので、表記・報告無しで改変、配布、商用利用などしてOKです。<br>
+          ただし、使用しているサードパーティ・ライブラリはそれらのライセンスに帰属します。
+        </li>
+        
+        <li>
+          不具合の発見・修正などしてくれた方は、以下のYoutube動画のコメント欄またはPull requestsに報告してくれると助かります<br>
+          <a class="youtube-link" href="https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl" target="_blank">
+            Youtube動画
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const copyBtn = document.querySelector('.copy-btn');
+    const code = document.getElementById('bookmarklet-code');
+  
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        copyBtn.innerText = '✓ コピー完了！';
+        copyBtn.style.background = 'linear-gradient(135deg, #009688 0%, #00796b 100%)';
+        setTimeout(() => {
+          copyBtn.innerText = 'コピー';
+          copyBtn.style.background = 'linear-gradient(135deg, #254f28 0%, #0C1F0E 100%)';
+        }, 2000);
+      }).catch(err => {
+        alert('コピーに失敗しました: ' + err);
+      });
+    });
+  </script>
+</body>
+</html>
