@@ -43,7 +43,7 @@
     }
 
     .alert-box {
-      background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+      background: #e1fcff;
       padding: 20px;
       border-left: 5px solid #0C1F0E;
       border-radius: 8px;
@@ -109,7 +109,7 @@
     }
 
     .copy-btn {
-      background: linear-gradient(135deg, #254f28 0%, #0C1F0E 100%);
+      background: #254f28;
       color: white;
       border: none;
       padding: 8px 15px;
@@ -117,7 +117,7 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
-      transition: all 0.3s;
+      transition: all 0.1s;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
@@ -184,7 +184,6 @@
       }
 
       .code-header {
-        flex-direction: column;
         align-items: flex-start;
       }
 
@@ -196,10 +195,10 @@
 </head>
 <body>
   <div class="container">
-    <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応）</small></h1>
+    <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応。）</small></h1>
 
     <div class="alert-box">
-      <p>📌 このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の GitHub Pages による紹介ページです。</p>
+      <p>このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の GitHub Pages による紹介ページです。</p>
     </div>
 
     <div class="section">
@@ -222,22 +221,31 @@
       <p>
         ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れと注意点だけを説明します。
       </p>
+      <div class="code-section">
+        <div class="code-header">
+          <span class="code-label">ブックマークレットコード（READMEにあるのと同じ）</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="code-container">
+          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
+        </div>
+      </div>
 
       <ul>
       <li>
 
       <ol>
-        <li>下のコードセクションから<strong>ブックマークレットコードをコピー</strong>しておきます。</li>
+        <li>上の<strong>ブックマークレットコードをコピー</strong>しておきます。</li>
         
-        <li>任意のページを<strong>ブックマークに登録</strong>します（追加できればどのページでもOK）。
+        <li>任意のページを<strong>ブックマークに登録</strong>します（どのページでもOK）。
           <div class="note">
-            ※ Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなります。「ブックマーク バー」への追加がおすすめです。
+            ※ Chromeでは登録したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなります。「ブックマーク バー」へ追加しましょう。
           </div>
         </li>
         
-        <li>追加したブックマークの<strong>名前を変更</strong>します。
+        <li>「ブックマークを管理」 等から登録したページの<strong>名前を変更</strong>します（自由）。
           <div class="note">
-            ※ モバイルChromeではアドレス欄に<strong>名前を入力して実行する</strong>ため、短めがおすすめ。ただし短すぎるとほかの検索候補に埋もれるため、一意のワード（例：「たてよみ」など）にしましょう。
+            ※ モバイルChromeではアドレス欄に<strong>名前を入力して呼び出す</strong>ため、短めがおすすめです。ただし短すぎるとほかの検索候補に埋もれるため、<strong>一意のワード</strong>（例：「たてよみ」など）にしましょう。
           </div>
         </li>
         
@@ -247,21 +255,12 @@
           </div>
         </li>
         
-        <li>実行したい小説のページを開き、作成したブックマークレットを実行します。</li>
+        <li>実行したい小説のページを開き、作成したブックマークレットを「ブックマーク一覧」等から探し、タップで実行します。</li>
       </ol>
 
       </li>
       </ul>
       
-      <div class="code-section">
-        <div class="code-header">
-          <span class="code-label">📋 ブックマークレットコード（READMEにあるのと同じ）</span>
-          <button class="copy-btn">コピー</button>
-        </div>
-        <div class="code-container">
-          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
-        </div>
-      </div>
     </div>
 
     <div class="section">
@@ -270,7 +269,7 @@
         <li>
           貼り付ける「Javascript:」がちゃんとソースコードに結びついているか不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください。
           <div class="note">
-            💡 例：@v1.3.0なら、「432307e」がコミットハッシュです
+            例：@v1.3.0なら、「432307e」がコミットハッシュです
           </div>
         </li>
         
@@ -284,9 +283,9 @@
         </li>
         
         <li>
-          不具合の発見・修正などしてくれた方は、以下のYoutube動画のコメント欄またはPull requestsに報告してくれると助かります<br>
+          不具合の発見・修正などしてくれた方は、以下のYoutubeの動画のコメント欄またはPull requestsに報告してくれると助かります。<br>
           <a class="youtube-link" href="https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl" target="_blank">
-            Youtube動画
+            Youtubeの動画
           </a>
         </li>
       </ul>
@@ -301,11 +300,10 @@
       copyBtn.disabled = true;
       navigator.clipboard.writeText(code.innerText).then(() => {
         copyBtn.innerText = '✓ コピー完了!';
-        copyBtn.style.
-        background = 'linear-gradient(135deg, #009688 0%, #4FFFEB 100%)';
+        copyBtn.style.background = '#009688';
         setTimeout(() => {
           copyBtn.innerText = 'コピー';
-          copyBtn.style.background = 'linear-gradient(135deg, #254f28 0%, #0C1F0E 100%)';
+          copyBtn.style.background = '#254f28';
           copyBtn.disabled = false;
         }, 1500);
       }).catch(err => {
