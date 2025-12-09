@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" >
-  <meta name="description" content="WEB小説を縦一行にして読むブックマークレット配布ページ">
+  <meta name="description" content="青空文庫・小説家になろう・カクヨム・アルファポリス対応のWEB小説縦書き一行表示ブックマークレット。スマホ、タブレットでも使えるJavaScriptツールの配布ページ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WEB小説を縦一行にするブックマークレット</title>
   <style>
@@ -18,7 +18,7 @@
     body {
       font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
-      color: #2c3e50;
+      color: #051605;
       margin: 0;
       padding: 20px;
       line-height: 1.8;
@@ -112,7 +112,7 @@
       background: linear-gradient(135deg, #254f28 0%, #0C1F0E 100%);
       color: white;
       border: none;
-      padding: 8px 20px;
+      padding: 8px 15px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
@@ -157,7 +157,7 @@
       padding: 0;
     }
 
-    li {
+    ul > li {
       background: #fafafa;
       margin: 15px 0;
       padding: 18px;
@@ -186,7 +186,6 @@
       .code-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
       }
 
       .copy-btn {
@@ -200,7 +199,7 @@
     <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応）</small></h1>
 
     <div class="alert-box">
-      <p>📌 このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の Google Search Console 用確認ページです。</p>
+      <p>📌 このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の GitHub Pages による紹介ページです。</p>
     </div>
 
     <div class="section">
@@ -213,20 +212,55 @@
       </p>
       <ul>
         <li>
-          このリポジトリは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、およびjsDelivr（CDN）経由でソースコードを実行するブックマークレットコードを提供しています。
+          上記リンクは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、および jsDelivr（CDN）経由でソースコードを実行するブックマークレットコードを提供しています。
         </li>
       </ul>
     </div>
 
     <div class="section">
       <div class="section-title">ブックマークレットについて</div>
-    <div class="code-section">
-      <div class="code-header">
-        <span class="code-label">📋 ブックマークレットコード（READMEにあるのと同じ）</span>
-        <button class="copy-btn">コピー</button>
-      </div>
-      <div class="code-container">
-        <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
+      <p>
+        ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れと注意点だけを説明します。
+      </p>
+
+      <ul>
+      <li>
+
+      <ol>
+        <li>下のコードセクションから<strong>ブックマークレットコードをコピー</strong>しておきます。</li>
+        
+        <li>任意のページを<strong>ブックマークに登録</strong>します（追加できればどのページでもOK）。
+          <div class="note">
+            ※ Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなります。「ブックマーク バー」への追加がおすすめです。
+          </div>
+        </li>
+        
+        <li>追加したブックマークの<strong>名前を変更</strong>します。
+          <div class="note">
+            ※ モバイルChromeではアドレス欄に<strong>名前を入力して実行する</strong>ため、短めがおすすめ。ただし短すぎるとほかの検索候補に埋もれるため、一意のワード（例：「たてよみ」など）にしましょう。
+          </div>
+        </li>
+        
+        <li>ブックマークの<strong>URL欄を削除</strong>し、手順1でコピーしたブックマークレットコードを<strong>ペースト</strong>します。
+          <div class="note">
+            ✅ この時点で「ブックマークレットの作成」は完了です。
+          </div>
+        </li>
+        
+        <li>実行したい小説のページを開き、作成したブックマークレットを実行します。</li>
+      </ol>
+
+      </li>
+      </ul>
+      
+      <div class="code-section">
+        <div class="code-header">
+          <span class="code-label">📋 ブックマークレットコード（READMEにあるのと同じ）</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="code-container">
+          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
+        </div>
       </div>
     </div>
 
@@ -241,7 +275,7 @@
         </li>
         
         <li>
-          READMEにも書いているように、AIが書いたコードをツギハギして作ったので、変なところがあると思います。
+          READMEにも書いているように、AIが書いたコードをツギハギして作ったので、変なところあると思います。
         </li>
         
         <li>
@@ -264,15 +298,19 @@
     const code = document.getElementById('bookmarklet-code');
   
     copyBtn.addEventListener('click', () => {
+      copyBtn.disabled = true;
       navigator.clipboard.writeText(code.innerText).then(() => {
-        copyBtn.innerText = '✓ コピー完了！';
-        copyBtn.style.background = 'linear-gradient(135deg, #009688 0%, #00796b 100%)';
+        copyBtn.innerText = '✓ コピー完了!';
+        copyBtn.style.
+        background = 'linear-gradient(135deg, #009688 0%, #4FFFEB 100%)';
         setTimeout(() => {
           copyBtn.innerText = 'コピー';
           copyBtn.style.background = 'linear-gradient(135deg, #254f28 0%, #0C1F0E 100%)';
-        }, 2000);
+          copyBtn.disabled = false;
+        }, 1500);
       }).catch(err => {
         alert('コピーに失敗しました: ' + err);
+        copyBtn.disabled = false;
       });
     });
   </script>
