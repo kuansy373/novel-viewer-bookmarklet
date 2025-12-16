@@ -363,56 +363,52 @@
     }
     
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
-    function buildPositionMap(html) {
-      const map = []; // [{visiblePos, htmlPos}]
-      let htmlPos = 0;
+    function buildPositionMap(container) {
+      const map = [];
       let visiblePos = 0;
-      let inTag = false;
-      
-      while (htmlPos < html.length) {
-        const ch = html[htmlPos];
-        
-        if (ch === '<') {
-          inTag = true;
-          htmlPos++;
-          continue;
+    
+      function walk(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const len = node.textContent.length;
+          for (let i = 0; i < len; i++) {
+            map.push({
+              visiblePos: visiblePos++,
+              node,
+              offset: i
+            });
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          node.childNodes.forEach(walk);
         }
-        
-        if (ch === '>') {
-          inTag = false;
-          htmlPos++;
-          continue;
-        }
-        
-        if (!inTag) {
-          map.push({ visiblePos, htmlPos });
-          visiblePos++;
-        }
-        
-        htmlPos++;
       }
-      
-      map.push({ visiblePos, htmlPos: html.length }); // 最後の位置
+    
+      walk(container);
       return map;
     }
     
-    // 可視文字位置からHTML位置を取得
-    function getHtmlPos(map, targetVisiblePos) {
-      // map は visiblePos 昇順である想定
-      let lo = 0, hi = map.length - 1;
-      while (lo < hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        if (map[mid].visiblePos < targetVisiblePos) lo = mid + 1;
-        else hi = mid;
-      }
-      return map[lo] ? map[lo].htmlPos : (map.length ? map[map.length - 1].htmlPos : 0);
+    const posMap = buildPositionMap(measurer);
+    
+    function rangeFromVisiblePos(map, startPos, endPos) {
+      const range = document.createRange();
+    
+      const start = map[startPos];
+      const end = map[endPos];
+    
+      if (!start || !end) return null;
+    
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset + 1);
+    
+      return range;
     }
     
-    const fullHTML = text;
-    
-    // 位置マップを作成
-    const posMap = buildPositionMap(fullHTML);
-    
+    function rangeToHTML(range) {
+      const frag = range.cloneContents();
+      const div = document.createElement('div');
+      div.appendChild(frag);
+      return div.innerHTML;
+    }
+        
     // 均等分割でパートを作成
     const parts = [];
     
@@ -429,7 +425,7 @@
       
       // 最後のページは残り全部
       if (i === numPages - 1) {
-        endVisiblePos = fullText.length;
+        endVisiblePos = Math.min(endVisiblePos, posMap.length - 1);
       } else {
         // 切り替え目標位置より先方5%の範囲で区切りのいい文字を探す
         const searchStart = endVisiblePos;
@@ -443,7 +439,7 @@
         for (const delimiter of delimiters) {
           for (let j = searchStart; j < searchEnd; j++) {
             if (fullText[j] === delimiter) {
-              bestPos = j + 1;
+              bestPos = j;
               found = true;
               break;
             }
@@ -455,18 +451,34 @@
       }
       
       // HTML位置に変換
-      const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
-      const endHtmlPos = getHtmlPos(posMap, endVisiblePos);
+      const range = rangeFromVisiblePos(
+        posMap,
+        startVisiblePos,
+        endVisiblePos
+      );
       
-      let partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
+      let partHTML = range ? rangeToHTML(range) : '';
     
       // 重複処理
       if (i > 0 && overlap > 0) {
-        const overlapEndHtmlPos = getHtmlPos(posMap, startVisiblePos + overlap);
-        const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
+        let overlapPart = '';
+        let mainPart = partHTML;
         
-        const overlapPart = partHTML.slice(0, overlapLengthInHTML);
-        const mainPart = partHTML.slice(overlapLengthInHTML);
+        if (i > 0 && overlap > 0) {
+          const overlapRange = rangeFromVisiblePos(
+            posMap,
+            startVisiblePos,
+            startVisiblePos + overlap
+          );
+          overlapPart = overlapRange ? rangeToHTML(overlapRange) : '';
+        
+          const mainRange = rangeFromVisiblePos(
+            posMap,
+            startVisiblePos + overlap,
+            endVisiblePos
+          );
+          mainPart = mainRange ? rangeToHTML(mainRange) : '';
+        }
         
         // メイン部分のみ50文字チャンク分割
         const mainChunks = chunkHTMLSafe(mainPart, 50);
@@ -546,7 +558,7 @@
       }
       ruby rt {
         font-size: 0.5em;
-        background: transparent;
+        background: transparent !important;
       }
       #yesButton,
       #noButton,
@@ -570,11 +582,6 @@
       
       win.addEventListener('load', () => {
         const doc = win.document;
-
-        // タブが閉じられたときにURLを解放
-        win.addEventListener('unload', () => {
-          URL.revokeObjectURL(url);
-        });
         
         // データを新しいウィンドウに渡す
         win.parts = parts;
@@ -801,16 +808,18 @@
             showOverlay(nextPage, numPages, (targetPage) => {
               isSwitching = true;
               currentIndex = targetPage - 1;
-              win.renderPart(currentIndex);
-              win.scrollTo(0, 0);
-              win.setTimeout(() => {
-                if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
-                if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
-                if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
-                isSwitching = false;
-              }, 50);
-              promptShownForward = false;
-              promptShownBackward = false;
+              win.requestAnimationFrame(() => {
+                win.renderPart(currentIndex);
+                win.scrollTo(0, 0);
+                win.setTimeout(() => {
+                  if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
+                  if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
+                  if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
+                  isSwitching = false;
+                }, 50);
+                promptShownForward = false;
+                promptShownBackward = false;
+              });
             });
           } else if (scrollBottom < bodyHeight - win.innerHeight / 4) {
             // 最上部から（25%）離れたらフラグON
@@ -828,20 +837,21 @@
               isSwitching = true;
               currentIndex = targetPage - 1;
               win.renderPart(currentIndex);
-              if (currentIndex === parts.length - 1) {
-                win.scrollTo(0, 0);
-              } else {
-                const prevPartHeight = win.scrollHeight;
-                win.scrollTo(0, prevPartHeight - win.innerHeight);
-              }
-              win.setTimeout(() => {
-                if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
-                if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
-                if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
-                isSwitching = false;
-              }, 50);
-              promptShownForward = false;
-              promptShownBackward = false;
+              win.requestAnimationFrame(() => {
+                if (currentIndex === parts.length - 1) {
+                  win.scrollTo(0, 0);
+                } else {
+                  win.scrollTo(0, 1e9);
+                }
+                win.setTimeout(() => {
+                  if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
+                  if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
+                  if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
+                  isSwitching = false;
+                }, 50);
+                promptShownForward = false;
+                promptShownBackward = false;
+              });
             });
           } else if (scrollTop > (currentIndex === 0 ? win.innerHeight / 1.5625 : win.innerHeight / 4)) {
             // 最上部から（1ページ目:64%、それ以外:25%）離れたらフラグON
@@ -938,12 +948,12 @@
           <label><input id="scrollB" class="settingCheckbox" type="checkbox"><span class="labelText"> Border</span></label><br>
           <label><input id="scrollC" class="settingCheckbox" type="checkbox"><span class="labelText"> Color in</span></label><br>
           <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label><br>
+          <label>Opacity: <input id="scrollO" class="settingInputbox" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1"> (0~1)</label><br>
           <label><input id="scrollBoth" class="settingCheckbox" type="checkbox"><span class="labelText"> Both sides</span></label><br>
           <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
           <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
           <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label><br>
           <label>Width: <input id="scrollW" class="settingInputbox" type="number" value="80"> px</label><br>
-          <label>Opacity: <input id="scrollO" class="settingInputbox" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1"> (0~1)</label><br>
           <label>Speed scale: <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</label><br>
           <label><input id="scrollHide" class="settingCheckbox" type="checkbox"><span class="labelText"> Slider ball</span></label><br>
         `;
@@ -1011,6 +1021,32 @@
             applyToSliders(el => el.style.boxShadow = '0 0 0px');
           }
         });
+
+        // Opacity
+        const opacityInput = doc.getElementById('scrollO');
+        let lastValue = opacityInput.value;
+        
+        opacityInput.addEventListener('input', e => {
+          if (e.target.value === '0' && lastValue !== '0.') {
+            e.target.value = '0.';
+          }
+          const num = parseFloat(e.target.value);
+          if (!isNaN(num) && num >= 0 && num <= 1) {
+            applyToSliders(el => el.style.opacity = num);
+          }
+          lastValue = e.target.value;
+        });
+        
+        opacityInput.addEventListener('focus', e => {
+          if (e.target.value === '0') e.target.value = '0.';
+        });
+        
+        opacityInput.addEventListener('blur', e => {
+          if (e.target.value === '0.' || e.target.value === '') {
+            e.target.value = '0';
+            applyToSliders(el => el.style.opacity = 0);
+          }
+        });
         
         // Right/Left/Both
         const rightbox = doc.getElementById('scrollRight');
@@ -1057,32 +1093,6 @@
             }
           });
         }
-        
-        // Opacity
-        const opacityInput = doc.getElementById('scrollO');
-        let lastValue = opacityInput.value;
-        
-        opacityInput.addEventListener('input', e => {
-          if (e.target.value === '0' && lastValue !== '0.') {
-            e.target.value = '0.';
-          }
-          const num = parseFloat(e.target.value);
-          if (!isNaN(num) && num >= 0 && num <= 1) {
-            applyToSliders(el => el.style.opacity = num);
-          }
-          lastValue = e.target.value;
-        });
-        
-        opacityInput.addEventListener('focus', e => {
-          if (e.target.value === '0') e.target.value = '0.';
-        });
-        
-        opacityInput.addEventListener('blur', e => {
-          if (e.target.value === '0.' || e.target.value === '') {
-            e.target.value = '0';
-            applyToSliders(el => el.style.opacity = 0);
-          }
-        });
         
         // Speed Scale
         const speedScaleInput = doc.getElementById('scrollSpeedScale');
@@ -2914,31 +2924,89 @@
           });
         }
 
+        function isPlainObject(obj) {
+          return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
+        }
+
+        function hasValidStyleProperty(styleObj, validKeys) {
+          if (!isPlainObject(styleObj)) return false;
+        
+          return Object.keys(styleObj).some(key => validKeys.has(key));
+        }
+
         // jsonInputのSAVEボタン
         doc.getElementById('bulkSaveBtn').onclick = () => {
           const bulkJsonInput = doc.getElementById('bulkJsonInput');
           const jsonText = bulkJsonInput.value.trim();
-        
+          const VALID_STYLE_KEYS = new Set([
+            'color',
+            'backgroundColor',
+            'fontSize',
+            'fontWeight',
+            'textShadow',
+            'fontFamily',
+            'scrollSettings'
+          ]);
+
           if (!jsonText) {
             win.alert('JSONデータを入力してください');
             return;
           }
-        
+          
+          let parsedData;
           try {
-            const parsedData = JSON.parse(jsonText);
-        
-            // 保存処理
-            Object.keys(parsedData).forEach(key => {
-              savedStyles[key] = parsedData[key];
-            });
-        
-            win.alert('JSONデータを保存しました！');
-            bulkJsonInput.value = '';
-            initApplyButtonStyle();
+            parsedData = JSON.parse(jsonText);
           } catch (e) {
             win.alert('JSONの解析に失敗しました:\n' + e.message);
-            bulkJsonInput.value = '';
+            return;
           }
+          
+          if (!isPlainObject(parsedData)) {
+            win.alert('JSONの形式が正しくありません');
+            return;
+          }
+
+          const keys = Object.keys(parsedData);
+
+          // Styleキーを抽出
+          const styleKeys = keys.filter(k => /^Style\d+$/.test(k));
+
+          // --- Styleキーなしの場合 ---
+          if (styleKeys.length === 0) {
+
+            // 既存のStyle番号を取得し、空いているStyle数字を付与
+            const usedNums = Object.keys(savedStyles)
+              .map(k => /^Style(\d+)$/.exec(k))
+              .filter(Boolean)
+              .map(m => Number(m[1]));
+
+            let newNum = 1;
+            while (usedNums.includes(newNum)) {
+              newNum++;
+            }
+
+            parsedData = {
+              [`Style${newNum}`]: parsedData
+            };
+
+          }
+          
+          // --- 保存処理 ---
+          for (const key of Object.keys(parsedData)) {
+            const styleObj = parsedData[key];
+
+            if (!hasValidStyleProperty(styleObj, VALID_STYLE_KEYS)) {
+              win.alert(`${key} に有効なスタイルプロパティがありません`);
+              return;
+            }
+
+            savedStyles[key] = styleObj;
+          }
+
+          win.alert('JSONデータを保存しました！');
+          bulkJsonInput.value = '';
+          initApplyButtonStyle();
+
         };
 
         // APPLYボタン
