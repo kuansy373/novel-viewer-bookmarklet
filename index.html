@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" >
-  <meta name="description" content="青空文庫・小説家になろう・カクヨム・アルファポリス対応のWEB小説縦書き一行表示ブックマークレット。スマホ、タブレットでも使えるJavaScriptツールの配布ページ">
+  <meta name="description" content="WEB小説縦書き一行表示ブックマークレット。スマホ、タブレットでも使えるJavaScriptツールの配布ページ。青空文庫・小説家になろう・カクヨム・アルファポリス対応">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WEB小説を縦一行にするブックマークレット</title>
   <style>
@@ -198,20 +198,19 @@
     <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応。）</small></h1>
 
     <div class="alert-box">
-      <p>このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の GitHub Pages による紹介ページです。</p>
+      <p>このページは <strong>novel-viewer-bookmarklet リポジトリ</strong>（GitHub）の紹介ページです。</p>
     </div>
 
     <div class="section">
       <div class="section-title">リポジトリはこちら</div>
       <p>
-        READMEやソースコード、編集履歴は以下のGitHubリポジトリで確認できます：<br>
         <a class="github-link" href="https://github.com/kuansy373/novel-viewer-bookmarklet" target="_blank">
           https://github.com/kuansy373/novel-viewer-bookmarklet
         </a>
       </p>
       <ul>
         <li>
-          上記リンクは、WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、および jsDelivr（CDN）経由でソースコードを実行するブックマークレットコードを提供しています。
+          WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、および jsDelivr（CDN）経由でソースコードを実行するブックマークレットコードを提供しています。
         </li>
       </ul>
     </div>
@@ -219,7 +218,7 @@
     <div class="section">
       <div class="section-title">ブックマークレットについて</div>
       <p>
-        ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れと注意点だけを説明します。
+        ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れと注意点だけ説明します。
       </p>
       <div class="code-section">
         <div class="code-header">
@@ -227,7 +226,7 @@
           <button class="copy-btn">コピー</button>
         </div>
         <div class="code-container">
-          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.0/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
+          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.1/vertical-text-size-color.js';document.body.appendChild(s);})();</code>
         </div>
       </div>
 
@@ -243,19 +242,19 @@
           </div>
         </li>
         
-        <li>「ブックマークを管理」 等から登録したページの<strong>名前を変更</strong>します（自由）。
+        <li>「ブックマークを管理」 等から登録したページの<strong>名前を変更</strong>します（自由な名前でOK）。
           <div class="note">
-            ※ モバイルChromeではアドレス欄に<strong>名前を入力して呼び出す</strong>ため、短めがおすすめです。ただし短すぎるとほかの検索候補に埋もれるため、<strong>一意のワード</strong>（例：「たてよみ」など）にしましょう。
+            ※ モバイルChromeではアドレス欄に<strong>名前を入力して呼び出し実行する</strong>ため、短めがおすすめです。ただし短すぎるとほかの検索候補に埋もれるため、<strong>一意のワード</strong>（例：「たてよみ」など）にしましょう。
           </div>
         </li>
         
-        <li>ブックマークの<strong>URL欄を削除</strong>し、手順1でコピーしたブックマークレットコードを<strong>ペースト</strong>します。
+        <li>登録したブックマークの<strong>URL欄にあるURLを削除</strong>し、手順1でコピーしたブックマークレットコードを<strong>貼り付け</strong>ます。
           <div class="note">
             ✅ この時点で「ブックマークレットの作成」は完了です。
           </div>
         </li>
         
-        <li>実行したい小説のページを開き、作成したブックマークレットを「ブックマーク一覧」等から探し、タップで実行します。</li>
+        <li>実行したいページ（今回は本文テキストがあるページ）を開き、作成したブックマークレットを「ブックマーク一覧」等から探し、タップで実行です。</li>
       </ol>
 
       </li>
