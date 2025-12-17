@@ -363,52 +363,56 @@
     }
     
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
-    function buildPositionMap(element) {
-      const map = [];
+    function buildPositionMap(html) {
+      const map = []; // [{visiblePos, htmlPos}]
+      let htmlPos = 0;
       let visiblePos = 0;
-    
-      function walk(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          const len = node.textContent.length;
-          for (let i = 0; i < len; i++) {
-            map.push({
-              visiblePos: visiblePos++,
-              node,
-              offset: i
-            });
-          }
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          node.childNodes.forEach(walk);
+      let inTag = false;
+      
+      while (htmlPos < html.length) {
+        const ch = html[htmlPos];
+        
+        if (ch === '<') {
+          inTag = true;
+          htmlPos++;
+          continue;
         }
+        
+        if (ch === '>') {
+          inTag = false;
+          htmlPos++;
+          continue;
+        }
+        
+        if (!inTag) {
+          map.push({ visiblePos, htmlPos });
+          visiblePos++;
+        }
+        
+        htmlPos++;
       }
-    
-      walk(element);
+      
+      map.push({ visiblePos, htmlPos: html.length }); // 最後の位置
       return map;
     }
     
-    const posMap = buildPositionMap(measurer);
-    
-    function rangeFromVisiblePos(map, startPos, endPos) {
-      const range = document.createRange();
-    
-      const start = map[startPos];
-      const end = map[endPos];
-    
-      if (!start || !end) return null;
-    
-      range.setStart(start.node, start.offset);
-      range.setEnd(end.node, end.offset + 1);
-    
-      return range;
+    // 可視文字位置からHTML位置を取得
+    function getHtmlPos(map, targetVisiblePos) {
+      // map は visiblePos 昇順である想定
+      let lo = 0, hi = map.length - 1;
+      while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (map[mid].visiblePos < targetVisiblePos) lo = mid + 1;
+        else hi = mid;
+      }
+      return map[lo] ? map[lo].htmlPos : (map.length ? map[map.length - 1].htmlPos : 0);
     }
     
-    function rangeToHTML(range) {
-      const frag = range.cloneContents();
-      const div = document.createElement('div');
-      div.appendChild(frag);
-      return div.innerHTML;
-    }
-        
+    const fullHTML = text;
+    
+    // 位置マップを作成
+    const posMap = buildPositionMap(fullHTML);
+    
     // 均等分割でパートを作成
     const parts = [];
     
@@ -425,7 +429,7 @@
       
       // 最後のページは残り全部
       if (i === numPages - 1) {
-        endVisiblePos = Math.min(endVisiblePos, posMap.length - 1);
+        endVisiblePos = fullText.length;
       } else {
         // 切り替え目標位置より先方5%の範囲で区切りのいい文字を探す
         const searchStart = endVisiblePos;
@@ -439,7 +443,7 @@
         for (const delimiter of delimiters) {
           for (let j = searchStart; j < searchEnd; j++) {
             if (fullText[j] === delimiter) {
-              bestPos = j;
+              bestPos = j + 1;
               found = true;
               break;
             }
@@ -451,34 +455,18 @@
       }
       
       // HTML位置に変換
-      const range = rangeFromVisiblePos(
-        posMap,
-        startVisiblePos,
-        endVisiblePos
-      );
+      const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
+      const endHtmlPos = i === numPages - 1 ? fullHTML.length : getHtmlPos(posMap, endVisiblePos);
       
-      let partHTML = range ? rangeToHTML(range) : '';
+      let partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
     
       // 重複処理
       if (i > 0 && overlap > 0) {
-        let overlapPart = '';
-        let mainPart = partHTML;
+        const overlapEndHtmlPos = getHtmlPos(posMap, startVisiblePos + overlap);
+        const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
         
-        if (i > 0 && overlap > 0) {
-          const overlapRange = rangeFromVisiblePos(
-            posMap,
-            startVisiblePos,
-            startVisiblePos + overlap
-          );
-          overlapPart = overlapRange ? rangeToHTML(overlapRange) : '';
-        
-          const mainRange = rangeFromVisiblePos(
-            posMap,
-            startVisiblePos + overlap,
-            endVisiblePos
-          );
-          mainPart = mainRange ? rangeToHTML(mainRange) : '';
-        }
+        const overlapPart = partHTML.slice(0, overlapLengthInHTML);
+        const mainPart = partHTML.slice(overlapLengthInHTML);
         
         // メイン部分のみ50文字チャンク分割
         const mainChunks = chunkHTMLSafe(mainPart, 50);
@@ -805,21 +793,17 @@
             isValidPage(currentIndex + 1)
           ) {
             const nextPage = currentIndex + 2;
+            resetScrollSliders();
             showOverlay(nextPage, numPages, (targetPage) => {
               isSwitching = true;
               currentIndex = targetPage - 1;
-              win.requestAnimationFrame(() => {
-                win.renderPart(currentIndex);
-                win.scrollTo(0, 0);
-                win.setTimeout(() => {
-                  if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
-                  if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
-                  if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
-                  isSwitching = false;
-                }, 50);
-                promptShownForward = false;
-                promptShownBackward = false;
-              });
+              win.renderPart(currentIndex);
+              win.scrollTo(0, 0);
+              win.setTimeout(() => {
+                isSwitching = false;
+              }, 50);
+              promptShownForward = false;
+              promptShownBackward = false;
             });
           } else if (scrollBottom < bodyHeight - win.innerHeight / 4) {
             // 最上部から（25%）離れたらフラグON
@@ -833,6 +817,7 @@
             promptShownBackward
           ) {
             const targetPageForPrompt = currentIndex === 0 ? validPageCount  : currentIndex;
+            resetScrollSliders();
             showOverlay(targetPageForPrompt, numPages , (targetPage) => {
               isSwitching = true;
               currentIndex = targetPage - 1;
@@ -844,9 +829,6 @@
                   win.scrollTo(0, 1e9);
                 }
                 win.setTimeout(() => {
-                  if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
-                  if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
-                  if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
                   isSwitching = false;
                 }, 50);
                 promptShownForward = false;
@@ -858,6 +840,12 @@
             promptShownBackward = true;
           }
         });
+
+        function resetScrollSliders() {
+          if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
+          if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
+          if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
+        }
         
         // === 右スライダー ===
         const scrollSliderRight = doc.createElement('input');
