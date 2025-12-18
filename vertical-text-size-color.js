@@ -234,6 +234,7 @@
     
     // HTMLから可視文字数を取得
     measurer.innerHTML = text;
+    measurer.querySelectorAll('rt, rp').forEach(el => el.remove());
     const fullText = measurer.textContent;
     const totalVisibleChars = fullText.length;
     
@@ -323,6 +324,22 @@
       textInfoPanel,
       document
     );
+
+    function parseTag(html, start) {
+      const end = html.indexOf('>', start + 1);
+      if (end === -1) return null;
+    
+      const content = html.slice(start + 1, end);
+      const isClosing = /^\s*\//.test(content);
+      const nameMatch = content.replace(/^\s*\//, '')
+                               .match(/^([a-zA-Z0-9-]+)/);
+    
+      return {
+        end,
+        name: nameMatch ? nameMatch[1].toLowerCase() : '',
+        isClosing
+      };
+    }
     
     // <ruby>の外でspan分割する
     function chunkHTMLSafe(html, chunkSize) {
@@ -334,21 +351,17 @@
         const ch = html[i];
     
         if (ch === '<') {
-          const end = html.indexOf('>', i + 1);
-          if (end === -1) break;
-    
-          const tagContent = html.slice(i + 1, end);
-          const isClosing = /^\s*\//.test(tagContent);
-          const nameMatch = tagContent.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
-          const name = nameMatch ? nameMatch[1].toLowerCase() : '';
-    
-          if (name === 'ruby') {
-            rubyDepth += isClosing ? -1 : 1;
-            if (rubyDepth < 0) rubyDepth = 0;
+          const tag = parseTag(html, i);
+          if (!tag) break;
+        
+          if (tag.name === 'ruby') {
+            rubyDepth += tag.isClosing ? -1 : 1;
+            rubyDepth = Math.max(0, rubyDepth);
           }
-          i = end + 1;
+          i = tag.end + 1;
           continue;
         }
+
         count++;
         i++;
     
@@ -364,35 +377,54 @@
     
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
-      const map = []; // [{visiblePos, htmlPos}]
+      const map = [];
       let htmlPos = 0;
       let visiblePos = 0;
-      let inTag = false;
-      
+      let rubyDepth = 0;
+    
+      // rt / rp の中かどうか
+      const skipStack = [];
+      let skipVisible = false;
+    
       while (htmlPos < html.length) {
         const ch = html[htmlPos];
-        
+    
+        // タグ開始
         if (ch === '<') {
-          inTag = true;
-          htmlPos++;
+          const tag = parseTag(html, htmlPos);
+          if (!tag) break;
+        
+          // ruby 深さ管理
+          if (tag.name === 'ruby') {
+            rubyDepth += tag.isClosing ? -1 : 1;
+            rubyDepth = Math.max(0, rubyDepth);
+          }
+        
+          // rt / rp は可視文字として数えない
+          if (tag.name === 'rt' || tag.name === 'rp') {
+            if (!tag.isClosing) {
+              skipStack.push(tag.name);
+              skipVisible = true;
+            } else {
+              skipStack.pop();
+              skipVisible = skipStack.length > 0;
+            }
+          }
+        
+          htmlPos = tag.end + 1;
           continue;
         }
-        
-        if (ch === '>') {
-          inTag = false;
-          htmlPos++;
-          continue;
-        }
-        
-        if (!inTag) {
-          map.push({ visiblePos, htmlPos });
+    
+        // テキストノード文字
+        if (!skipVisible) {
+          map.push({ visiblePos, htmlPos, rubyDepth });
           visiblePos++;
         }
-        
+    
         htmlPos++;
       }
-      
-      map.push({ visiblePos, htmlPos: html.length }); // 最後の位置
+    
+      map.push({ visiblePos, htmlPos: html.length, rubyDepth });
       return map;
     }
     
@@ -409,6 +441,100 @@
     }
     
     const fullHTML = text;
+
+    function adjustVisiblePosToRubyBoundary(posMap, visiblePos) {
+      while (visiblePos > 0 && posMap[visiblePos]?.rubyDepth > 0) {
+        visiblePos--;
+      }
+      return visiblePos;
+    }
+
+    function createPagePart({
+      pageIndex,
+      numPages,
+      prevEndVisiblePos,
+      overlap,
+      charsPerPage,
+      fullText,
+      fullHTML,
+      posMap
+    }) {
+      let startVisiblePos = prevEndVisiblePos;
+    
+      if (pageIndex > 0) {
+        const rawOverlapStart = Math.max(0, prevEndVisiblePos - overlap);
+        startVisiblePos = adjustVisiblePosToRubyBoundary(posMap, rawOverlapStart);
+      }
+    
+      let endVisiblePos = startVisiblePos + charsPerPage;
+    
+      if (pageIndex === numPages - 1) {
+        endVisiblePos = fullText.length;
+      } else {
+        const searchStart = endVisiblePos;
+        const searchEnd = Math.min(
+          fullText.length,
+          endVisiblePos + Math.floor(charsPerPage * 0.05)
+        );
+    
+        let bestPos = endVisiblePos;
+        const delimiters = ['　', '。', '」', '…'];
+    
+        outer:
+        for (const d of delimiters) {
+          for (let j = searchStart; j < searchEnd; j++) {
+            if (fullText[j] === d) {
+              bestPos = j + 1;
+              break outer;
+            }
+          }
+        }
+        endVisiblePos = bestPos;
+      }
+    
+      const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
+      const endHtmlPos =
+        pageIndex === numPages - 1
+          ? fullHTML.length
+          : getHtmlPos(posMap, endVisiblePos);
+    
+      const partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
+    
+      let part;
+    
+      if (pageIndex > 0 && overlap > 0) {
+        const overlapEndHtmlPos = getHtmlPos(
+          posMap,
+          startVisiblePos + overlap
+        );
+    
+        const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
+    
+        const overlapPart = partHTML.slice(0, overlapLengthInHTML);
+        const mainPart = partHTML.slice(overlapLengthInHTML);
+    
+        part = {
+          overlap: [overlapPart],
+          main: chunkHTMLSafe(mainPart, 50)
+        };
+      } else {
+        part = {
+          overlap: [],
+          main: chunkHTMLSafe(partHTML, 50)
+        };
+      }
+    
+      const actualStartPos =
+        pageIndex > 0 ? Math.max(0, prevEndVisiblePos - overlap) : 0;
+    
+      const actualLen = endVisiblePos - actualStartPos;
+    
+      return {
+        part,
+        endVisiblePos,
+        actualLen
+      };
+    }
     
     // 位置マップを作成
     const posMap = buildPositionMap(fullHTML);
@@ -421,80 +547,27 @@
     const pageCharCounts = [];  // 各ページの実際の文字数を保存する配列
     
     for (let i = 0; i < numPages; i++) {
-      let startVisiblePos = prevEndVisiblePos;
-      if (i > 0) {
-          startVisiblePos = Math.max(0, prevEndVisiblePos - overlap);
-      }
-      let endVisiblePos = startVisiblePos + charsPerPage;
-      
-      // 最後のページは残り全部
-      if (i === numPages - 1) {
-        endVisiblePos = fullText.length;
-      } else {
-        // 切り替え目標位置より先方5%の範囲で区切りのいい文字を探す
-        const searchStart = endVisiblePos;
-        const searchEnd = Math.min(fullText.length, endVisiblePos + Math.floor(charsPerPage * 0.05));
-        
-        let bestPos = endVisiblePos;
-        
-        const delimiters = ['　','。','」','…'];
-        let found = false;
-        
-        for (const delimiter of delimiters) {
-          for (let j = searchStart; j < searchEnd; j++) {
-            if (fullText[j] === delimiter) {
-              bestPos = j + 1;
-              found = true;
-              break;
-            }
-          }
-          if (found) break;
-        }
-        
-        endVisiblePos = bestPos;
-      }
-      
-      // HTML位置に変換
-      const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
-      const endHtmlPos = i === numPages - 1 ? fullHTML.length : getHtmlPos(posMap, endVisiblePos);
-      
-      let partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
+      const { part, endVisiblePos, actualLen } = createPagePart({
+        pageIndex: i,
+        numPages,
+        prevEndVisiblePos,
+        overlap,
+        charsPerPage,
+        fullText,
+        fullHTML,
+        posMap
+      });
     
-      // 重複処理
-      if (i > 0 && overlap > 0) {
-        const overlapEndHtmlPos = getHtmlPos(posMap, startVisiblePos + overlap);
-        const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
-        
-        const overlapPart = partHTML.slice(0, overlapLengthInHTML);
-        const mainPart = partHTML.slice(overlapLengthInHTML);
-        
-        // メイン部分のみ50文字チャンク分割
-        const mainChunks = chunkHTMLSafe(mainPart, 50);
-        
-        parts.push({
-          overlap: [overlapPart],
-          main: mainChunks
-        });
-      } else {
-        const chunks = chunkHTMLSafe(partHTML, 50);
-        parts.push({
-          overlap: [],
-          main: chunks
-        });
-      }
-  
-      // 実際の文字数を計算（重複部分を含む）
-      const actualStartPos = i > 0 ? Math.max(0, prevEndVisiblePos - overlap) : 0;
-      const actualLen = endVisiblePos - actualStartPos;
+      parts.push(part);
+      pageCharCounts.push(actualLen);
+    
       console.log(`ページ${i + 1}: ${actualLen}文字`);
-      pageCharCounts.push(actualLen);   // 文字数を配列に追加
-  
-      // デバッグパネルにページ情報を追加
+    
       const partInfo = document.createElement('div');
       partInfo.style.cssText = panelStyls.partInfo;
       partInfo.innerHTML = createPartInfoHTML(i + 1, actualLen);
       partsList.appendChild(partInfo);
-      
+    
       prevEndVisiblePos = endVisiblePos;
     }
     
@@ -717,6 +790,7 @@
           overlayElements.message.textContent = '';
           overlayElements.pageInput.value = defaultPage;
           overlayElements.pageInput.max = maxPage;
+          disableBodyScroll();
           overlayElements.overlay.style.display = 'flex';
           
           // はい
@@ -733,6 +807,7 @@
             } else {
               // 有効なページへ移動
               overlayElements.overlay.style.display = 'none';
+              enableBodyScroll();
               cleanup();
               onYes(targetPage);
             }
@@ -741,6 +816,7 @@
           // いいえ
           const handleNo = () => {
             overlayElements.overlay.style.display = 'none';
+            enableBodyScroll();
             cleanup();
             isSwitching = false;
             promptShownForward = false;
@@ -845,6 +921,16 @@
           if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
           if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
           if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
+        }
+        
+        function disableBodyScroll() {
+          doc.body.style.overflow = 'hidden';
+          doc.documentElement.style.overflow = 'hidden';
+        }
+        
+        function enableBodyScroll() {
+          doc.body.style.overflow = '';
+          doc.documentElement.style.overflow = '';
         }
         
         // === 右スライダー ===
@@ -2681,6 +2767,8 @@
           if (__saveConfirmOpen) return Promise.resolve(false);
           __saveConfirmOpen = true;
           isSwitching = true;
+          resetScrollSliders();
+          disableBodyScroll();
           
           return new Promise((resolve) => {
             // オーバーレイを作成
@@ -2830,6 +2918,7 @@
               if (overlay.parentNode) doc.body.removeChild(overlay);
               __saveConfirmOpen = false;
               isSwitching = false;
+              enableBodyScroll();
               doc.removeEventListener('keydown', handleKeydown); // イベントリスナーを削除
               resolve(result);
             };
