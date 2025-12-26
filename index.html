@@ -42,20 +42,6 @@
       padding-bottom: 15px;
     }
 
-    .alert-box {
-      background: #e1fcff;
-      padding: 20px;
-      border-left: 5px solid #0C1F0E;
-      border-radius: 8px;
-      margin: 25px 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .alert-box p {
-      margin: 0;
-      font-weight: 500;
-    }
-
     .section {
       margin: 30px 0;
     }
@@ -67,12 +53,6 @@
       margin-bottom: 15px;
       display: flex;
       align-items: center;
-    }
-
-    .section-title::before {
-      content: "▶";
-      margin-right: 10px;
-      color: #009688;
     }
 
     .github-link, .youtube-link {
@@ -197,28 +177,19 @@
   <div class="container">
     <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（青空文庫、小説家になろう、カクヨム、アルファポリス対応。）</small></h1>
 
-    <div class="alert-box">
-      <p>このページは <strong>novel-viewer-bookmarklet</strong> のPagesです。</p>
-    </div>
-
     <div class="section">
-      <div class="section-title">リポジトリはこちら</div>
+      <div class="section-title">- リポジトリ</div>
       <p>
         <a class="github-link" href="https://github.com/kuansy373/novel-viewer-bookmarklet" target="_blank">
           https://github.com/kuansy373/novel-viewer-bookmarklet
         </a>
       </p>
-      <ul>
-        <li>
-          WEB小説を縦一行にするJavaScriptソースコード（vertical-text-size-color.js）、および jsDelivr（CDN）経由でソースコードを実行するブックマークレットコードを提供しています。
-        </li>
-      </ul>
     </div>
 
     <div class="section">
-      <div class="section-title">ブックマークレットについて</div>
+      <div class="section-title">- ブックマークレット</div>
       <p>
-        ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れと注意点だけ説明します。
+        ブックマークレットの登録・実行方法は端末やブラウザによって異なるため、ここでは大まかな流れだけ説明します。
       </p>
       <div class="code-section">
         <div class="code-header">
@@ -236,15 +207,15 @@
       <ol>
         <li>上の<strong>ブックマークレットコードをコピー</strong>しておきます。</li>
         
-        <li>任意のページを<strong>ブックマークに登録</strong>します（どのページでもOK）。
+        <li>任意のページを<strong>ブックマークに追加</strong>します（どのページでもOK）。
           <div class="note">
-            ※ Chromeでは登録したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなります。「ブックマーク バー」へ追加しましょう。
+            ※ Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなるので、「ブックマーク バー」へ分類しましょう。
           </div>
         </li>
         
-        <li>「ブックマークを管理」 等から登録したページの<strong>名前を変更</strong>します（自由な名前でOK）。
+        <li>「ブックマークを管理」 等からブックマークに追加したページの<strong>名前を変更</strong>します（自由な名前でOK）。
           <div class="note">
-            ※ モバイルChromeではアドレス欄に<strong>名前を入力して呼び出し実行する</strong>ため、短めがおすすめです。ただし短すぎるとほかの検索候補に埋もれるため、<strong>一意のワード</strong>（例：「たてよみ」など）にしましょう。
+            ※ モバイルChromeではアドレス欄に<strong>名前を入力し呼び出してから実行する</strong>ため、短めがおすすめです。ただし短すぎるとほかの検索候補に埋もれるため、<strong>一意のワード</strong>（例：「たてよみ」など）にしましょう。
           </div>
         </li>
         
@@ -254,7 +225,7 @@
           </div>
         </li>
         
-        <li>実行したいページ（今回は本文テキストがあるページ）を開き、作成したブックマークレットを「ブックマーク一覧」等から探し、タップで実行です。</li>
+        <li>実行したいページ（今回は本文テキストがあるページ）にいる状態で、作成したブックマークレットを「ブックマーク一覧」等から探したり、アドレス欄から呼び出したりして、タップで実行です。</li>
       </ol>
 
       </li>
@@ -263,7 +234,7 @@
     </div>
 
     <div class="section">
-      <div class="section-title">使用上の注意と情報</div>
+      <div class="section-title">- 使用上の注意点</div>
       <ul>
         <li>
           貼り付ける「Javascript:」がちゃんとソースコードに結びついているか不安な方は、READMEの右もしくは下にある「Releases」から、コミットハッシュがソースコードのファイルのハッシュと一致しているか確認してください。
