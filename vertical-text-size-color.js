@@ -320,8 +320,7 @@
     
       const content = html.slice(start + 1, end);
       const isClosing = /^\s*\//.test(content);
-      const nameMatch = content.replace(/^\s*\//, '')
-                               .match(/^([a-zA-Z0-9-]+)/);
+      const nameMatch = content.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
     
       return {
         end,
@@ -330,7 +329,8 @@
       };
     }
     
-    // <ruby>の外でspan分割する関数
+    // 長文の負荷軽減のため50文字毎にspan分割する関数
+    // タグ内は避ける
     function chunkHTMLSafe(html, chunkSize) {
       const chunks = [];
       const len = html.length;
@@ -431,7 +431,7 @@
     
     const fullHTML = text;
 
-    // ページ分割がルビタグ内を避ける関数
+    // タグ内を避ける関数
     function avoidInsideRuby(posMap, visiblePos) {
       while (visiblePos > 0 && posMap[visiblePos]?.rubyDepth > 0) {
         visiblePos--;
@@ -610,6 +610,7 @@
       ruby rt {
         font-size: 0.5em;
         background: transparent !important;
+        user-select: none;
       }
       #yesButton,
       #noButton,
@@ -665,7 +666,7 @@
       
         // 初期表示
         win.renderPart(0);
-        
+
         // ページ切り替えオーバーレイ作成関数
         function createOverlay() {
           const overlay = doc.createElement('div');
@@ -983,6 +984,13 @@
         });
         
         win.requestAnimationFrame(forceScroll);
+
+        // タブまたはウィンドウの非アクティブでスライダー値リセット
+        doc.addEventListener('visibilitychange', () => {
+        if (doc.hidden) resetScrollSliders();
+        });
+
+        win.addEventListener('blur', resetScrollSliders);
           
         // ==============================
         // Slider Settings
@@ -1007,7 +1015,6 @@
           <label><input id="scrollC" class="settingCheckbox" type="checkbox"><span class="labelText"> Color in</span></label><br>
           <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label><br>
           <label>Opacity: <input id="scrollO" class="settingInputbox" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1"> (0~1)</label><br>
-          <label><input id="scrollBoth" class="settingCheckbox" type="checkbox"><span class="labelText"> Both sides</span></label><br>
           <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
           <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
           <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label><br>
@@ -1106,30 +1113,20 @@
           }
         });
         
-        // Right/Left/Both
+        // Right/Left
         const rightbox = doc.getElementById('scrollRight');
         const leftbox = doc.getElementById('scrollLeft');
-        const bothbox = doc.getElementById('scrollBoth');
         
         function updateDisplay() {
-          scrollSliderRight.style.display = (rightbox.checked || bothbox.checked) ? 'block' : 'none';
-          scrollSliderLeft.style.display = (leftbox.checked || bothbox.checked) ? 'block' : 'none';
-        }
-        
-        function uncheckOthers(current) {
-          [rightbox, leftbox, bothbox].forEach(box => {
-            if (box !== current) box.checked = false;
-          });
+          scrollSliderRight.style.display = rightbox.checked ? 'block' : 'none';
+          scrollSliderLeft.style.display = leftbox.checked ? 'block' : 'none';
         }
         
         rightbox.checked = true;
         updateDisplay();
         
-        [rightbox, leftbox, bothbox].forEach(box => {
-          box.addEventListener('change', e => {
-            if (e.target.checked) uncheckOthers(box);
-            updateDisplay();
-          });
+        [rightbox, leftbox].forEach(box => {
+          box.addEventListener('change', updateDisplay);
         });
         
         // Position & Width
@@ -1201,6 +1198,7 @@
           </svg>
         `;
         Object.assign(sUIOpenBtn.style, baseOpenBtnStyle, {
+          padding: '0px 5px 5px 0px',
           top: '10px',
           left: '18px',
           zIndex: '10006',
@@ -1543,6 +1541,7 @@
           </svg>
         `;
         Object.assign(fUIOpenBtn.style, baseOpenBtnStyle, {
+          padding: '0px 0px 5px 5px',
           top: '10px',
           right: '18px',
           zIndex: '10006'
@@ -1968,7 +1967,7 @@
             doc
           );
       
-          // bodyの色を取得しrgb→Hex変換する関数
+          // bodyの色を取得しrgbをHex変換する関数
           const getHex = (prop) => {
             const rgb = getComputedStyle(doc.body)[prop];
             return rgbToHex(rgb);
@@ -2036,7 +2035,7 @@
             updateLockIcons();
           };
       
-          // --- Pickr関連・状態変数 ---
+          // Pickr関連・状態変数の初期化
           const contrastEl = doc.getElementById('contrastRatio');
 
           colorState = {
@@ -2055,10 +2054,10 @@
               colorState.currentBg
             ));
           
-          // --- pcr-appドラッグ用グローバル変数を追加 ---
+          // pcr-appドラッグ用グローバル変数を追加
           let globalDragStyle = null;
           let globalDragRuleIndex = null;
-      
+          
           const initPickr = (id, prop) => {
             const swatch = doc.getElementById(id + 'Swatch');
             const isFg = id === 'fg';
@@ -2097,7 +2096,7 @@
             pickr.on('init', instance => {
               win.setTimeout(() => {
                 doc.querySelectorAll('.pcr-app').forEach(app => {
-                  // --- pcr-appドラッグボタン追加 ---
+                  // pcr-appドラッグボタン追加
                   if (!app.querySelector('.pcr-drag-handle')) {
                     const saveBtn = app.querySelector('.pcr-save');
                     if (saveBtn) {
@@ -2116,10 +2115,10 @@
                       `;
                       saveBtn.insertAdjacentElement('afterend', dragBtn);
             
-                      // --- ドラッグ処理 ---
+                      // ドラッグ処理
                       let isDragging = false, offsetX = 0, offsetY = 0;
             
-                      // --- グローバルなドラッグ用CSSルールを使う ---
+                      // グローバルなドラッグ用CSSルールを使う
                       function applyDragCss(left, top) {
                         if (!globalDragStyle) {
                           globalDragStyle = doc.createElement('style');
@@ -2179,7 +2178,7 @@
                     }
                   }
             
-                  // --- Copyボタン追加 ---
+                  // Copyボタン追加
                   if (!app.querySelector('.pcr-copy')) {
                     const resultInput = app.querySelector('.pcr-result');
                     if (resultInput) {
@@ -2215,7 +2214,7 @@
                 });
               }, 0);
             });
-      
+
             pickr.on('change', (color) => {
               const hex = color.toHEXA().toString();
               setCurrent(hex);
@@ -2223,6 +2222,7 @@
               updateSwatch(swatch, hex, getSaved());
               updateContrast()
             });
+            
             pickr.on('save', (color) => {
               const hex = color.toHEXA().toString();
               setCurrent(hex);
@@ -2234,19 +2234,24 @@
               if (isFg) win.__fgHSL = hexToHSL(hex);
               else win.__bgHSL = hexToHSL(hex);
             });
+
             pickr.on('hide', () => {
               setCurrent(getSaved());
               applyStyle(prop, getSaved());
               updateSwatch(swatch, getSaved(), getSaved());
               updateContrast()
             });
+
             updateSwatch(swatch, getCurrent(), getSaved());
             applyStyle(prop, getCurrent());
             updateContrast();
             return pickr
           };
+
+          // Pickr初期化
           let bgPickr = null;
           let fgPickr = null;
+
           try {
             bgPickr = initPickr('bg', 'background-color');
             fgPickr = initPickr('fg', 'color')
@@ -2276,9 +2281,10 @@
               destroyAndRemove: () => {},
             }
           }
-          // --- イベントハンドラ・UI操作 ---
+          // イベントハンドラ・UI操作
           updateColorHexDisplays();
-          // --- ロックアイコン制御 ---
+
+          // ロックアイコン制御関数
           function updateLockIcons() {
             const bgLocked = doc.getElementById('color-toggle-bg-lock').checked;
             const fgLocked = doc.getElementById('color-toggle-fg-lock').checked;
@@ -2337,7 +2343,8 @@
             const contrastMax = parseFloat(doc.getElementById("contrastMax").value) || 21;
             let trials = 0;
             const maxTrials = 300;
-            // --- HSLオブジェクトが不正な場合は初期化 ---
+
+            // HSLオブジェクトが不正な場合は初期化
             if (!win.__bgHSL || typeof win.__bgHSL.h !== 'number' || typeof win.__bgHSL.s !== 'number' || typeof win.__bgHSL.l !== 'number') {
               win.__bgHSL = hexToHSL(colorState.currentBg);
             }
@@ -2379,6 +2386,7 @@
           }
           doc.getElementById("randomColorBtn").onclick = changeColors;
           doc.getElementById("swapColorsBtn").onclick = () => {
+            
             // ロック状態を無視してスワップ
             [colorState.currentFg, colorState.currentBg] = [colorState.currentBg, colorState.currentFg];
             [colorState.savedFg, colorState.savedBg] = [colorState.savedBg, colorState.savedFg];
@@ -2393,20 +2401,25 @@
             win.__fgHSL = hexToHSL(colorState.currentFg);
             updateLockIcons();
           };
+
           // 初期非表示
           container.style.display = 'none';
           style.disabled = true;
-          // □ ボタン作成関数
+
+          // 開くボタン □ 作成関数
           function createPickrOpenButton() {
-            // 開くボタン □
+
             const pUIOpenBtn = doc.createElement('div');
+
             pUIOpenBtn.innerHTML = `
               <svg width="14" height="14" viewBox="0 0 24 24">
                 <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
               </svg>
             `;
+
             Object.assign(pUIOpenBtn.style, baseOpenBtnStyle, {
-              top: '80px',
+              padding: '5px 0px 5px 5px',
+              top: '75px',
               right: '18px',
               zIndex: '20000'
             });
@@ -2426,11 +2439,8 @@
           
           // Pickr の閉じるボタンの処理
           doc.getElementById('pickrClose').onclick = () => {
-            // UI を閉じる
             container.style.display = 'none';
             style.disabled = true;
-          
-            // □ ボタンを再生成
             createPickrOpenButton();
           };
           
@@ -2453,6 +2463,7 @@
           console.error("Pickr load error:", err);
         });
 
+        // ==関数==
         function hexToHSL(hex) {
           if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) {
             return { h: 0, s: 0, l: 0 };
@@ -2645,7 +2656,8 @@
           </svg>
         `;
         Object.assign(oUIOpenBtn.style, baseOpenBtnStyle, {
-          top: '80px',
+          padding: '5px 5px 5px 0px',
+          top: '75px',
           left: '18px',
           zIndex: '10000',
         });
@@ -2725,7 +2737,6 @@
               border:       ['scrollB', 'checked'],
               colorIn:      ['scrollC', 'checked'],
               shadow:       ['scrollS', 'value',   Number],
-              both:         ['scrollBoth', 'checked'],
               right:        ['scrollRight', 'checked'],
               left:         ['scrollLeft', 'checked'],
               position:     ['scrollX', 'value',   Number],
@@ -2747,7 +2758,6 @@
             }
             return result;
           })();
-      
         
           // 保存プレビューオブジェクト
           const savePreview = {
@@ -2755,9 +2765,10 @@
             backgroundColor,
             fontSize,
             fontWeight,
-            textShadow: blur,
+            fontShadow: blur,
             fontFamily,
-            scrollSettings
+            scrollSettings,
+            searchConfigs: getSearchConfigs(),
           };
         
           // オーバーレイで確認
@@ -2814,6 +2825,7 @@
               max-height: 50vh;
               overflow-y: auto;
               overscroll-behavior: contain;
+              scrollbar-width: thin;
               z-index: 10008
             `;
             
@@ -2827,15 +2839,16 @@
               font-weight: bold;
             `;
             
-            // プリティプリントチェックボックスコンテナ
-            const checkboxContainer = doc.createElement('div');
-            checkboxContainer.style.cssText = `
+            // 上段コンテナ
+            const topContainer = doc.createElement('div');
+            topContainer.style.cssText = `
               margin: 0 0 12px 0;
               display: flex;
               align-items: center;
               gap: 8px;
             `;
             
+            // チェックボックス
             const prettyCheckbox = doc.createElement('input');
             prettyCheckbox.type = 'checkbox';
             prettyCheckbox.id = 'prettyPrintCheckbox';
@@ -2844,6 +2857,7 @@
               cursor: pointer;
             `;
             
+            // ラベル
             const prettyLabel = doc.createElement('label');
             prettyLabel.htmlFor = 'prettyPrintCheckbox';
             prettyLabel.textContent = 'プリティプリント';
@@ -2853,6 +2867,54 @@
               font-size: 14px;
               user-select: none;
             `;
+
+            // 編集ボタン
+            const jsonEditBtn = doc.createElement('button');
+            jsonEditBtn.textContent = '編集';
+            jsonEditBtn.id = 'jsonEditBtn';
+            jsonEditBtn.style.cssText = `
+              padding: 6px 12px;
+              margin-left: auto;
+              color: unset;
+              border: 1px solid currentColor;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 12px;
+            `;
+
+            let isEditing = false;
+
+            const setEditingMode = (editing) => {
+              isEditing = editing;
+
+              // プレビュー編集切替
+              preview.contentEditable = editing ? 'true' : 'false';
+              preview.style.border = editing ? 'none' : '1px solid';
+              preview.style.outline = editing ? '3px dashed' : 'none';
+
+              // ボタンの無効化対象
+              const controls = [
+                prettyCheckbox,
+                prettyLabel,
+                jsonCopyBtn,
+                saveBtn,
+                cancelBtn
+              ];
+
+              controls.forEach(el => {
+                el.disabled = editing;
+                el.style.opacity = editing ? '0.5' : '1';
+                el.style.cursor = editing ? 'not-allowed' : 'pointer';
+              });
+
+              // 編集ボタンの表示切替
+              jsonEditBtn.textContent = editing ? '編集中...' : '編集';
+            };
+
+            // 編集ボタンのクリック処理
+            jsonEditBtn.onclick = () => {
+              setEditingMode(!isEditing);
+            };
         
             // コピーボタン
             const jsonCopyBtn = doc.createElement('button');
@@ -2860,7 +2922,6 @@
             jsonCopyBtn.id = 'jsonCopyBtn';
             jsonCopyBtn.style.cssText = `
               padding: 6px 12px;
-              margin-left: auto;
               color: unset;
               border: 1px solid currentColor;
               border-radius: 4px;
@@ -2872,7 +2933,7 @@
               if (jsonCopyBtn.disabled) return;
               try {
                 jsonCopyBtn.disabled = true;
-                const textToCopy = prettyCheckbox.checked ? jsonTextFormatted : jsonTextCompressed;
+                const textToCopy = preview.textContent;
                 await win.navigator.clipboard.writeText(textToCopy);
                 jsonCopyBtn.textContent = 'コピー完了!';
                 win.setTimeout(() => {
@@ -2885,9 +2946,10 @@
               }
             };
             
-            checkboxContainer.appendChild(prettyCheckbox);
-            checkboxContainer.appendChild(prettyLabel);
-            checkboxContainer.appendChild(jsonCopyBtn);
+            topContainer.appendChild(prettyCheckbox);
+            topContainer.appendChild(prettyLabel);
+            topContainer.appendChild(jsonEditBtn);
+            topContainer.appendChild(jsonCopyBtn);
             
             // プレビューコンテナ
             const previewContainer = doc.createElement('div');
@@ -2923,21 +2985,21 @@
               }
             };
             
-            // ボタンコンテナ
-            const buttonContainer = doc.createElement('div');
-            buttonContainer.style.cssText = `
+            // 下段コンテナ
+            const bottomContainer = doc.createElement('div');
+            bottomContainer.style.cssText = `
               display: flex;
               gap: 12px;
               justify-content: flex-end;
             `;
         
-            // 操作の処理まとめ
+            // キャンセル・保存共通のクリーンアップ関数
             const cleanupAndResolve = (result) => {
               if (overlay.parentNode) doc.body.removeChild(overlay);
               __saveConfirmOpen = false;
               isSwitching = false;
               enableBodyScroll();
-              doc.removeEventListener('keydown', handleKeydown); // イベントリスナーを削除
+              doc.removeEventListener('keydown', handleKeydown);
               resolve(result);
             };
             
@@ -2981,12 +3043,12 @@
             
             // 組み立て
             previewContainer.appendChild(preview);
-            buttonContainer.appendChild(cancelBtn);
-            buttonContainer.appendChild(saveBtn);
+            bottomContainer.appendChild(cancelBtn);
+            bottomContainer.appendChild(saveBtn);
             box.appendChild(title);
-            box.appendChild(checkboxContainer);
+            box.appendChild(topContainer);
             box.appendChild(previewContainer);
-            box.appendChild(buttonContainer);
+            box.appendChild(bottomContainer);
             overlay.appendChild(box);
             doc.body.appendChild(overlay);
         
@@ -3009,7 +3071,7 @@
               });
             }
             
-            /// フォーカスをオーバーレイに移してキーボードの影響を抑える
+            // フォーカスをオーバーレイに移してキーボードの影響を抑える
             overlay.tabIndex = -1;
             overlay.focus();
             
@@ -3088,6 +3150,7 @@
           }
           
           // 保存処理
+          const savedKeys = [];
           for (const key of Object.keys(parsedData)) {
             const styleObj = parsedData[key];
 
@@ -3097,9 +3160,10 @@
             }
 
             savedStyles[key] = styleObj;
+            savedKeys.push(key);
           }
 
-          win.alert('JSONデータを保存しました！');
+          win.alert(`${savedKeys.join(', ')} に保存しました！`);
           bulkJsonInput.value = '';
           initApplyButtonStyle();
 
@@ -3115,6 +3179,8 @@
           if (!data) return win.alert(`${name} は保存されていません`);
         
           if (applyStyleData(data)) {
+            win.appConfig = data;
+            createMenus();
             onetapUI.style.display = 'none';
           }
         }
@@ -3153,6 +3219,8 @@
             if (!proceed) return;
         
             if (applyStyleData(data)) {
+              win.appConfig = data;
+              createMenus();
               onetapUI.style.display = 'none';
               jsonInput.value = '';
             }
@@ -3211,7 +3279,6 @@
               scrollB:        { prop: 'checked', value: s.border },
               scrollC:        { prop: 'checked', value: s.colorIn },
               scrollS:        { prop: 'value',   value: s.shadow },
-              scrollBoth:     { prop: 'checked', value: s.both },
               scrollRight:    { prop: 'checked', value: s.right },
               scrollLeft:     { prop: 'checked', value: s.left },
               scrollX:        { prop: 'value',   value: s.position },
@@ -3310,9 +3377,11 @@
             pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; padding: 12px; border-radius: 4px; }
             .controls { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
             .controls-left { display: flex; align-items: center; }
+            input[type="checkbox"] { cursor: pointer; }
+            label { font-size: 15px; cursor: pointer; }
             button { margin-left: 8px; font-size: 15px; cursor: pointer; }
-            button:disabled { opacity: 0.5; cursor: not-allowed; }
-            #jsonDisplay[contenteditable="true"] { border: 3px dashed #000000; border-radius: 0px; }
+            .disabled { opacity: 0.5; cursor: not-allowed; }
+            #jsonDisplay[contenteditable="true"] { outline: 3px dashed #000000; border-radius: 0px; }
           `;
           head.appendChild(style);
 
@@ -3329,7 +3398,7 @@
                 </label>
                 <button id="copyJsonBtn">コピー</button>
               </div>
-              <button id="editBtn">編集</button>
+              <button id="allJsonEditBtn">編集</button>
             </div>
             <pre id="jsonDisplay"></pre>
           `;
@@ -3344,11 +3413,11 @@
             const prettyCheckbox = document.getElementById('prettyPrintCheckbox');
             const prettyLabel = document.getElementById('prettyPrintLabel');
             const copyJsonBtn = document.getElementById('copyJsonBtn');
-            const editBtn = document.getElementById('editBtn');
-            let isEditing = false;
+            const allJsonEditBtn = document.getElementById('allJsonEditBtn');
+            let isAllEditing = false;
       
             const updateJsonDisplay = () => {
-              if (isEditing) return;
+              if (isAllEditing) return;
               const jsonText = prettyCheckbox.checked
                 ? JSON.stringify(currentJson, null, 2)
                 : JSON.stringify(currentJson);
@@ -3367,20 +3436,20 @@
               }
             });
       
-            editBtn.addEventListener('click', () => {
-              isEditing = !isEditing;
-              if (isEditing) {
-                editBtn.textContent = '編集中…';
+            allJsonEditBtn.addEventListener('click', () => {
+              isAllEditing = !isAllEditing;
+              if (isAllEditing) {
+                allJsonEditBtn.textContent = '編集中…';
                 jsonDisplay.contentEditable = 'true';
-                prettyCheckbox.disabled = true;
-                prettyLabel.style.opacity = "0.5";
-                copyJsonBtn.disabled = true;
+                prettyCheckbox.classList.add("disabled");
+                prettyLabel.classList.add("disabled");
+                copyJsonBtn.classList.add("disabled");
               } else {
-                editBtn.textContent = '編集';
+                allJsonEditBtn.textContent = '編集';
                 jsonDisplay.contentEditable = 'false';
-                prettyCheckbox.disabled = false;
-                prettyLabel.style.opacity = "1";
-                copyJsonBtn.disabled = false;
+                prettyCheckbox.classList.remove("disabled");
+                prettyLabel.classList.remove("disabled");
+                copyJsonBtn.classList.remove("disabled");
                 try {
                   currentJson = JSON.parse(jsonDisplay.textContent);
                 } catch (e) {
@@ -3401,6 +3470,213 @@
           `;
           newDoc.body.appendChild(script);
         };
+        // ---
+        
+        // ---テキスト選択メニュー---
+        const novelText = doc.getElementById('novelDisplay');
+        let pendingSelection = null;
+
+        doc.addEventListener('selectionchange', () => {
+          const sel = win.getSelection();
+
+          if (!sel.rangeCount) return;
+
+          const range = sel.getRangeAt(0);
+          const text = sel.toString().trim();
+          if (!text) return;
+
+          // doc全体に反応してしまうためnovelTextかどうかチェック
+          const startNode = range.startContainer;
+          const endNode = range.endContainer;
+
+          if (
+            !novelText.contains(startNode) ||
+            !novelText.contains(endNode)
+          ) {
+            return;
+          }
+
+          pendingSelection = text;
+        });
+
+        // divスタイル
+        function applyMenuStyle(el) {
+          Object.assign(el.style, {
+            position: 'absolute',
+            border: '1px solid',
+            borderRadius: '5px',
+            padding: '5px',
+            zIndex: '9999',
+            display: 'none'
+          });
+        }
+
+        // buttonスタイル
+        function applyBtnStyle(btn) {
+          Object.assign(btn.style, {
+            padding: '0',
+            margin: '0',
+            border: 'none',
+            background: 'none',
+            userSelect: 'none',
+            cursor: 'alias'
+          });
+        }
+
+        // メニュー初期設定
+        const defaultConfigs = [
+          { label: '何者', side: 'left', offsetY: 0, query: '何者' , engine: 'https://www.google.com/search?q=' },
+          { label: '元ネタ', side: 'left', offsetY: 40, query: '元ネタ' , engine: 'https://www.google.com/search?q=' },
+          { label: '日本語訳', side: 'left', offsetY: 80, query: '日本語訳' , engine: 'https://www.google.com/search?q=' },
+
+          { label: '意味', side: 'right', offsetY: 0, query: 'とは' , engine: 'https://www.google.com/search?q=' },
+          { label: '読み方', side: 'right', offsetY: 40, query: '読み方' , engine: 'https://www.google.com/search?q=' },
+          { label: '意味 読み方', side: 'right', offsetY: 80, query: '意味 読み方' , engine: 'https://www.google.com/search?q=' }
+        ];
+
+        // メニュー設定を受け取る関数
+        function getSearchConfigs() {
+          const cfg = win.appConfig;
+
+          if (!cfg || !Array.isArray(cfg.searchConfigs)) {
+            return defaultConfigs;
+          }
+
+          return cfg.searchConfigs
+            .filter(item =>
+              item &&
+              typeof item.label === 'string' &&
+              typeof item.query === 'string'
+            )
+            .map(item => ({
+              label: item.label,
+              side: item.side === 'right' ? 'right' : 'left',
+              offsetY: Number(item.offsetY) || 0,
+              query: item.query,
+              engine: typeof item.engine === 'string'
+                ? item.engine
+                : 'https://www.google.com/search?q='
+            }));
+        }
+
+        const menus = [];
+
+        // div作成関数
+        function createMenus() {
+          hideMenus();
+
+          // 既存削除
+          menus.forEach(({ div }) => div.remove());
+          menus.length = 0;
+
+          // 受け取ったメニュー設定を採用
+          const configs = getSearchConfigs();
+
+          configs.forEach(cfg => {
+            const div = doc.createElement('div');
+            applyMenuStyle(div);
+
+            const btn = doc.createElement('button');
+            btn.textContent = cfg.label;
+            applyBtnStyle(btn);
+
+            btn.onclick = () => {
+              const text = div.dataset.text;
+
+              const base = cfg.engine || "https://www.google.com/search?q=";
+              const query = encodeURIComponent(text + " " + cfg.query);
+
+              const url = base + query;
+
+              win.open(url, '_blank');
+              hideMenus();
+            };
+
+            div.appendChild(btn);
+            doc.body.appendChild(div);
+
+            menus.push({ div, cfg });
+          });
+        }
+
+        createMenus();
+
+        // 表示制御
+        function showMenus(text) {
+          const sel = win.getSelection();
+          const range = sel.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+
+          const direction = getSelectionDirection(sel);
+
+          const fontSize = parseFloat(getComputedStyle(novelText).fontSize) || 20;
+          const offset = fontSize + 10;
+
+          const textRect = novelText.getBoundingClientRect();
+          const centerX = textRect.left + textRect.width / 2;
+
+          menus.forEach(({ div, cfg }) => {
+            div.style.display = 'block';
+
+            const width = div.offsetWidth;
+            const height = div.offsetHeight;
+
+            // 横位置
+            if (cfg.side === 'right') {
+              div.style.left = (centerX + offset + win.scrollX) + 'px'; 
+            } else {
+              div.style.left = (centerX - offset - width + win.scrollX) + 'px';
+            }
+
+            // 縦位置
+            let top;
+
+            if (text.length === 1) {
+              top = rect.bottom - height - 40;
+            } else if (direction === 'forward') {
+              top = rect.bottom - height - 80;
+            } else {
+              top = rect.top;
+            }
+
+            div.style.top = (top + cfg.offsetY + win.scrollY) + 'px';
+            div.dataset.text = text;
+          });
+        }
+
+        // 選択方向を検査する関数
+        function getSelectionDirection(sel) {
+          if (sel.anchorNode === sel.focusNode) {
+            return sel.anchorOffset <= sel.focusOffset ? 'forward' : 'backward';
+          }
+
+          const pos = sel.anchorNode.compareDocumentPosition(sel.focusNode);
+
+          if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return 'forward';
+          if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 'backward';
+
+          return 'none';
+        }
+
+        function hideMenus() {
+          menus.forEach(({ div }) => {
+            div.style.display = 'none';
+          });
+        }
+
+        doc.addEventListener('mouseup', (e) => {
+          if (!pendingSelection) return;
+
+          showMenus(pendingSelection);
+          pendingSelection = null;
+        });
+
+        doc.addEventListener('mousedown', (e) => {
+          if (!menus.some(({ div }) => div.contains(e.target))) {
+            hideMenus();
+          }
+        });
+
       }, { once: true });
     }
     openNovelWindow();
