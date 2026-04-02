@@ -2,17 +2,18 @@
 
 ## vertical-text-size-color.js
 ### はじめに
-- AIを駆使して作りました。<br>
-AIが書いたコードをコピペ、ツギハギして作ったので、私はプログラミング素人とも名乗れない、プログラミング未経験者です。<br><br>
+- AIが書いたコードをコピペ、ツギハギして作りました。<br><br>
 - みもねる氏の｢[青空一行文庫ブックマークレット](https://qiita.com/mimonelu/items/26288a6347e958f500af)｣を知り、使ってみて、｢更にこれが出来たらすごいんじゃないか？｣と思う機能を付け加えていきました。<br><br>
 - （追記:2025.11/07）AndroidとWindowsでは正常な動作を確認していますが、iOSでは自動スクロールとページ切り替えの挙動がうまくいかず、快適な利用は無理そうでした。<br><br>
 
 ### 対象サイト
-対象サイトは青空文庫に加え、｢小説家になろう・カクヨム・アルファポリス」です。
+- 対象サイトは青空文庫に加え、｢小説家になろう・カクヨム・アルファポリス」です。<br><br>
+- 他サイトでも使いたい場合や、作者あとがきを含めたくない場合など、自由に改変してください。<br><br>
+- 小説本文のページで「右クリック→開発者ツール→ページのソースを確認」から、本文を囲っているタグを確認することが出来ます。
 <br><br>
 ### 実行
-これをコピーして、ブラウザのブックマークのurl欄に貼り付けます。
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.4.4/vertical-text-size-color.js';document.body.appendChild(s);})();
+ブックマークレットによる実行です。以下をコピーして、ブラウザのブックマークのurl欄に貼り付けます。ブラウザ、端末によって方法が異なるので詳細は調べてみてください。
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.0/vertical-text-size-color.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -43,6 +44,84 @@ AIが書いたコードをコピペ、ツギハギして作ったので、私は
 - ここに載せているjavascript:は常に最新のタグにしています。<br><br>
 - v1.3.1を含むそれ以前のバージョンは、ブックマークレットを実行した際に新しいタブを開かず、元のページを作り変えるようになっているため、広告が読み込まれる前に実行してしまうとまれに宛先不明のメッセージがコンソールに大量に溜まることがあります。v1.4.1以降はDOMの完成後に処理が走るため、webページの読み込み完了を待たなくて大丈夫です。<br><br>
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）<br><br>
+
+### デフォルト設定 JSON
+```json
+{
+  "color": "#000000",
+  "backgroundColor": "#ffffff",
+  "fontSize": "23px",
+  "fontWeight": "400",
+  "fontShadow": 0,
+  "fontFamily": "游明朝",
+  "scrollSettings": {
+    "border": false,
+    "colorIn": false,
+    "shadow": 0,
+    "right": true,
+    "left": false,
+    "position": 30,
+    "width": 80,
+    "opacity": 1,
+    "speedScale": 10,
+    "hideBall": false
+  },
+  "searchConfigs": [
+    {
+      "label": "何者",
+      "side": "left",
+      "offsetY": 0,
+      "query": "何者",
+      "engine": "https://www.google.com/search?q="
+    },
+    {
+      "label": "元ネタ",
+      "side": "left",
+      "offsetY": 40,
+      "query": "元ネタ",
+      "engine": "https://www.google.com/search?q="
+    },
+    {
+      "label": "日本語訳",
+      "side": "left",
+      "offsetY": 80,
+      "query": "日本語訳",
+      "engine": "https://www.google.com/search?q="
+    },
+    {
+      "label": "意味",
+      "side": "right",
+      "offsetY": 0,
+      "query": "とは",
+      "engine": "https://www.google.com/search?q="
+    },
+    {
+      "label": "読み方",
+      "side": "right",
+      "offsetY": 40,
+      "query": "読み方",
+      "engine": "https://www.google.com/search?q="
+    },
+    {
+      "label": "意味 読み方",
+      "side": "right",
+      "offsetY": 80,
+      "query": "意味 読み方",
+      "engine": "https://www.google.com/search?q="
+    }
+  ]
+}
+```
+<br>
+
+### バージョン大雑把まとめ
+- v1.0.0: 縦一行、自動スクロール、色変更、文字サイズ調整。
+- v1.1.ｘ: 自動スクロールスライダーの設定UIを追加。ページ切り替えの実装。
+- v1.2.x: font-familyの追加。ローカルWEBサーバーによる設定保存を実装(のち廃止)。
+- v1.3.x: ページ切り替えとJSON保存のconfirmをUI化。JSONの貼り付け反映を実装。HTMLエスケープ追加。
+- v1.4.x: 既存のタブを改変するのではなく新しいタブに整形したテキストを表示。実行後DOM完成を待つ。ローカルWEBサーバー廃止。テキスト情報パネル追加。ルビを数えないようにして文字数のズレを無くした。
+- v1.5.0: テキスト選択時に検索ショートカットメニューを表示。
+<br>
 
 ### 不具合・要望
 不具合、要望がありましたら、このリポジトリ内で報告するか、この [YouTubeの動画](https://youtu.be/b3lUvSqFgrY?si=7jlP4xZH5-1cneE3) のコメント欄に書き込んでください。可能な範囲で修正し、リリースしてここのタグを更新します。
