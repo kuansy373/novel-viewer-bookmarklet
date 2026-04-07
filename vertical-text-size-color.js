@@ -330,7 +330,7 @@
     }
     
     // 長文の負荷軽減のため50文字毎にspan分割する関数
-    // タグ内は避ける
+    // タグ内<>とエンティティ内&;は避ける
     function chunkHTMLSafe(html, chunkSize) {
       const chunks = [];
       const len = html.length;
@@ -341,8 +341,11 @@
     
         if (ch === '<') {
           const tag = parseTag(html, i);
-          if (!tag) break;
-        
+          if (!tag) {
+            i = len;
+            break;
+          }
+    
           if (tag.name === 'ruby') {
             rubyDepth += tag.isClosing ? -1 : 1;
             rubyDepth = Math.max(0, rubyDepth);
@@ -350,7 +353,21 @@
           i = tag.end + 1;
           continue;
         }
-
+    
+        if (ch === '&') {
+          const semi = html.indexOf(';', i + 1);
+          if (semi !== -1 && semi - i <= 10) {
+            i = semi + 1;
+            count++;
+            if (count >= chunkSize && rubyDepth === 0) {
+              chunks.push(html.slice(last, i));
+              last = i;
+              count = 0;
+            }
+            continue;
+          }
+        }
+    
         count++;
         i++;
     
@@ -360,6 +377,7 @@
           count = 0;
         }
       }
+    
       if (last < len) chunks.push(html.slice(last));
       return chunks;
     }
