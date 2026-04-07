@@ -13,7 +13,7 @@
 <br><br>
 ### 実行
 ブックマークレットによる実行です。以下をコピーして、ブラウザのブックマークのurl欄に貼り付けます。ブラウザ、端末によって方法が異なるので詳細は調べてみてください。
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.0/vertical-text-size-color.js';document.body.appendChild(s);})();
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.1/vertical-text-size-color.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
