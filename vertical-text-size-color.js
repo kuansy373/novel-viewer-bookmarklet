@@ -3390,7 +3390,7 @@
               label { font-size: 15px; cursor: pointer; }
               button { margin-left: 8px; font-size: 15px; cursor: pointer; }
               .disabled { opacity: 0.5; cursor: not-allowed; }
-              #jsonDisplay[contenteditable="true"] { outline: 3px dashed #000000; border-radius: 0px; }
+              #jsonDisplay[contenteditable="true"] { border: none; outline: 3px dashed #000000; border-radius: 0px; }
             </style>
           </head>
           <body>
