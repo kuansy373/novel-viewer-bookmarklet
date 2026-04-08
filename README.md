@@ -12,7 +12,9 @@
   - 小説本文のページで右クリックし、「開発者ツール」→「ページのソースを確認」から、本文を囲っているタグを確認することが出来ます。
 <br><br>
 ### 実行
-ブックマークレットによる実行です。以下をコピーして、ブラウザのブックマークのurl欄に貼り付けます。ブラウザ、端末によって方法が異なるので詳細は調べてみてください。
+- ブックマークレットによる実行です。<br><br>
+  - 実行方法はブラウザや端末によって異なるので詳しくは調べてみてください。<br><br>
+
 <pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.1/vertical-text-size-color.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
