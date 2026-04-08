@@ -3364,8 +3364,6 @@
         
         // --- 保存済みのすべてのJSONを表示するボタンのイベント登録 ---
         doc.getElementById('viewAllJsonBtn').onclick = () => {
-          const newTab = win.open();
-          const newDoc = newTab.document;
 
           // 保存済みスタイルをキー順にソート
           const sortedStyles = ((o) =>
@@ -3376,39 +3374,26 @@
               )
               .reduce((r, k) => (r[k] = o[k], r), {})
           )(savedStyles);
-      
-          // head要素
-          const head = newDoc.createElement("head");
-          
-          const meta = newDoc.createElement("meta");
-          meta.name = "viewport";
-          meta.content = "width=device-width, initial-scale=1";
-          head.appendChild(meta);
-      
-          const title = newDoc.createElement("title");
-          title.textContent = "保存済みJSON";
-          head.appendChild(title);
-      
-          const style = newDoc.createElement("style");
-          style.textContent = `
-            body { font-family: sans-serif; padding: 16px; }
-            pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; padding: 12px; border-radius: 4px; }
-            .controls { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-            .controls-left { display: flex; align-items: center; }
-            input[type="checkbox"] { cursor: pointer; }
-            label { font-size: 15px; cursor: pointer; }
-            button { margin-left: 8px; font-size: 15px; cursor: pointer; }
-            .disabled { opacity: 0.5; cursor: not-allowed; }
-            #jsonDisplay[contenteditable="true"] { outline: 3px dashed #000000; border-radius: 0px; }
-          `;
-          head.appendChild(style);
 
-          // ブラウザが生成した空の<head>を組み立てた<head>に差し替え
-          newDoc.head.replaceWith(head);
-      
-          // body要素
-          const body = newDoc.body;
-          body.innerHTML = `
+          const htmlContent = `<!DOCTYPE html>
+          <html lang="ja">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>保存済みJSON</title>
+            <style>
+              body { font-family: sans-serif; padding: 16px; }
+              pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; padding: 12px; border-radius: 4px; }
+              .controls { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+              .controls-left { display: flex; align-items: center; }
+              input[type="checkbox"] { cursor: pointer; }
+              label { font-size: 15px; cursor: pointer; }
+              button { margin-left: 8px; font-size: 15px; cursor: pointer; }
+              .disabled { opacity: 0.5; cursor: not-allowed; }
+              #jsonDisplay[contenteditable="true"] { outline: 3px dashed #000000; border-radius: 0px; }
+            </style>
+          </head>
+          <body>
             <div class="controls">
               <div class="controls-left">
                 <label id="prettyPrintLabel">
@@ -3419,74 +3404,67 @@
               <button id="allJsonEditBtn">編集</button>
             </div>
             <pre id="jsonDisplay"></pre>
-          `;
-      
-          // scriptロジックをJSとして挿入（即実行される）
-          const script = newDoc.createElement("script");
-          script.textContent = `
-            const savedStyles = ${JSON.stringify(sortedStyles)};
-            let currentJson = savedStyles;
-      
-            const jsonDisplay = document.getElementById('jsonDisplay');
-            const prettyCheckbox = document.getElementById('prettyPrintCheckbox');
-            const prettyLabel = document.getElementById('prettyPrintLabel');
-            const copyJsonBtn = document.getElementById('copyJsonBtn');
-            const allJsonEditBtn = document.getElementById('allJsonEditBtn');
-            let isAllEditing = false;
-      
-            const updateJsonDisplay = () => {
-              if (isAllEditing) return;
-              const jsonText = prettyCheckbox.checked
-                ? JSON.stringify(currentJson, null, 2)
-                : JSON.stringify(currentJson);
-              jsonDisplay.textContent = jsonText;
-            };
-      
-            prettyCheckbox.addEventListener('change', updateJsonDisplay);
-      
-            copyJsonBtn.addEventListener('click', async () => {
-              try {
-                const jsonText = jsonDisplay.textContent;
-                await navigator.clipboard.writeText(jsonText);
-                alert('JSONをコピーしました！');
-              } catch (err) {
-                alert('コピーに失敗しました: ' + err);
-              }
-            });
-      
-            allJsonEditBtn.addEventListener('click', () => {
-              isAllEditing = !isAllEditing;
-              if (isAllEditing) {
-                allJsonEditBtn.textContent = '編集中…';
-                jsonDisplay.contentEditable = 'true';
-                prettyCheckbox.classList.add("disabled");
-                prettyLabel.classList.add("disabled");
-                copyJsonBtn.classList.add("disabled");
-              } else {
-                allJsonEditBtn.textContent = '編集';
-                jsonDisplay.contentEditable = 'false';
-                prettyCheckbox.classList.remove("disabled");
-                prettyLabel.classList.remove("disabled");
-                copyJsonBtn.classList.remove("disabled");
+            <script>
+              const savedStyles = ${JSON.stringify(sortedStyles)};
+              let currentJson = savedStyles;
+
+              const jsonDisplay = document.getElementById('jsonDisplay');
+              const prettyCheckbox = document.getElementById('prettyPrintCheckbox');
+              const prettyLabel = document.getElementById('prettyPrintLabel');
+              const copyJsonBtn = document.getElementById('copyJsonBtn');
+              const allJsonEditBtn = document.getElementById('allJsonEditBtn');
+              let isAllEditing = false;
+
+              const updateJsonDisplay = () => {
+                if (isAllEditing) return;
+                jsonDisplay.textContent = prettyCheckbox.checked
+                  ? JSON.stringify(currentJson, null, 2)
+                  : JSON.stringify(currentJson);
+              };
+
+              prettyCheckbox.addEventListener('change', updateJsonDisplay);
+
+              copyJsonBtn.addEventListener('click', async () => {
                 try {
-                  currentJson = JSON.parse(jsonDisplay.textContent);
-                } catch (e) {
-                  alert("JSONの形式が正しくありません");
+                  await navigator.clipboard.writeText(jsonDisplay.textContent);
+                  alert('JSONをコピーしました！');
+                } catch (err) {
+                  alert('コピーに失敗しました: ' + err);
                 }
-              }
-            });
-      
-            updateJsonDisplay();
-      
-            // CSSOM、レイアウト計算途中のDOM構築によるviewport崩れ対策
-            requestAnimationFrame(() => {
-              jsonDisplay.style.display = 'none';
-              jsonDisplay.offsetHeight;
-              jsonDisplay.style.display = '';
-            });
-            
-          `;
-          newDoc.body.appendChild(script);
+              });
+
+              allJsonEditBtn.addEventListener('click', () => {
+                isAllEditing = !isAllEditing;
+                if (isAllEditing) {
+                  allJsonEditBtn.textContent = '編集中…';
+                  jsonDisplay.contentEditable = 'true';
+                  prettyCheckbox.classList.add('disabled');
+                  prettyLabel.classList.add('disabled');
+                  copyJsonBtn.classList.add('disabled');
+                } else {
+                  allJsonEditBtn.textContent = '編集';
+                  jsonDisplay.contentEditable = 'false';
+                  prettyCheckbox.classList.remove('disabled');
+                  prettyLabel.classList.remove('disabled');
+                  copyJsonBtn.classList.remove('disabled');
+                  try {
+                    currentJson = JSON.parse(jsonDisplay.textContent);
+                  } catch (e) {
+                    alert('JSONの形式が正しくありません');
+                  }
+                }
+              });
+
+              updateJsonDisplay();
+            <\/script>
+          </body>
+          </html>`;
+
+          const jsonBlob = new Blob([htmlContent], { type: 'text/html' });
+          const jsonUrl = URL.createObjectURL(jsonBlob);
+          const newTab = win.open(jsonUrl);
+
+          newTab.addEventListener('load', () => URL.revokeObjectURL(jsonUrl));
         };
         // ---
         
