@@ -1687,6 +1687,12 @@
               font-family: monospace;
               font-size: 21px;
             }
+
+            #pickrContainer .label-lock {
+              margin-left: 2px;
+              font-weight: normal;
+              font-size: 19px;
+            }
           
             .color-swatch {
               width: 30px;
@@ -1738,7 +1744,7 @@
               font-size: 1em;
               font-weight: bolder;
               border: 1px solid #aaa;
-              background: #dddddd;
+              background: #fafafa
               border-radius: 4px;
             }
           
@@ -1751,7 +1757,7 @@
               font-family: monospace;
               font-size: 18px;
               border: 1px solid #aaa;
-              background: #dddddd;
+              background: #f9f9f9;
               border-radius: 4px;
               width: 19px;
               height: 25px;
@@ -1810,6 +1816,13 @@
               border: 1px solid;
               display: inline-block;
             }
+
+            #bgLockLabel,
+            #fgLockLabel {
+              cursor: pointer;
+              display: inline-flex;
+              align-items:center;
+            }
       
             .pickr .pcr-button {
               height: 25px;
@@ -1852,7 +1865,7 @@
             .pcr-color-preview {
               width: 22px !important;
               margin-right: 10px !important;
-              border: 1px solid; !important;
+              border: 1px solid !important;
             }
           
             .pcr-color-chooser {
@@ -1932,13 +1945,13 @@
             </div>
           
             <div class="row">
-              <div class="label" style="margin-left:2px;font-weight: normal;font-size: 19px;">BG:</div>
-              <label id="bgLockLabel" style="cursor:pointer;display:inline-flex;align-items:center;">
+              <div class="label label-lock">BG:</div>
+              <label id="bgLockLabel">
                 <input type="checkbox" id="color-toggle-bg-lock" style="display:none;">
                 <span id="bgLockIcon">🔓</span>
               </label>
-              <div class="label" style="margin-left:2px;font-weight: normal;font-size: 19px;">FG:</div>
-              <label id="fgLockLabel" style="cursor:pointer;display:inline-flex;align-items:center;">
+              <div class="label label-lock">FG:</div>
+              <label id="fgLockLabel">
                 <input type="checkbox" id="color-toggle-fg-lock" style="display:none;">
                 <span id="fgLockIcon">🔓</span>
               </label>
