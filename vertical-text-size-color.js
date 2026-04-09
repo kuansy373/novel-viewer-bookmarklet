@@ -1815,6 +1815,7 @@
               margin: 0px 0px;
               border: 1px solid;
               display: inline-block;
+              user-select: none;
             }
 
             #bgLockLabel,
