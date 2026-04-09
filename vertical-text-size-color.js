@@ -1744,7 +1744,7 @@
               font-size: 1em;
               font-weight: bolder;
               border: 1px solid #aaa;
-              background: #fafafa
+              background: #fafafa;
               border-radius: 4px;
             }
           
