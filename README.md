@@ -27,7 +27,7 @@
 <img src="images/photo2.jpg" alt="Example Bookmarklet" width="300">
 <br>
 設定するとこんな感じにできます。左右に伸びてるのはスクロールバーの当たり判定です。<br>
-（左タブレット、右スマホ）
+（青タブレット、緑スマホ）
 <br><br>
 <p align="left">
   <img src="images/photo3.jpg" alt="Example Bookmarklet" width="300">
