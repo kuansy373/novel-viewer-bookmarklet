@@ -2719,21 +2719,22 @@
         // 保存されたスタイルを保持するローカル変数
         const savedStyles = {};
         
-        // APPLYボタンの色を初期化
+        // APPLYボタンに保存済みスタイルの色を反映
+        function updateApplyBtnColor(name) {
+          const num = name.replace('Style', '');
+          const data = savedStyles[name];
+          const btn = doc.getElementById(`applyBtn${num}`);
+          if (!btn || !data) return;
+          if (data.color) btn.style.color = data.color;
+          if (data.backgroundColor) btn.style.backgroundColor = data.backgroundColor;
+        }
+
+        // ページ読み込み時に全APPLYボタンを初期化
         function initApplyButtonStyle() {
-          const styles = ['Style1', 'Style2', 'Style3', 'Style4', 'Style5', 'Style6', 'Style7', 'Style8'];
-        
-          for (const styleName of styles) {
-            const applyBtn = doc.getElementById(`applyBtn${styleName.slice(-1)}`);
-            if (applyBtn && savedStyles[styleName]) {
-              const data = savedStyles[styleName];
-              if (data.color) applyBtn.style.color = data.color;
-              if (data.backgroundColor) applyBtn.style.backgroundColor = data.backgroundColor;
-            }
+          for (let i = 1; i <= 8; i++) {
+            updateApplyBtnColor(`Style${i}`);
           }
         }
-        
-        // ページ読み込み時に呼ぶ
         initApplyButtonStyle();
         
         // RGB → HEX 変換関数
@@ -2742,8 +2743,8 @@
             return null;
           }
           const nums = rgb.match(/\d+/g)?.map(Number);
-          return nums && nums.length >= 3 
-            ? '#' + nums.slice(0, 3).map((n) => n.toString(16).padStart(2, '0')).join('') 
+          return nums && nums.length >= 3
+            ? '#' + nums.slice(0, 3).map(n => n.toString(16).padStart(2, '0')).join('')
             : null;
         }
         
@@ -2809,15 +2810,9 @@
         
           // ローカル変数に保存
           savedStyles[name] = savePreview;
-        
-          // 保存成功後にAPPLYボタンに色を反映
-          const num = name.replace('Style', '');
-          const applyBtn = doc.getElementById(`applyBtn${num}`);
-          if (applyBtn) {
-            applyBtn.style.color = color;
-            applyBtn.style.backgroundColor = backgroundColor;
-          }
+          
           win.alert(`☆ 保存しました！`);
+          updateApplyBtnColor(name);
         }
         
         let __saveConfirmOpen = false;
@@ -3197,8 +3192,7 @@
 
           win.alert(`${savedKeys.join(', ')} に保存しました！`);
           bulkJsonInput.value = '';
-          initApplyButtonStyle();
-
+          savedKeys.forEach(updateApplyBtnColor);
         };
 
         // APPLYボタン
