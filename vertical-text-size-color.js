@@ -2912,6 +2912,30 @@
             let isEditing = false;
 
             const setEditingMode = (editing) => {
+              // 編集終了時（true → false）
+              if (isEditing && !editing) {
+                try {
+                  // 1) JSONとしてパース
+                  const parsed = JSON.parse(preview.textContent);
+
+                  // 2) 不正キー検証
+                  const invalid = collectInvalidKeys(parsed);
+                  if (invalid.length > 0) {
+                    win.alert(
+                      '不正なキーが含まれています:\n' + invalid.join('\n')
+                    );
+                    return; // ← 編集モード解除させない
+                  }
+
+                  // 3) 問題なければ保存内容を更新
+                  savePreview = parsed;
+
+                } catch (e) {
+                  win.alert('JSONが不正です:\n' + e.message);
+                  return; // ← 編集モード解除させない
+                }
+              }
+
               isEditing = editing;
 
               // プレビュー編集切替
@@ -2924,8 +2948,7 @@
                 prettyCheckbox,
                 prettyLabel,
                 jsonCopyBtn,
-                saveBtn,
-                cancelBtn
+                saveBtn
               ];
 
               controls.forEach(el => {
@@ -3250,7 +3273,7 @@
 
             if (invalidKeys.length > 0) {
               win.alert(
-                '無効なキーが含まれています:\n' +
+                '不正なキーが含まれています:\n' +
                 invalidKeys.join('\n')
               );
               return;
@@ -3315,7 +3338,7 @@
 
             if (invalidKeys.length > 0) {
               win.alert(
-                '無効なキーが含まれています:\n' +
+                '不正なキーが含まれています:\n' +
                 invalidKeys.join('\n')
               );
               jsonInput.value = '';
