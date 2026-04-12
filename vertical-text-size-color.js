@@ -2815,8 +2815,8 @@
           updateApplyBtnColor(name);
         }
         
-        let __saveConfirmOpen = false;
         // オーバーレイを表示する関数
+        let __saveConfirmOpen = false;
         function showSaveConfirmOverlay(name, savePreview) {
           
           // 二重表示を防ぐ
@@ -3113,25 +3113,91 @@
           return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
         }
 
-        function hasValidStyleProperty(styleObj, validKeys) {
-          if (!isPlainObject(styleObj)) return false;
-        
-          return Object.keys(styleObj).some(key => validKeys.has(key));
+        function collectInvalidKeys(obj) {
+          const invalid = [];
+
+          // root
+          for (const key of Object.keys(obj)) {
+            if (!VALID_KEYS.root.includes(key)) {
+              invalid.push(`root > "${key}"`);
+            }
+          }
+
+          // scrollSettings
+          if ('scrollSettings' in obj) {
+            const s = obj.scrollSettings;
+            if (!isPlainObject(s)) {
+              invalid.push('scrollSettings (not an object)');
+            } else {
+              for (const key of Object.keys(s)) {
+                if (!VALID_KEYS.scrollSettings.includes(key)) {
+                  invalid.push(`scrollSettings > "${key}"`);
+                }
+              }
+            }
+          }
+
+          // searchConfigs
+          if ('searchConfigs' in obj) {
+            const arr = obj.searchConfigs;
+            if (!Array.isArray(arr)) {
+              invalid.push('searchConfigs (not an array)');
+            } else {
+              arr.forEach((item, i) => {
+                if (!isPlainObject(item)) {
+                  invalid.push(`searchConfigs[${i}] (not an object)`);
+                } else {
+                  for (const key of Object.keys(item)) {
+                    if (!VALID_KEYS.searchConfigs.includes(key)) {
+                      invalid.push(`searchConfigs[${i}] > "${key}"`);
+                    }
+                  }
+                }
+              });
+            }
+          }
+
+          return invalid;
         }
+
+        const VALID_KEYS = {
+          root: [
+            'color',
+            'backgroundColor',
+            'fontSize',
+            'fontWeight',
+            'fontShadow',
+            'fontFamily',
+            'scrollSettings',
+            'searchConfigs'
+          ],
+
+          scrollSettings: [
+            'border',
+            'colorIn',
+            'shadow',
+            'right',
+            'left',
+            'position',
+            'width',
+            'opacity',
+            'speedScale',
+            'hideBall'
+          ],
+
+          searchConfigs: [
+            'label',
+            'side',
+            'offsetY',
+            'query',
+            'engine'
+          ]
+        };
 
         // jsonInputのSAVEボタン
         doc.getElementById('bulkSaveBtn').onclick = () => {
           const bulkJsonInput = doc.getElementById('bulkJsonInput');
           const jsonText = bulkJsonInput.value.trim();
-          const VALID_STYLE_KEYS = new Set([
-            'color',
-            'backgroundColor',
-            'fontSize',
-            'fontWeight',
-            'textShadow',
-            'fontFamily',
-            'scrollSettings'
-          ]);
 
           if (!jsonText) {
             win.alert('JSONデータを入力してください');
@@ -3180,9 +3246,13 @@
           const savedKeys = [];
           for (const key of Object.keys(parsedData)) {
             const styleObj = parsedData[key];
+            const invalidKeys = collectInvalidKeys(styleObj);
 
-            if (!hasValidStyleProperty(styleObj, VALID_STYLE_KEYS)) {
-              win.alert(`${key} に有効なスタイルプロパティがありません`);
+            if (invalidKeys.length > 0) {
+              win.alert(
+                '無効なキーが含まれています:\n' +
+                invalidKeys.join('\n')
+              );
               return;
             }
 
@@ -3226,7 +3296,7 @@
 
             const keys = Object.keys(data); // キーチェック
 
-            // Styleで始まるキーだけを抽出
+            // Styleで始まるキーだけを抽出。無ければそのまま通過。
             const styleKeys = keys.filter(k => k.startsWith('Style'));
 
             if (styleKeys.length > 0) {
@@ -3239,6 +3309,17 @@
                 jsonInput.value = '';
                 return;
               }
+            }
+
+            const invalidKeys = collectInvalidKeys(data);
+
+            if (invalidKeys.length > 0) {
+              win.alert(
+                '無効なキーが含まれています:\n' +
+                invalidKeys.join('\n')
+              );
+              jsonInput.value = '';
+              return;
             }
         
             const proceed = win.confirm(`☆ JSONデータを反映します！`);
