@@ -15,7 +15,7 @@
 - ブックマークレットによる実行です。<br><br>
   - 実行方法はブラウザや端末によって異なるので詳しくは調べてください。<br><br>
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.3/vertical-text-size-color.js';document.body.appendChild(s);})();
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v1.5.4/vertical-text-size-color.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
