@@ -3278,12 +3278,14 @@
 
         // APPLYボタン
         async function applyStyleByName(name) {
-          
+          const data = savedStyles[name];
+        
+          if (!data) {
+            return win.alert(`${name} は保存されていません`);
+          }
+        
           const proceed = win.confirm(`☆ ${name} を反映します！`);
           if (!proceed) return;
-        
-          const data = savedStyles[name];
-          if (!data) return win.alert(`${name} は保存されていません`);
         
           if (applyStyleData(data)) {
             win.appConfig = data;
