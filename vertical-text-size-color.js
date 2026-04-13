@@ -3276,7 +3276,23 @@
           savedKeys.forEach(updateApplyBtnColor);
         };
 
-        // JsonInputのAPPLYボタン
+        // APPLYボタン
+        async function applyStyleByName(name) {
+          
+          const proceed = win.confirm(`☆ ${name} を反映します！`);
+          if (!proceed) return;
+        
+          const data = savedStyles[name];
+          if (!data) return win.alert(`${name} は保存されていません`);
+        
+          if (applyStyleData(data)) {
+            win.appConfig = data;
+            createMenus();
+            onetapUI.style.display = 'none';
+          }
+        }
+
+        // jsonInputのAPPLYボタン
         doc.getElementById('applyJsonBtn').onclick = async () => {
           const jsonInput = doc.getElementById('jsonInput');
           const jsonText = jsonInput.value.trim();
