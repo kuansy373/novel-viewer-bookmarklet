@@ -1285,7 +1285,7 @@
         });
       
         // モードボタン
-        const modes = ['Font shadow','Font weight','Font size'];
+        const modes = ['Text shadow','Font weight','Font size'];
         let currentMode = 'Font size';
         const modeContainer = doc.createElement('div');
         Object.assign(modeContainer.style, {
@@ -1416,7 +1416,7 @@
               label.textContent = `Font weight: ${slider.value}`;
             };
           }
-          else if (currentMode === 'Font shadow') {
+          else if (currentMode === 'Text shadow') {
             slider.min = 0;
             slider.max = 30;
             slider.step = 1;
@@ -1424,7 +1424,7 @@
             // 現在のスライダー値を保持（前回の設定を使う）
             let blur = parseInt(target.dataset.textShadow || 0);
             slider.value = blur;
-            label.textContent = `Font shadow: ${slider.value}px`;
+            label.textContent = `Text shadow: ${slider.value}px`;
           
             slider.oninput = () => {
               const b = slider.value;
@@ -1433,7 +1433,7 @@
               } else {
                 target.style.textShadow = 'none';
               }
-              label.textContent = `Font shadow: ${b}px`;
+              label.textContent = `Text shadow: ${b}px`;
           
               // blur 値を保持しておく
               target.dataset.textShadow = b;
@@ -2798,7 +2798,7 @@
             backgroundColor,
             fontSize,
             fontWeight,
-            fontShadow: blur,
+            textShadow: blur,
             fontFamily,
             scrollSettings,
             searchConfigs: getSearchConfigs(),
@@ -3124,7 +3124,7 @@
             'backgroundColor',
             'fontSize',
             'fontWeight',
-            'fontShadow',
+            'textShadow',
             'fontFamily',
             'scrollSettings',
             'searchConfigs'
