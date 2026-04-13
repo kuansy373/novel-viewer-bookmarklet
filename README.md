@@ -54,7 +54,7 @@
   "backgroundColor": "#ffffff",
   "fontSize": "23px",
   "fontWeight": "400",
-  "fontShadow": 0,
+  "textShadow": 0,
   "fontFamily": "游明朝",
   "scrollSettings": {
     "border": false,
