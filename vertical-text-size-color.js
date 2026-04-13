@@ -3118,19 +3118,57 @@
           });
         }
 
+        const VALID_KEYS = {
+          root: new Set([
+            'color',
+            'backgroundColor',
+            'fontSize',
+            'fontWeight',
+            'fontShadow',
+            'fontFamily',
+            'scrollSettings',
+            'searchConfigs'
+          ]),
+
+          scrollSettings: new Set([
+            'border',
+            'colorIn',
+            'shadow',
+            'right',
+            'left',
+            'position',
+            'width',
+            'opacity',
+            'speedScale',
+            'hideBall'
+          ]),
+
+          searchConfigs: new Set([
+            'label',
+            'side',
+            'offsetY',
+            'query',
+            'engine'
+          ])
+        };
+
+        // 純粋なオブジェクトかどうかを判定する関数
         function isPlainObject(obj) {
           return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
         }
 
+        // オブジェクト内の不正なキーを検出する関数
+        const hasInvalidKey = (obj, validSet, path) =>
+          Object.keys(obj)
+            .filter(k => !validSet.has(k))
+            .map(k => `${path} > "${k}"`);
+
+        // 不正なキーや構造エラーを収集する関数
         function collectInvalidKeys(obj) {
           const invalid = [];
 
           // root
-          for (const key of Object.keys(obj)) {
-            if (!VALID_KEYS.root.includes(key)) {
-              invalid.push(`root > "${key}"`);
-            }
-          }
+          invalid.push(...hasInvalidKey(obj, VALID_KEYS.root, 'root'));
 
           // scrollSettings
           if ('scrollSettings' in obj) {
@@ -3138,11 +3176,7 @@
             if (!isPlainObject(s)) {
               invalid.push('scrollSettings (not an object)');
             } else {
-              for (const key of Object.keys(s)) {
-                if (!VALID_KEYS.scrollSettings.includes(key)) {
-                  invalid.push(`scrollSettings > "${key}"`);
-                }
-              }
+              invalid.push(...hasInvalidKey(s, VALID_KEYS.scrollSettings, 'scrollSettings'));
             }
           }
 
@@ -3156,11 +3190,9 @@
                 if (!isPlainObject(item)) {
                   invalid.push(`searchConfigs[${i}] (not an object)`);
                 } else {
-                  for (const key of Object.keys(item)) {
-                    if (!VALID_KEYS.searchConfigs.includes(key)) {
-                      invalid.push(`searchConfigs[${i}] > "${key}"`);
-                    }
-                  }
+                  invalid.push(
+                    ...hasInvalidKey(item, VALID_KEYS.searchConfigs, `searchConfigs[${i}]`)
+                  );
                 }
               });
             }
@@ -3197,79 +3229,81 @@
           return { data: parsedData };
         }
 
-        const VALID_KEYS = {
-          root: [
-            'color',
-            'backgroundColor',
-            'fontSize',
-            'fontWeight',
-            'fontShadow',
-            'fontFamily',
-            'scrollSettings',
-            'searchConfigs'
-          ],
+        // 複数JSONを分割する関数
+        function splitMultipleJSON(text) {
+          const result = [];
+          let depth = 0;
+          let start = 0;
 
-          scrollSettings: [
-            'border',
-            'colorIn',
-            'shadow',
-            'right',
-            'left',
-            'position',
-            'width',
-            'opacity',
-            'speedScale',
-            'hideBall'
-          ],
+          for (let i = 0; i < text.length; i++) {
+            if (text[i] === '{') depth++;
+            if (text[i] === '}') depth--;
 
-          searchConfigs: [
-            'label',
-            'side',
-            'offsetY',
-            'query',
-            'engine'
-          ]
-        };
+            if (depth === 0 && text[i] === '}') {
+              result.push(text.slice(start, i + 1).trim());
+              start = i + 1;
+            }
+          }
+
+          return result.filter(Boolean);
+        }
+
+        // 空いているStyle番号を取得する関数
+        function getNextAvailableStyleNumbers(count) {
+          const usedSet = new Set(
+            Object.keys(savedStyles)
+              .map(k => /^Style(\d+)$/.exec(k))
+              .filter(Boolean)
+              .map(m => Number(m[1]))
+          );
+
+          const result = [];
+          let num = 1;
+
+          while (result.length < count) {
+            if (!usedSet.has(num)) {
+              result.push(num);
+            }
+            num++;
+          }
+
+          return result;
+        }
 
         // jsonInputのSAVEボタン
         doc.getElementById('bulkSaveBtn').onclick = () => {
           const bulkJsonInput = doc.getElementById('bulkJsonInput');
           const jsonText = bulkJsonInput.value.trim();
 
-          const validationResult = validateAndParseJSON(jsonText);
-          if (validationResult.error) {
-            win.alert(validationResult.error);
+          if (!jsonText) {
+            win.alert('JSONデータを入力してください');
             return;
           }
 
-          let parsedData = validationResult.data;
-          const keys = Object.keys(parsedData);
+          // 複数JSONを分割
+          const jsonBlocks = splitMultipleJSON(jsonText);
 
-          // Styleキーを抽出
-          const styleKeys = keys.filter(k => /^Style\d+$/.test(k));
+          const parsedList = [];
 
-          // Styleキーなしの場合
-          if (styleKeys.length === 0) {
-            
-            // 既存のStyle番号を取得し、空いているStyle数字を付与
-            const usedNums = Object.keys(savedStyles)
-              .map(k => /^Style(\d+)$/.exec(k))
-              .filter(Boolean)
-              .map(m => Number(m[1]));
-
-            let newNum = 1;
-            while (usedNums.includes(newNum)) {
-              newNum++;
+          for (let i = 0; i < jsonBlocks.length; i++) {
+            const result = validateAndParseJSON(jsonBlocks[i]);
+            if (result.error) {
+              win.alert(`【${i + 1}個目】\n${result.error}`);
+              return;
             }
-
-            parsedData = { [`Style${newNum}`]: parsedData };
+            parsedList.push(result.data);
           }
+
+          // 空いてるStyle番号を取得
+          const styleNums = getNextAvailableStyleNumbers(parsedList.length);
 
           const savedKeys = [];
-          for (const key of Object.keys(parsedData)) {
-            savedStyles[key] = parsedData[key];
+
+          parsedList.forEach((data, i) => {
+            const key = `Style${styleNums[i]}`;
+            savedStyles[key] = data;
             savedKeys.push(key);
-          }
+          });
 
           win.alert(`${savedKeys.join(', ')} に保存しました！`);
           bulkJsonInput.value = '';
