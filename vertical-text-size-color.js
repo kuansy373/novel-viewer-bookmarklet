@@ -2805,11 +2805,13 @@
           };
 
           // オーバーレイで確認
+          // confirmed が data または false になる
           const confirmed = await showSaveConfirmOverlay(name, savePreview);
           if (!confirmed) return;
 
-          // ローカル変数に保存
-          savedStyles[name] = savePreview;
+
+          // 編集済みデータで保存
+          savedStyles[name] = confirmed;
           
           win.alert(`☆ 保存しました！`);
           updateApplyBtnColor(name);
@@ -2817,7 +2819,7 @@
 
         // オーバーレイを表示する関数
         let __saveConfirmOpen = false;
-        function showSaveConfirmOverlay(name, savePreview) {
+        function showSaveConfirmOverlay(name, initialData) {
           
           // 二重表示を防ぐ
           if (__saveConfirmOpen) return Promise.resolve(false);
@@ -2909,17 +2911,26 @@
               font-size: 12px;
             `;
 
+            // オーバーレイ内で管理する保存対象データ
+            let currentData = initialData;
             let isEditing = false;
 
             const setEditingMode = (editing) => {
-              // 編集終了時（true → false）
               if (isEditing && !editing) {
                 const validationResult = validateAndParseJSON(preview.textContent);
                 if (validationResult.error) {
                   win.alert(validationResult.error);
-                  return; // 編集モード解除させない
+                  return;
                 }
-                savePreview = validationResult.data;
+                // Styleキーが含まれていたらはじく
+                const keys = Object.keys(validationResult.data);
+                if (keys.some(k => /^Style\d+$/.test(k))) {
+                  win.alert('Styleキーは削除してください');
+                  return;
+                }
+                // 保存内容を更新
+                currentData = validationResult.data;
+                updatePreviewText();
               }
 
               isEditing = editing;
@@ -2996,9 +3007,6 @@
             
             // プレビュー内容
             const preview = doc.createElement('pre');
-            const jsonTextFormatted = JSON.stringify(savePreview, null, 2);
-            const jsonTextCompressed = JSON.stringify(savePreview);
-            preview.textContent = jsonTextCompressed;
             preview.style.cssText = `
               padding: 12px;
               border: 1px solid currentColor;
@@ -3009,9 +3017,11 @@
               white-space: nowrap;
               scrollbar-width: thin;
             `;
-            
-            // プリティプリントチェックイベント
-            prettyCheckbox.onchange = () => {
+
+            // 編集後のcurrentDataからプレビュー内容を再生成する関数
+            const updatePreviewText = () => {
+              const jsonTextFormatted = JSON.stringify(currentData, null, 2);
+              const jsonTextCompressed = JSON.stringify(currentData);
               if (prettyCheckbox.checked) {
                 preview.textContent = jsonTextFormatted;
                 preview.style.whiteSpace = 'pre-wrap';
@@ -3020,6 +3030,11 @@
                 preview.style.whiteSpace = 'nowrap';
               }
             };
+
+            updatePreviewText();
+
+            // プリティプリントチェックイベント
+            prettyCheckbox.onchange = () => updatePreviewText();
             
             // 下段コンテナ
             const bottomContainer = doc.createElement('div');
@@ -3030,13 +3045,14 @@
             `;
 
             // キャンセル・保存共通のクリーンアップ関数
+            // 保存時に最新のcurrentDataを返す
             const cleanupAndResolve = (result) => {
               if (overlay.parentNode) doc.body.removeChild(overlay);
               __saveConfirmOpen = false;
               isSwitching = false;
               enableBodyScroll();
               doc.removeEventListener('keydown', handleKeydown);
-              resolve(result);
+              resolve(result ? currentData : false);
             };
             
             // キャンセルボタン
@@ -3118,6 +3134,24 @@
           });
         }
 
+        // APPLYボタン
+        function applyStyleByName(name) {
+          const data = savedStyles[name];
+        
+          if (!data) {
+            return win.alert(`${name} は保存されていません`);
+          }
+        
+          const proceed = win.confirm(`☆ ${name} を反映します！`);
+          if (!proceed) return;
+        
+          if (applyStyleData(data)) {
+            win.appConfig = data;
+            createMenus();
+            onetapUI.style.display = 'none';
+          }
+        }
+
         const VALID_KEYS = {
           root: new Set([
             'color',
@@ -3163,35 +3197,37 @@
             .filter(k => !validSet.has(k))
             .map(k => `${path} > "${k}"`);
 
-        // 不正なキーや構造エラーを収集する関数
-        function collectInvalidKeys(obj) {
+        function validateObject(obj, path) {
           const invalid = [];
 
-          // root
-          invalid.push(...hasInvalidKey(obj, VALID_KEYS.root, 'root'));
+          invalid.push(...hasInvalidKey(obj, VALID_KEYS.root, path));
 
-          // scrollSettings
           if ('scrollSettings' in obj) {
             const s = obj.scrollSettings;
             if (!isPlainObject(s)) {
-              invalid.push('scrollSettings (not an object)');
+              invalid.push(`${path} > scrollSettings (not an object)`);
             } else {
-              invalid.push(...hasInvalidKey(s, VALID_KEYS.scrollSettings, 'scrollSettings'));
+              invalid.push(
+                ...hasInvalidKey(s, VALID_KEYS.scrollSettings, `${path} > scrollSettings`)
+              );
             }
           }
 
-          // searchConfigs
           if ('searchConfigs' in obj) {
             const arr = obj.searchConfigs;
             if (!Array.isArray(arr)) {
-              invalid.push('searchConfigs (not an array)');
+              invalid.push(`${path} > searchConfigs (not an array)`);
             } else {
               arr.forEach((item, i) => {
                 if (!isPlainObject(item)) {
-                  invalid.push(`searchConfigs[${i}] (not an object)`);
+                  invalid.push(`${path} > searchConfigs[${i}] (not an object)`);
                 } else {
                   invalid.push(
-                    ...hasInvalidKey(item, VALID_KEYS.searchConfigs, `searchConfigs[${i}]`)
+                    ...hasInvalidKey(
+                      item,
+                      VALID_KEYS.searchConfigs,
+                      `${path} > searchConfigs[${i}]`
+                    )
                   );
                 }
               });
@@ -3199,6 +3235,32 @@
           }
 
           return invalid;
+        }
+
+        // 不正なキーや構造エラーを収集する関数
+        function collectInvalidKeys(obj) {
+          const keys = Object.keys(obj);
+          const hasAnyStyleKey = keys.some(k => /^Style\d+$/.test(k));
+          const hasAnyNonStyleKey = keys.some(k => !/^Style\d+$/.test(k));
+
+          // Style形式と判断する条件：Styleキーが1つ以上ある、
+          // かつrootの有効キーに一つも一致しない（通常形式との区別）
+          const looksLikeStyleFormat = hasAnyStyleKey && !keys.some(k => VALID_KEYS.root.has(k));
+
+          if (looksLikeStyleFormat) {
+            return keys.flatMap(key => {
+              if (!/^Style\d+$/.test(key)) {
+                // Styl1 のようなタイポ → 不正なStyleキーとして報告
+                return [`root > "${key}"`];
+              }
+              const val = obj[key];
+              return isPlainObject(val)
+                ? validateObject(val, key)
+                : [`${key} (not an object)`];
+            });
+          }
+
+          return validateObject(obj, 'root');
         }
 
         // JSONの検証ロジックを共通化
@@ -3231,43 +3293,111 @@
 
         // 複数JSONを分割する関数
         function splitMultipleJSON(text) {
-          const result = [];
+          const blocks = [];
           let depth = 0;
           let start = 0;
+          let inBlock = false;
 
           for (let i = 0; i < text.length; i++) {
-            if (text[i] === '{') depth++;
-            if (text[i] === '}') depth--;
+            const ch = text[i];
 
-            if (depth === 0 && text[i] === '}') {
-              result.push(text.slice(start, i + 1).trim());
-              start = i + 1;
+            if (!inBlock && ch !== '{' && ch.trim() !== '') {
+              // ブロック外に { 以外の非空白文字（余計なテキスト）
+              return { error: `JSONの解析に失敗しました:\nUnexpected token '${ch}'` };
+            }
+
+            if (ch === '{') {
+              if (depth === 0) { start = i; inBlock = true; }
+              depth++;
+            } else if (ch === '}') {
+              depth--;
+              if (depth === 0 && inBlock) {
+                blocks.push(text.slice(start, i + 1).trim());
+                inBlock = false;
+              } else if (depth < 0) {
+                return { error: `JSONの解析に失敗しました:\nUnexpected token '}'` };
+              }
             }
           }
 
-          return result.filter(Boolean);
+          if (depth > 0) {
+            return { error: `JSONの解析に失敗しました:\nUnexpected end of JSON input` };
+          }
+
+          if (blocks.length === 0) {
+            return { error: 'JSONデータを入力してください' };
+          }
+
+          return { blocks };
         }
 
-        // 空いているStyle番号を取得する関数
-        function getNextAvailableStyleNumbers(count) {
-          const usedSet = new Set(
+        // 入力を「Style形式オブジェクト」に統一する
+        // ①キー無し個別   → { StyleN: data }          （N=空き番号）
+        // ②キーあり個別   → そのまま                   （{ Style1: {...} }）
+        // ③キーあり複数   → そのまま                   （{ Style1: {...}, Style2: {...} }）
+        // ④キー無し複数   → splitで分割済みの配列を受け取り③に変換
+        function normalizeToStyleFormat(parsedList) {
+          // parsedList: validateAndParseJSONを通過済みのオブジェクト配列
+          const result = {}; // Style番号 → データ のマップ
+
+          // まず既存Style番号を一時的にusedSetに追加しながら処理（連番重複防止）
+          const tempUsed = new Set(
             Object.keys(savedStyles)
               .map(k => /^Style(\d+)$/.exec(k))
               .filter(Boolean)
               .map(m => Number(m[1]))
           );
 
-          const result = [];
-          let num = 1;
-
-          while (result.length < count) {
-            if (!usedSet.has(num)) {
-              result.push(num);
-            }
-            num++;
+          function nextNum() {
+            let n = 1;
+            while (tempUsed.has(n)) n++;
+            tempUsed.add(n);
+            return n;
           }
 
-          return result;
+          for (const data of parsedList) {
+            const keys = Object.keys(data);
+            const isStyleFormat = keys.length > 0 && keys.every(k => /^Style\d+$/.test(k));
+
+            if (isStyleFormat) {
+              // ②③: Styleキーあり → そのままマージ
+              for (const k of keys) {
+                result[k] = data[k];
+              }
+            } else {
+              // ①④: Styleキー無し → 新しい番号を付与
+              const key = `Style${nextNum()}`;
+              result[key] = data;
+            }
+          }
+
+          return result; // 常にStyle形式オブジェクトを返す
+        }
+
+        // 共通の入力パース処理
+        // テキストを受け取り、Style形式オブジェクトを返す
+        // エラー時は { error } を返す
+        function parseInputToStyleMap(jsonText) {
+          if (!jsonText) return { error: 'JSONデータを入力してください' };
+
+          // 戻り値が { blocks } または { error } になった
+          const splitResult = splitMultipleJSON(jsonText);
+          if (splitResult.error) return { error: splitResult.error };
+
+          const blocks = splitResult.blocks;
+
+          const parsedList = [];
+          for (let i = 0; i < blocks.length; i++) {
+            const result = validateAndParseJSON(blocks[i]);
+            if (result.error) {
+              const prefix = blocks.length > 1 ? `【${i + 1}個目】\n` : '';
+              return { error: prefix + result.error };
+            }
+            parsedList.push(result.data);
+          }
+
+          const styleMap = normalizeToStyleFormat(parsedList);
+          return { data: styleMap };
         }
 
         // jsonInputのSAVEボタン
@@ -3275,76 +3405,60 @@
           const bulkJsonInput = doc.getElementById('bulkJsonInput');
           const jsonText = bulkJsonInput.value.trim();
 
-          if (!jsonText) {
-            win.alert('JSONデータを入力してください');
+          const result = parseInputToStyleMap(jsonText);
+          if (result.error) {
+            win.alert(result.error);
             return;
           }
 
-          // 複数JSONを分割
-          const jsonBlocks = splitMultipleJSON(jsonText);
+          const styleMap = result.data;
+          const keys = Object.keys(styleMap);
 
-          const parsedList = [];
-
-          for (let i = 0; i < jsonBlocks.length; i++) {
-            const result = validateAndParseJSON(jsonBlocks[i]);
-            if (result.error) {
-              win.alert(`【${i + 1}個目】\n${result.error}`);
-              return;
-            }
-            parsedList.push(result.data);
+          // 既存キーの上書き確認
+          const existingKeys = keys.filter(k => k in savedStyles);
+          if (existingKeys.length > 0) {
+            const msg = `${existingKeys.join(', ')} はすでに存在します。上書きしますか？`;
+            if (!win.confirm(msg)) return;
           }
 
-          // 空いてるStyle番号を取得
-          const styleNums = getNextAvailableStyleNumbers(parsedList.length);
+          // 保存実行
+          for (const k of keys) {
+            savedStyles[k] = styleMap[k];
+          }
 
-          const savedKeys = [];
-
-          parsedList.forEach((data, i) => {
-            const key = `Style${styleNums[i]}`;
-            savedStyles[key] = data;
-            savedKeys.push(key);
-          });
-
-          win.alert(`${savedKeys.join(', ')} に保存しました！`);
+          win.alert(`${keys.join(', ')} に保存しました！`);
           bulkJsonInput.value = '';
-          savedKeys.forEach(updateApplyBtnColor);
+          keys.forEach(updateApplyBtnColor);
         };
 
-        // APPLYボタン
-        async function applyStyleByName(name) {
-          const data = savedStyles[name];
-        
-          if (!data) {
-            return win.alert(`${name} は保存されていません`);
-          }
-        
-          const proceed = win.confirm(`☆ ${name} を反映します！`);
-          if (!proceed) return;
-        
-          if (applyStyleData(data)) {
-            win.appConfig = data;
-            createMenus();
-            onetapUI.style.display = 'none';
-          }
-        }
-
         // jsonInputのAPPLYボタン
-        doc.getElementById('applyJsonBtn').onclick = async () => {
+        doc.getElementById('applyJsonBtn').onclick = () => {
           const jsonInput = doc.getElementById('jsonInput');
           const jsonText = jsonInput.value.trim();
 
-          const validationResult = validateAndParseJSON(jsonText);
-          if (validationResult.error) {
-            win.alert(validationResult.error);
+          const result = parseInputToStyleMap(jsonText);
+          if (result.error) {
+            win.alert(result.error);
             return;
           }
 
-          const data = validationResult.data;
+          const styleMap = result.data;
+          const keys = Object.keys(styleMap);
+
+          // ③相当（複数Styleキー）は適用不可
+          if (keys.length > 1) {
+            win.alert('個別のJSONを入力してください');
+            return;
+          }
+
+          // ①②相当（Styleキー1つ）→ 中身を適用
+          const finalData = styleMap[keys[0]];
+
           const proceed = win.confirm('☆ JSONデータを反映します！');
           if (!proceed) return;
 
-          if (applyStyleData(data)) {
-            win.appConfig = data;
+          if (applyStyleData(finalData)) {
+            win.appConfig = finalData;
             createMenus();
             onetapUI.style.display = 'none';
             jsonInput.value = '';
