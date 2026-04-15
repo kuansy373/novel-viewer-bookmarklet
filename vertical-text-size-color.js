@@ -615,7 +615,7 @@
       #novelDisplay {
         writing-mode: vertical-rl;
         white-space: nowrap;
-        letter-spacing: 0.25em;
+        letter-spacing: 0.27em;
         line-height: 1.8;
         font-size: 23px;
         display: block;
@@ -2808,7 +2808,6 @@
           // confirmed が data または false になる
           const confirmed = await showSaveConfirmOverlay(name, savePreview);
           if (!confirmed) return;
-
 
           // 編集済みデータで保存
           savedStyles[name] = confirmed;
