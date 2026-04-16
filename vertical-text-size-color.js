@@ -1339,32 +1339,28 @@
         });
           
         // 増減ボタン
+        const decAndIncBtnStyle = {
+          position: 'absolute',
+          fontSize: '15px',
+          padding: '0 6px',
+          marginBottom: '3px',
+          borderRadius: '4px',
+          border: '1px solid',
+          cursor: 'pointer'
+        };
+
         const decreaseBtn = doc.createElement('button');
         decreaseBtn.id = 'sliderDecrease';
         decreaseBtn.textContent = '◀';
-        Object.assign(decreaseBtn.style, {
-          position: 'absolute',
-          left: '135px',
-          fontSize: '15px',
-          padding: '0 6px',
-          marginBottom:'3px',
-          borderRadius: '4px',
-          border: '1px solid',
-          cursor: 'pointer'
+        Object.assign(decreaseBtn.style, decAndIncBtnStyle, {
+          left: '135px'
         });
-      
+
         const increaseBtn = doc.createElement('button');
         increaseBtn.id = 'sliderIncrease';
         increaseBtn.textContent = '▶';
-        Object.assign(increaseBtn.style, {
-          position: 'absolute',
-          left: '255px',
-          fontSize: '15px',
-          padding: '0 6px',
-          marginBottom:'3px',
-          borderRadius: '4px',
-          border: '1px solid',
-          cursor: 'pointer'
+        Object.assign(increaseBtn.style, decAndIncBtnStyle, {
+          left: '255px'
         });
       
         // 増減ボタンの共通処理
@@ -1440,6 +1436,7 @@
             };
           }
         }
+
         // 横並び用コンテナを作る
         const sliderContainer = doc.createElement('div');
         Object.assign(sliderContainer.style, {
@@ -3471,6 +3468,7 @@
             win.alert('対象要素が見つかりません');
             return false;
           }
+
           // color
           if (data.color) {
             const hex = data.color;
@@ -3480,6 +3478,7 @@
             const fgHex = doc.getElementById('fgHex');
             if (fgHex) fgHex.value = hex;
           }
+
           // background
           if (data.backgroundColor) {
             const hex = data.backgroundColor;
@@ -3489,12 +3488,15 @@
             const bgHex = doc.getElementById('bgHex');
             if (bgHex) bgHex.value = hex;
           }
+
           // scrollbar-color
           if (data.color && data.backgroundColor) {
             applyStyle('scrollbar-color', `${data.color} ${data.backgroundColor}`);
           }
+
           updateContrast();
           updateColorHexDisplays();
+          
           if (data.fontSize) target.style.fontSize = data.fontSize;
           if (data.fontWeight) target.style.fontWeight = data.fontWeight;
           if (data.textShadow !== null && data.textShadow !== undefined) {
@@ -3505,76 +3507,47 @@
             fontSelect.value = data.fontFamily;
             fontSelect.dispatchEvent(new Event('change'));
           }
+          updateControls();
 
           // スライダーセッティングUIの状態反映
           if (data.scrollSettings) {
             const s = data.scrollSettings;
             const uiMap = {
-              scrollB:        { prop: 'checked', value: s.border },
-              scrollC:        { prop: 'checked', value: s.colorIn },
-              scrollS:        { prop: 'value',   value: s.shadow },
-              scrollRight:    { prop: 'checked', value: s.right },
-              scrollLeft:     { prop: 'checked', value: s.left },
-              scrollX:        { prop: 'value',   value: s.position },
-              scrollW:        { prop: 'value',   value: s.width },
-              scrollO:        { prop: 'value',   value: s.opacity },
-              scrollSpeedScale:{prop: 'value',   value: s.speedScale },
-              scrollHide:     { prop: 'checked', value: s.hideBall }
+                scrollB:         { prop: 'checked', value: s.border },
+                scrollC:         { prop: 'checked', value: s.colorIn },
+                scrollS:         { prop: 'value',   value: s.shadow },
+                scrollRight:     { prop: 'checked', value: s.right },
+                scrollLeft:      { prop: 'checked', value: s.left },
+                scrollX:         { prop: 'value',   value: s.position },
+                scrollW:         { prop: 'value',   value: s.width },
+                scrollO:         { prop: 'value',   value: s.opacity },
+                scrollSpeedScale:{ prop: 'value',   value: s.speedScale },
+                scrollHide:      { prop: 'checked', value: s.hideBall }
             };
+
+            // イベントタイプのマッピング
+            const eventMap = {
+                scrollB:         'change',
+                scrollC:         'change',
+                scrollS:         'input',
+                scrollRight:     'change',
+                scrollLeft:      'change',
+                scrollX:         'input',
+                scrollW:         'input',
+                scrollO:         'input',
+                scrollSpeedScale:'input',
+                scrollHide:      'change'
+            };
+
             Object.entries(uiMap).forEach(([id, info]) => {
-              const el = doc.getElementById(id);
-              if (el) el[info.prop] = info.value;
+                const el = doc.getElementById(id);
+                if (el) {
+                    el[info.prop] = info.value;
+                    el.dispatchEvent(new Event(eventMap[id]));
+                }
             });
-
-            // スライダースタイルは直接適用
-            if (s.border) {
-              applyToSliders(el => {
-                el.style.border = '1px solid';
-                el.style.setProperty("background", "transparent", "important");
-              });
-            } else if (s.colorIn) {
-              applyToSliders(el => {
-                el.style.border = 'none';
-                el.style.setProperty("background", "currentColor", "important");
-              });
-            } else {
-              applyToSliders(el => {
-                el.style.border = 'none';
-                el.style.setProperty("background", "transparent", "important");
-              });
-            }
-
-            const shadowVal = Number(s.shadow) || 0;
-            const shadowStyle = shadowVal < 0 ? `inset 0 0 ${Math.abs(shadowVal)}px` : `0 0 ${shadowVal}px`;
-            applyToSliders(el => el.style.boxShadow = shadowStyle);
-
-            const posVal = parseFloat(s.position);
-            if (!isNaN(posVal)) {
-              applyToSliders(el => {
-                el.style[el === scrollSliderRight ? 'right' : 'left'] = `${posVal}px`;
-              });
-            }
-            const widthVal = parseFloat(s.width);
-            if (!isNaN(widthVal)) {
-              applyToSliders(el => el.style.width = `${widthVal}px`);
-            }
-            const opacityVal = parseFloat(s.opacity);
-            if (!isNaN(opacityVal) && opacityVal >= 0 && opacityVal <= 1) {
-              applyToSliders(el => el.style.opacity = opacityVal);
-            }
-            const speedVal = parseFloat(s.speedScale);
-            if (!isNaN(speedVal)) {
-              speedScale = Math.max(0, Math.min(20, speedVal));
-              syncScrollSpeed(scrollSliderRight.value);
-            }
-            const [height, bottom] = s.hideBall ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
-            applyToSliders(el => {
-              el.style.height = height;
-              el.style.bottom = bottom;
-            });
-            updateDisplay();
           }
-          updateControls();
+          
           return true;
         }
         
