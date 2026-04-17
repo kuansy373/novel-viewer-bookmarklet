@@ -738,6 +738,7 @@
             font-size: 18px;
             border: 2px solid hsl(from currentColor h s l / 0.7);
             border-radius: 5px;
+            text-align: center;
           `;
           
           const pageLabel = doc.createElement('span');
@@ -758,31 +759,24 @@
             justify-content: center;
           `;
           
-          const yesButton = doc.createElement('button');
-          yesButton.textContent = 'はい';
-          yesButton.id = 'yesButton';
-          yesButton.style.cssText = `
-            padding: 10px 30px;
-            font-size: 16px;
-            background: rgb(120,120,120,0.3);
-            color: unset;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          `;
-          
-          const noButton = doc.createElement('button');
-          noButton.textContent = 'いいえ';
-          noButton.id = 'noButton';
-          noButton.style.cssText = `
-            padding: 10px 30px;
-            font-size: 16px;
-            background: rgba(120, 120, 120, 0.3);
-            color: unset;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          `;
+          const createChoiceButton = (doc, text, id) => {
+            const btn = doc.createElement('button');
+            btn.textContent = text;
+            btn.id = id;
+            btn.style.cssText = `
+              padding: 10px 30px;
+              font-size: 16px;
+              background: rgba(120, 120, 120, 0.3);
+              color: unset;
+              border: none;
+              border-radius: 5px;
+              cursor: pointer;
+            `;
+            return btn;
+          };
+
+          const yesButton = createChoiceButton(doc, 'はい', 'yesButton');
+          const noButton = createChoiceButton(doc, 'いいえ', 'noButton');
           
           buttonContainer.appendChild(yesButton);
           buttonContainer.appendChild(noButton);
