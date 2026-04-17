@@ -805,7 +805,14 @@
           disableBodyScroll();
           overlayElements.overlay.style.display = 'flex';
 
+          // 入力制御
           const handleInput = () => {
+
+            if (overlayElements.pageInput.value === '') {
+              adjustInputWidth(overlayElements.pageInput);
+              return;
+            }
+
             const max = parseInt(overlayElements.pageInput.max) || Infinity;
             const min = parseInt(overlayElements.pageInput.min) || 1;
             let val = parseInt(overlayElements.pageInput.value);
@@ -826,6 +833,12 @@
           // はい
           const handleYes = () => {
             const targetPage = parseInt(overlayElements.pageInput.value);
+
+            if (isNaN(targetPage)) {
+              win.alert(`1から${maxPage}の範囲で入力してください。`);
+              return;
+            }
+
             overlayElements.overlay.style.display = 'none';
             enableBodyScroll();
             cleanup();
@@ -853,7 +866,7 @@
       
           // イベントリスナー削除
           const cleanup = () => {
-            overlayElements.pageInput.addEventListener('input', handleInput);
+            overlayElements.pageInput.removeEventListener('input', handleInput);
             overlayElements.yesButton.removeEventListener('click', handleYes);
             overlayElements.noButton.removeEventListener('click', handleNo);
             overlayElements.overlay.removeEventListener('click', handleOverlayClick);
