@@ -733,7 +733,6 @@
           pageInput.min = '1';
           pageInput.id = 'page-input';
           pageInput.style.cssText = `
-            width: 30px;
             padding: 8px;
             font-size: 18px;
             border: 2px solid hsl(from currentColor h s l / 0.7);
@@ -788,6 +787,12 @@
           
           return { overlay, message, pageInput, yesButton, noButton };
         }
+
+        // 桁数に応じてinputの幅を調整
+        function adjustInputWidth(input) {
+          const digits = input.value.length || 1;
+          input.style.width = `${digits + 2}ch`;
+        }
         
         const overlayElements = createOverlay();
 
@@ -795,29 +800,37 @@
         function showOverlay(defaultPage, maxPage, onYes) {
           overlayElements.message.textContent = '';
           overlayElements.pageInput.value = defaultPage;
+          adjustInputWidth(overlayElements.pageInput);
           overlayElements.pageInput.max = maxPage;
           disableBodyScroll();
           overlayElements.overlay.style.display = 'flex';
+
+          const handleInput = () => {
+            const max = parseInt(overlayElements.pageInput.max) || Infinity;
+            const min = parseInt(overlayElements.pageInput.min) || 1;
+            let val = parseInt(overlayElements.pageInput.value);
+
+            if (val > max) val = max;
+            else if (val < min) val = min;
+
+            if (isValidPage(val - 1)) {
+                lastValidValue = val;
+            } else {
+                val = lastValidValue;
+            }
+
+            overlayElements.pageInput.value = val;
+            adjustInputWidth(overlayElements.pageInput);
+          };
           
           // はい
           const handleYes = () => {
             const targetPage = parseInt(overlayElements.pageInput.value);
-            const targetIndex = targetPage - 1;
-            
-            // 範囲チェックを先に実行
-            if (targetPage < 1 || targetPage > maxPage) {
-              win.alert(`1から${maxPage}の範囲で入力してください。`);
-            } else if (!isValidPage(targetIndex)) {
-              // 範囲内だが無効なページ
-              win.alert(`1から${maxPage}の範囲で入力してください。\nページ${targetPage}は無効なページです。`);
-            } else {
-              // 有効なページへ移動
-              overlayElements.overlay.style.display = 'none';
-              enableBodyScroll();
-              cleanup();
-              onYes(targetPage);
-              resetScrollSliders();
-            }
+            overlayElements.overlay.style.display = 'none';
+            enableBodyScroll();
+            cleanup();
+            onYes(targetPage);
+            resetScrollSliders();
           };
           
           // いいえ
@@ -840,12 +853,14 @@
       
           // イベントリスナー削除
           const cleanup = () => {
+            overlayElements.pageInput.addEventListener('input', handleInput);
             overlayElements.yesButton.removeEventListener('click', handleYes);
             overlayElements.noButton.removeEventListener('click', handleNo);
             overlayElements.overlay.removeEventListener('click', handleOverlayClick);
           };
       
           // イベントリスナー追加
+          overlayElements.pageInput.addEventListener('input', handleInput);
           overlayElements.yesButton.addEventListener('click', handleYes);
           overlayElements.noButton.addEventListener('click', handleNo);
           overlayElements.overlay.addEventListener('click', handleOverlayClick);
