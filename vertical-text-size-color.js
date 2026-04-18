@@ -1096,20 +1096,25 @@
         ['scrollB', 'scrollC'].forEach((id, i) => {
           const el = doc.getElementById(id);
           el.addEventListener('change', e => {
+            const otherId = i ? 'scrollB' : 'scrollC';
+            const otherEl = doc.getElementById(otherId);
+
             if (e.target.checked) {
-              const otherId = i ? 'scrollB' : 'scrollC';
-              const otherEl = doc.getElementById(otherId);
               otherEl.checked = false;
-              applyToSliders(sl => {
-                sl.style.border = id === 'scrollB' ? '1px solid currentColor' : 'none';
-                sl.style.setProperty("background", id === 'scrollC' ? "currentColor" : "transparent", "important");
-              });
-            } else {
-              applyToSliders(sl => {
-                sl.style.border = 'none';
-                sl.style.setProperty("background", "transparent", "important");
-              });
+              otherEl.dispatchEvent(new Event('change'));
             }
+
+            const isBorder  = doc.getElementById('scrollB').checked;
+            const isColorIn = doc.getElementById('scrollC').checked;
+
+            applyToSliders(sl => {
+              sl.style.border = isBorder ? '1px solid currentColor' : 'none';
+              sl.style.setProperty(
+                "background",
+                isColorIn ? "currentColor" : "transparent",
+                "important"
+              );
+            });
           });
         });
         
