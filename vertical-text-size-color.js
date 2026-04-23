@@ -2033,22 +2033,6 @@
           applyStyle = function (prop, value) {
             if (!value) return;
       
-            // scrollbar-color
-            if (prop === 'scrollbar-color') {
-              let el = doc.getElementById('__scrollbarOverride');
-              if (!el) {
-                el = doc.createElement('style');
-                el.id = '__scrollbarOverride';
-                doc.head.appendChild(el);
-              }
-              el.textContent = `
-              * {
-                scrollbar-color: ${value};
-              }`;
-      
-              return;
-            }
-      
             // color / background-color
             const id = prop === 'color' ? '__fgOverride' : '__bgOverride';
             let el = doc.getElementById(id);
@@ -3499,8 +3483,8 @@
           // color
           if (data.color) {
             const hex = data.color;
-            applyStyle('color', hex);
             colorState.currentFg = colorState.savedFg = hex;
+            applyStyle('color', hex);
             win.__fgHSL = hexToHSL(hex);
             const fgHex = doc.getElementById('fgHex');
             if (fgHex) fgHex.value = hex;
@@ -3509,16 +3493,11 @@
           // background
           if (data.backgroundColor) {
             const hex = data.backgroundColor;
-            applyStyle('background-color', hex);
             colorState.currentBg = colorState.savedBg = hex;
+            applyStyle('background-color', hex);
             win.__bgHSL = hexToHSL(hex);
             const bgHex = doc.getElementById('bgHex');
             if (bgHex) bgHex.value = hex;
-          }
-
-          // scrollbar-color
-          if (data.color && data.backgroundColor) {
-            applyStyle('scrollbar-color', `${data.color} ${data.backgroundColor}`);
           }
 
           updateContrast();
