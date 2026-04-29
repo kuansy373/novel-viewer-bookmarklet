@@ -3561,14 +3561,12 @@
         doc.getElementById('viewAllJsonBtn').onclick = () => {
 
           // 保存済みスタイルをキー順にソート
-          const sortedStyles = ((o) =>
-            Object.keys(o)
-              .sort((a, b) =>
-                parseInt(a.replace(/\D/g, ''), 10) -
-                parseInt(b.replace(/\D/g, ''), 10)
-              )
-              .reduce((r, k) => (r[k] = o[k], r), {})
-          )(savedStyles);
+          const sortedStyles = Object.fromEntries(
+            Object.entries(savedStyles).sort((a, b) =>
+              parseInt(a[0].replace(/\D/g, ''), 10) -
+              parseInt(b[0].replace(/\D/g, ''), 10)
+            )
+          );
 
           const jsonHtml = `<!DOCTYPE html>
           <html lang="ja">
@@ -3639,26 +3637,21 @@
             });
 
             allJsonEditBtn.addEventListener('click', () => {
-              if (isAllEditing) {
+              isAllEditing = !isAllEditing;
+              allJsonEditBtn.textContent = isAllEditing ? '編集中…' : '編集';
+              jsonDisplay.contentEditable = isAllEditing.toString();
+              [prettyCheckbox, prettyLabel, copyJsonBtn].forEach(el => el.classList.toggle('disabled', isAllEditing));
+
+              if (!isAllEditing) {
                 try {
                   currentJson = JSON.parse(jsonDisplay.textContent);
                 } catch (e) {
                   jsonWin.alert('JSONの形式が正しくありません');
-                  return;
+                  isAllEditing = true;
+                  allJsonEditBtn.textContent = '編集中…';
+                  jsonDisplay.contentEditable = 'true';
+                  [prettyCheckbox, prettyLabel, copyJsonBtn].forEach(el => el.classList.add('disabled'));
                 }
-                isAllEditing = false;
-                allJsonEditBtn.textContent = '編集';
-                jsonDisplay.contentEditable = 'false';
-                prettyCheckbox.classList.remove('disabled');
-                prettyLabel.classList.remove('disabled');
-                copyJsonBtn.classList.remove('disabled');
-              } else {
-                isAllEditing = true;
-                allJsonEditBtn.textContent = '編集中…';
-                jsonDisplay.contentEditable = 'true';
-                prettyCheckbox.classList.add('disabled');
-                prettyLabel.classList.add('disabled');
-                copyJsonBtn.classList.add('disabled');
               }
             });
 
