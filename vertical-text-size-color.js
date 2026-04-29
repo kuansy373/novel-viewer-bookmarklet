@@ -3410,7 +3410,12 @@
         // jsonInputのSAVEボタン
         doc.getElementById('bulkSaveBtn').onclick = () => {
           const bulkJsonInput = doc.getElementById('bulkJsonInput');
-          const jsonText = bulkJsonInput.value.trim();
+          let jsonText = bulkJsonInput.value.trim();
+
+          try {
+            const parsed = JSON.parse(jsonText);
+            if ('_base' in parsed) jsonText = JSON.stringify(expandBase(parsed));
+          } catch (e) {}
 
           const result = parseInputToStyleMap(jsonText);
           if (result.error) {
@@ -3592,6 +3597,7 @@
                 <label id="prettyPrintLabel">
                   <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
                 </label>
+                <button id="compressJsonBtn">短縮する</button>
                 <button id="copyJsonBtn">コピー</button>
               </div>
               <button id="allJsonEditBtn">編集</button>
@@ -3615,6 +3621,7 @@
             const prettyCheckbox = jsonDoc.getElementById('prettyPrintCheckbox');
             const prettyLabel = jsonDoc.getElementById('prettyPrintLabel');
             const copyJsonBtn = jsonDoc.getElementById('copyJsonBtn');
+            const compressJsonBtn = jsonDoc.getElementById('compressJsonBtn');
             const allJsonEditBtn = jsonDoc.getElementById('allJsonEditBtn');
             let isAllEditing = false;
 
@@ -3626,6 +3633,97 @@
             };
 
             prettyCheckbox.addEventListener('change', updateJsonDisplay);
+
+            // --- ベース抽出・短縮ロジック ---
+            // 2つの値が「同じ」かどうか（ディープ比較）
+            const deepEqual = (a, b) => {
+              if (a === b) return true;
+              if (typeof a !== typeof b) return false;
+              if (a === null || b === null) return a === b;
+              if (Array.isArray(a) && Array.isArray(b)) {
+                if (a.length !== b.length) return false;
+                return a.every((v, i) => deepEqual(v, b[i]));
+              }
+              if (typeof a === 'object' && typeof b === 'object') {
+                const keysA = Object.keys(a), keysB = Object.keys(b);
+                if (keysA.length !== keysB.length) return false;
+                return keysA.every(k => deepEqual(a[k], b[k]));
+              }
+              return false;
+            };
+
+            // すべてのスタイルで共通の値をベースとして抽出する
+            const extractBase = (styles) => {
+              const entries = Object.entries(styles);
+              if (entries.length === 0) return {};
+
+              // トップレベルのbaseを最頻値で構築
+              const base = {};
+              for (const key of Object.keys(entries[0][1])) {
+                const values = entries.map(([, s]) => s[key]);
+
+                // 最頻値とその出現回数を取得
+                const counts = new Map();
+                for (const v of values) {
+                  const k = JSON.stringify(v);
+                  counts.set(k, (counts.get(k) ?? 0) + 1);
+                }
+                let bestKey = null, bestCount = 0;
+                for (const [k, c] of counts) {
+                  if (c > bestCount) { bestCount = c; bestKey = k; }
+                }
+
+                // 出現回数が2以上のものだけbaseに入れる
+                if (bestCount >= 2) {
+                  base[key] = JSON.parse(bestKey);
+                }
+              }
+
+              // 各スタイルの差分を生成
+              const diffStyles = Object.fromEntries(
+                entries.map(([name, style]) => {
+                  const diff = {};
+                  for (const [k, v] of Object.entries(style)) {
+                    const baseVal = base[k];
+
+                    // オブジェクト（配列除く）はネストして差分キーだけ残す
+                    if (
+                      typeof v === 'object' && v !== null && !Array.isArray(v) &&
+                      typeof baseVal === 'object' && baseVal !== null && !Array.isArray(baseVal)
+                    ) {
+                      const nestedDiff = {};
+                      for (const [nk, nv] of Object.entries(v)) {
+                        if (!deepEqual(baseVal[nk], nv)) nestedDiff[nk] = nv;
+                      }
+                      if (Object.keys(nestedDiff).length > 0) diff[k] = nestedDiff;
+
+                    // 配列・プリミティブはそのまま比較
+                    } else if (!deepEqual(baseVal, v)) {
+                      diff[k] = v;
+                    }
+                  }
+                  return [name, diff];
+                })
+              );
+
+              return { _base: base, ...diffStyles };
+            };
+
+            const updateCompressBtn = () => {
+              compressJsonBtn.textContent = '_base' in currentJson ? '展開する' : '短縮する';
+            };
+
+            compressJsonBtn.addEventListener('click', () => {
+              if ('_base' in currentJson) {
+                if (!jsonWin.confirm('JSONを展開します。よろしいですか？')) return;
+                currentJson = expandBase(currentJson);
+              } else {
+                if (!jsonWin.confirm('JSONを短縮します。よろしいですか？')) return;
+                currentJson = extractBase(currentJson);
+              }
+              updateJsonDisplay();
+              updateCompressBtn();
+            });
 
             copyJsonBtn.addEventListener('click', async () => {
               try {
@@ -3640,25 +3738,61 @@
               isAllEditing = !isAllEditing;
               allJsonEditBtn.textContent = isAllEditing ? '編集中…' : '編集';
               jsonDisplay.contentEditable = isAllEditing.toString();
-              [prettyCheckbox, prettyLabel, copyJsonBtn].forEach(el => el.classList.toggle('disabled', isAllEditing));
+
+              [prettyCheckbox, copyJsonBtn, compressJsonBtn].forEach(el => {
+                el.disabled = isAllEditing;
+                el.classList.toggle('disabled', isAllEditing);
+              });
+              prettyLabel.classList.toggle('disabled', isAllEditing);
 
               if (!isAllEditing) {
                 try {
                   currentJson = JSON.parse(jsonDisplay.textContent);
+                  updateCompressBtn();
                 } catch (e) {
                   jsonWin.alert('JSONの形式が正しくありません');
                   isAllEditing = true;
                   allJsonEditBtn.textContent = '編集中…';
                   jsonDisplay.contentEditable = 'true';
-                  [prettyCheckbox, prettyLabel, copyJsonBtn].forEach(el => el.classList.add('disabled'));
+                  [prettyCheckbox, copyJsonBtn, compressJsonBtn].forEach(el => {
+                    el.disabled = true;
+                    el.classList.add('disabled');
+                  });
+                  prettyLabel.classList.add('disabled');
                 }
               }
             });
 
+            updateCompressBtn();
             updateJsonDisplay();
           });
         };
         // ---
+        // ベース展開関数
+        function mergeDeep(base, override) {
+          const result = { ...base };
+          for (const key of Object.keys(override)) {
+            const baseVal = base[key];
+            const overVal = override[key];
+            if (
+              overVal !== null && typeof overVal === 'object' && !Array.isArray(overVal) &&
+              baseVal !== null && typeof baseVal === 'object' && !Array.isArray(baseVal)
+            ) {
+              result[key] = mergeDeep(baseVal, overVal);
+            } else {
+              result[key] = overVal;
+            }
+          }
+          return result;
+        }
+
+        function expandBase(compressed) {
+          const { _base, ...styles } = compressed;
+          if (!_base) return compressed;
+          return Object.fromEntries(
+            Object.entries(styles).map(([name, diff]) => [name, mergeDeep(_base, diff)])
+          );
+        }
         
         // ---テキスト選択メニュー---
         const novelText = doc.getElementById('novelDisplay');
