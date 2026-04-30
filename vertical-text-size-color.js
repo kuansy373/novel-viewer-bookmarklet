@@ -2604,15 +2604,8 @@
           display: 'none',
         });
 
-        // ボタンセットを生成
-        const buttonSets = Array.from({ length: 8 }, (_, i) => 
-          `<div class="button-set">
-            <span class="label">${i + 1}.</span>
-            <button id="saveBtn${i + 1}" class="button">SAVE</button>
-            <span class="label">⇒</span>
-            <button id="applyBtn${i + 1}" class="button">APPLY</button>
-          </div>`
-        ).join('');
+        const STYLES_PER_PAGE = 8;
+        let currentPage = 1;
 
         onetapUI.innerHTML = `
           <div style="font-weight:bold; margin-bottom:10px;">Apply Style with One Tap</div>
@@ -2627,66 +2620,141 @@
               <span class="label">⇒</span>
               <button id="bulkSaveBtn" class="button">SAVE</button>
             </div>
-            ${buttonSets}
+            <div style="display:flex; gap:4px; align-items:stretch;">
+              <div id="styleRows" style="display:flex; flex-direction:column; gap:10px;">
+              </div>
+              <div id="pageNav">
+                <button id="prevPageBtn" class="button page-btn">◀</button>
+                <button id="nextPageBtn" class="button page-btn">▶</button>
+              </div>
+            </div>
             <div class="button-set">
               <button id="viewAllJsonBtn" class="button">保存済みのすべてのJSONを表示</button>
             </div>
           </div>
         `;
 
-        // ボタン群のスタイル
-        const buttonsContainer = onetapUI.querySelector('.ui-buttons');
-        Object.assign(buttonsContainer.style, {
-          display: 'flex',
-          flexDirection: 'column',
-          marginLeft: '5px',
-          gap: '9px',
-          fontSize: '14px',
-        });
+        const onetapUIStyle = doc.createElement('style');
+        onetapUIStyle.textContent = `
 
-        // ボタンのスタイル
-        const buttons = onetapUI.querySelectorAll('.button');
-        buttons.forEach(btn => {
-          Object.assign(btn.style, {
-            fontSize: '14px',
-            color: 'unset',
-            padding: '2px 4px',
-            border: '1px solid',
-          });
-        });
+          .ui-buttons {
+            display: flex;
+            flex-direction: column;
+            margin-left: 5px;
+            gap: 9px;
+            font-size: 14px;
+          }
 
-        // JSON入力欄のスタイル
-        const jsonInputs = onetapUI.querySelectorAll('.json-input');
-        jsonInputs.forEach(input => {
-          Object.assign(input.style, {
-            fontSize: '12px',
-            padding: '4px',
-            border: '1px solid',
-            borderRadius: '2px',
-            width: '130px',
-            fontFamily: 'monospace',
-          });
-        });
-
-        const jsonStyle  = doc.createElement('style');
-        jsonStyle.textContent = `
+          .json-input {
+            font-size: 12px;
+            padding: 4px;
+            border: 1px solid;
+            border-radius: 2px;
+            width: 135px;
+            font-family: monospace;
+          }
+          
           #jsonInput::placeholder,
           #bulkJsonInput::placeholder {
             color: unset;
             opacity: 0.7;
           }
-        `;
-        doc.head.appendChild(jsonStyle);
 
-        // 数字、矢印のスタイル
-        const labels = onetapUI.querySelectorAll('.label');
-        labels.forEach(span => {
-          Object.assign(span.style, {
+          #pageNav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-left: 25px;
+          }
+
+          .page-btn {
+            flex: 1;
+            width: 28px;
+            padding: 0;
+            font-size: 16px;
+          }
+        `;
+        doc.head.appendChild(onetapUIStyle);
+
+        // ボタンのスタイルを更新するヘルパー
+        function updateButtonStyle(el) {
+          Object.assign(el.style, {
+            fontSize: '14px',
+            color: 'unset',
+            padding: '2px 4px',
+            border: '1px solid',
+          });
+        }
+
+        function updateLabelStyle(el) {
+          Object.assign(el.style, {
             color: 'inherit',
             background: 'inherit',
             fontSize: '14px',
           });
-        });
+        }
+
+        onetapUI.querySelectorAll('.button').forEach(updateButtonStyle);
+        onetapUI.querySelectorAll('.label').forEach(updateLabelStyle);
+
+        // ページネーション：ボタンセット行を動的に描画
+        function updatePage(page) {
+          currentPage = page;
+          const styleRows = doc.getElementById('styleRows');
+          styleRows.innerHTML = '';  // 既存行をクリア
+
+          const start = (page - 1) * STYLES_PER_PAGE + 1;
+          for (let i = 0; i < STYLES_PER_PAGE; i++) {
+            const n = start + i;
+            const isDisabled = n > 99;
+            const div = doc.createElement('div');
+            div.className = 'button-set style-row';
+            Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px' });
+
+            const span1 = doc.createElement('span');
+            span1.className = 'label';
+            span1.textContent = `${n}.`;
+            span1.style.display = 'inline-block';
+            span1.style.width = '19px';
+            span1.style.textAlign = 'center';
+            updateLabelStyle(span1);
+
+            const saveBtn = doc.createElement('button');
+            saveBtn.id = `saveBtn${n}`;
+            saveBtn.className = 'button';
+            saveBtn.textContent = 'SAVE';
+            updateButtonStyle(saveBtn);
+
+            const arrow = doc.createElement('span');
+            arrow.className = 'label';
+            arrow.textContent = '⇒';
+            updateLabelStyle(arrow);
+
+            const applyBtn = doc.createElement('button');
+            applyBtn.id = `applyBtn${n}`;
+            applyBtn.className = 'button';
+            applyBtn.textContent = 'APPLY';
+            updateButtonStyle(applyBtn);
+
+            if (isDisabled) {
+              Object.assign(div.style, { opacity: '0', pointerEvents: 'none' });
+            }
+
+            div.appendChild(span1);
+            div.appendChild(saveBtn);
+            div.appendChild(arrow);
+            div.appendChild(applyBtn);
+            styleRows.appendChild(div);
+
+            saveBtn.onclick = () => saveStyle(`Style${n}`);
+            applyBtn.onclick = () => applyStyleByName(`Style${n}`);
+          }
+          for (let i = start; i < start + STYLES_PER_PAGE; i++) {
+            updateApplyBtnColor(`Style${i}`);
+          }
+        }
 
         // 開くボタン ☆
         const oUIOpenBtn = doc.createElement('div');
@@ -2710,7 +2778,6 @@
         // 閉じるボタン ✕
         const oUICloseBtn = createCloseBtn();
         onetapUI.appendChild(oUICloseBtn);
-
         oUICloseBtn.addEventListener('click', () => {
           onetapUI.style.display = 'none';
         });
@@ -2718,11 +2785,13 @@
         // UIをbodyに追加
         doc.body.appendChild(onetapUI);
 
-        // ボタンごとのイベント登録
-        for (let i = 1; i <= 8; i++) {
-          doc.getElementById(`saveBtn${i}`).onclick = () => saveStyle(`Style${i}`);
-          doc.getElementById(`applyBtn${i}`).onclick = () => applyStyleByName(`Style${i}`);
-        }
+        // ◀▶ページナビのイベント
+        doc.getElementById('prevPageBtn').addEventListener('click', () => {
+          if (currentPage > 1) updatePage(currentPage - 1);
+        });
+        doc.getElementById('nextPageBtn').addEventListener('click', () => {
+          if (currentPage < Math.ceil(99 / STYLES_PER_PAGE)) updatePage(currentPage + 1);
+        });
 
         // 保存されたスタイルを保持するローカル変数
         const savedStyles = {};
@@ -2737,13 +2806,8 @@
           if (data.backgroundColor) btn.style.backgroundColor = data.backgroundColor;
         }
 
-        // ページ読み込み時に全APPLYボタンを初期化
-        function initApplyButtonStyle() {
-          for (let i = 1; i <= 8; i++) {
-            updateApplyBtnColor(`Style${i}`);
-          }
-        }
-        initApplyButtonStyle();
+        // 初期ページを描画（Style1〜8）
+        updatePage(1);
 
         // RGB → HEX 変換関数
         function rgbToHex(rgb) {
