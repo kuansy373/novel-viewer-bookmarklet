@@ -2672,8 +2672,7 @@
           .page-btn {
             flex: 1;
             width: 28px;
-            padding: 0;
-            font-size: 16px;
+            user-select: none;
           }
         `;
         doc.head.appendChild(onetapUIStyle);
@@ -3661,7 +3660,7 @@
                 <label id="prettyPrintLabel">
                   <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
                 </label>
-                <button id="compressJsonBtn">短縮する</button>
+                <button id="compressJsonBtn">展開する</button>
                 <button id="copyJsonBtn">コピー</button>
               </div>
               <button id="allJsonEditBtn">編集</button>
@@ -3718,7 +3717,8 @@
 
             // すべてのスタイルで共通の値をベースとして抽出する
             const extractBase = (styles) => {
-              const entries = Object.entries(styles);
+              const { _base, ...rest } = styles;  // _baseを除外
+              const entries = Object.entries(rest); // restを使う
               if (entries.length === 0) return {};
 
               // トップレベルのbaseを最頻値で構築
@@ -3778,11 +3778,11 @@
             };
 
             compressJsonBtn.addEventListener('click', () => {
-              if ('_base' in currentJson) {
-                if (!jsonWin.confirm('JSONを展開します。よろしいですか？')) return;
+              if (compressJsonBtn.textContent === '展開する') {
+                if (!jsonWin.confirm('"_base"を各スタイルに展開しますか？')) return;
                 currentJson = expandBase(currentJson);
               } else {
-                if (!jsonWin.confirm('JSONを短縮します。よろしいですか？')) return;
+                if (!jsonWin.confirm('各スタイルの共通した値を"_base"にまとめますか？')) return;
                 currentJson = extractBase(currentJson);
               }
               updateJsonDisplay();
@@ -3812,7 +3812,11 @@
               if (!isAllEditing) {
                 try {
                   currentJson = JSON.parse(jsonDisplay.textContent);
-                  updateCompressBtn();
+                  // 編集終了時に短縮可能箇所があれば「短縮する」に切り替え
+                  const currentText = JSON.stringify(currentJson);
+                  const compressed = extractBase(currentJson);
+                  const compressedText = JSON.stringify(compressed);
+                  compressJsonBtn.textContent = compressedText.length < currentText.length ? '短縮する' : '展開する';
                 } catch (e) {
                   jsonWin.alert('JSONの形式が正しくありません');
                   isAllEditing = true;
@@ -3827,6 +3831,7 @@
               }
             });
 
+            currentJson = extractBase(currentJson);
             updateCompressBtn();
             updateJsonDisplay();
           });
