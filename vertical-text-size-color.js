@@ -2629,7 +2629,7 @@
               </div>
             </div>
             <div class="button-set">
-              <button id="viewAllJsonBtn" class="button">保存済みのすべてのJSONを表示</button>
+              <button id="viewAllJsonBtn" class="button">すべての保存済みJSONを表示</button>
             </div>
           </div>
         `;
@@ -2686,7 +2686,6 @@
             border: '1px solid',
           });
         }
-
         function updateLabelStyle(el) {
           Object.assign(el.style, {
             color: 'inherit',
@@ -2694,9 +2693,12 @@
             fontSize: '14px',
           });
         }
-
         onetapUI.querySelectorAll('.button').forEach(updateButtonStyle);
         onetapUI.querySelectorAll('.label').forEach(updateLabelStyle);
+
+        // 保存されたスタイルを保持するローカル変数
+        const savedStyles = {};
+        const maxPage = Math.ceil(99 / STYLES_PER_PAGE);
 
         // ページネーション：ボタンセット行を動的に描画
         function updatePage(page) {
@@ -2707,7 +2709,7 @@
           const start = (page - 1) * STYLES_PER_PAGE + 1;
           for (let i = 0; i < STYLES_PER_PAGE; i++) {
             const n = start + i;
-            const isDisabled = n > 99;
+            if (n > 99) break;
             const div = doc.createElement('div');
             div.className = 'button-set style-row';
             Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px' });
@@ -2737,10 +2739,6 @@
             applyBtn.textContent = 'APPLY';
             updateButtonStyle(applyBtn);
 
-            if (isDisabled) {
-              Object.assign(div.style, { opacity: '0', pointerEvents: 'none' });
-            }
-
             div.appendChild(span1);
             div.appendChild(saveBtn);
             div.appendChild(arrow);
@@ -2750,8 +2748,51 @@
             saveBtn.onclick = () => saveStyle(`Style${n}`);
             applyBtn.onclick = () => applyStyleByName(`Style${n}`);
           }
-          for (let i = start; i < start + STYLES_PER_PAGE; i++) {
+
+          for (let i = start; i < start + STYLES_PER_PAGE && i <= 99; i++) {
             updateApplyBtnColor(`Style${i}`);
+          }
+          
+          // 最終ページのみ「すべての保存済みJSONコピー」ボタンを追加
+          if (page === maxPage) {
+            const copyAllDiv = doc.createElement('div');
+            copyAllDiv.className = 'button-set';
+            Object.assign(copyAllDiv.style, {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '4px',
+            });
+
+            const copyAllBtn = doc.createElement('button');
+            copyAllBtn.className = 'button';
+            copyAllBtn.textContent = 'すべての保存済みJSONをコピー';
+            Object.assign(copyAllBtn.style, {
+              width: '144px',
+              height: '143px',
+              writingMode: 'horizontal-tb',
+            });
+            updateButtonStyle(copyAllBtn);
+
+            copyAllBtn.onclick = () => {
+              const COPY_ALL_LABEL = copyAllBtn.textContent;
+              const resetCopyAllBtn = () => win.setTimeout(() => { copyAllBtn.textContent = COPY_ALL_LABEL; }, 1500);
+
+              if (Object.keys(savedStyles).length === 0) {
+                copyAllBtn.textContent = '保存スタイルがありません';
+                resetCopyAllBtn();
+                return;
+              }
+
+              const json = JSON.stringify(extractBase(savedStyles), null, 2);
+              win.navigator.clipboard.writeText(json).then(() => {
+                copyAllBtn.textContent = 'コピーしました！';
+                resetCopyAllBtn();
+              });
+            };
+
+            copyAllDiv.appendChild(copyAllBtn);
+            styleRows.appendChild(copyAllDiv);
           }
         }
 
@@ -2786,14 +2827,11 @@
 
         // ◀▶ページナビのイベント
         doc.getElementById('prevPageBtn').addEventListener('click', () => {
-          if (currentPage > 1) updatePage(currentPage - 1);
+          updatePage(currentPage > 1 ? currentPage - 1 : maxPage);
         });
         doc.getElementById('nextPageBtn').addEventListener('click', () => {
-          if (currentPage < Math.ceil(99 / STYLES_PER_PAGE)) updatePage(currentPage + 1);
+          updatePage(currentPage < maxPage ? currentPage + 1 : 1);
         });
-
-        // 保存されたスタイルを保持するローカル変数
-        const savedStyles = {};
 
         // APPLYボタンに保存済みスタイルの色を反映
         function updateApplyBtnColor(name) {
@@ -3697,82 +3735,6 @@
 
             prettyCheckbox.addEventListener('change', updateJsonDisplay);
 
-            // --- ベース抽出・短縮ロジック ---
-            // 2つの値が「同じ」かどうか（ディープ比較）
-            const deepEqual = (a, b) => {
-              if (a === b) return true;
-              if (typeof a !== typeof b) return false;
-              if (a === null || b === null) return a === b;
-              if (Array.isArray(a) && Array.isArray(b)) {
-                if (a.length !== b.length) return false;
-                return a.every((v, i) => deepEqual(v, b[i]));
-              }
-              if (typeof a === 'object' && typeof b === 'object') {
-                const keysA = Object.keys(a), keysB = Object.keys(b);
-                if (keysA.length !== keysB.length) return false;
-                return keysA.every(k => deepEqual(a[k], b[k]));
-              }
-              return false;
-            };
-
-            // すべてのスタイルで共通の値をベースとして抽出する
-            const extractBase = (styles) => {
-              const { _base, ...rest } = styles;  // _baseを除外
-              const entries = Object.entries(rest); // restを使う
-              if (entries.length === 0) return {};
-
-              // トップレベルのbaseを最頻値で構築
-              const base = {};
-              for (const key of Object.keys(entries[0][1])) {
-                const values = entries.map(([, s]) => s[key]);
-
-                // 最頻値とその出現回数を取得
-                const counts = new Map();
-                for (const v of values) {
-                  const k = JSON.stringify(v);
-                  counts.set(k, (counts.get(k) ?? 0) + 1);
-                }
-                let bestKey = null, bestCount = 0;
-                for (const [k, c] of counts) {
-                  if (c > bestCount) { bestCount = c; bestKey = k; }
-                }
-
-                // 出現回数が2以上のものだけbaseに入れる
-                if (bestCount >= 2) {
-                  base[key] = JSON.parse(bestKey);
-                }
-              }
-
-              // 各スタイルの差分を生成
-              const diffStyles = Object.fromEntries(
-                entries.map(([name, style]) => {
-                  const diff = {};
-                  for (const [k, v] of Object.entries(style)) {
-                    const baseVal = base[k];
-
-                    // オブジェクト（配列除く）はネストして差分キーだけ残す
-                    if (
-                      typeof v === 'object' && v !== null && !Array.isArray(v) &&
-                      typeof baseVal === 'object' && baseVal !== null && !Array.isArray(baseVal)
-                    ) {
-                      const nestedDiff = {};
-                      for (const [nk, nv] of Object.entries(v)) {
-                        if (!deepEqual(baseVal[nk], nv)) nestedDiff[nk] = nv;
-                      }
-                      if (Object.keys(nestedDiff).length > 0) diff[k] = nestedDiff;
-
-                    // 配列・プリミティブはそのまま比較
-                    } else if (!deepEqual(baseVal, v)) {
-                      diff[k] = v;
-                    }
-                  }
-                  return [name, diff];
-                })
-              );
-
-              return { _base: base, ...diffStyles };
-            };
-
             const updateCompressBtn = () => {
               compressJsonBtn.textContent = '_base' in currentJson ? '展開する' : '短縮する';
             };
@@ -3837,6 +3799,83 @@
           });
         };
         // ---
+
+        // --- ベース抽出・短縮ロジック ---
+        // 2つの値が「同じ」かどうか（ディープ比較）
+        function deepEqual(a, b) {
+          if (a === b) return true;
+          if (typeof a !== typeof b) return false;
+          if (a === null || b === null) return a === b;
+          if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return false;
+            return a.every((v, i) => deepEqual(v, b[i]));
+          }
+          if (typeof a === 'object' && typeof b === 'object') {
+            const keysA = Object.keys(a), keysB = Object.keys(b);
+            if (keysA.length !== keysB.length) return false;
+            return keysA.every(k => deepEqual(a[k], b[k]));
+          }
+          return false;
+        };
+
+        // すべてのスタイルで共通の値をベースとして抽出する
+        function extractBase(styles) {
+          const { _base, ...rest } = styles;  // _baseを除外
+          const entries = Object.entries(rest); // restを使う
+          if (entries.length === 0) return {};
+
+          // トップレベルのbaseを最頻値で構築
+          const base = {};
+          for (const key of Object.keys(entries[0][1])) {
+            const values = entries.map(([, s]) => s[key]);
+
+            // 最頻値とその出現回数を取得
+            const counts = new Map();
+            for (const v of values) {
+              const k = JSON.stringify(v);
+              counts.set(k, (counts.get(k) ?? 0) + 1);
+            }
+            let bestKey = null, bestCount = 0;
+            for (const [k, c] of counts) {
+              if (c > bestCount) { bestCount = c; bestKey = k; }
+            }
+
+            // 出現回数が2以上のものだけbaseに入れる
+            if (bestCount >= 2) {
+              base[key] = JSON.parse(bestKey);
+            }
+          }
+
+          // 各スタイルの差分を生成
+          const diffStyles = Object.fromEntries(
+            entries.map(([name, style]) => {
+              const diff = {};
+              for (const [k, v] of Object.entries(style)) {
+                const baseVal = base[k];
+
+                // オブジェクト（配列除く）はネストして差分キーだけ残す
+                if (
+                  typeof v === 'object' && v !== null && !Array.isArray(v) &&
+                  typeof baseVal === 'object' && baseVal !== null && !Array.isArray(baseVal)
+                ) {
+                  const nestedDiff = {};
+                  for (const [nk, nv] of Object.entries(v)) {
+                    if (!deepEqual(baseVal[nk], nv)) nestedDiff[nk] = nv;
+                  }
+                  if (Object.keys(nestedDiff).length > 0) diff[k] = nestedDiff;
+
+                // 配列・プリミティブはそのまま比較
+                } else if (!deepEqual(baseVal, v)) {
+                  diff[k] = v;
+                }
+              }
+              return [name, diff];
+            })
+          );
+
+          return { _base: base, ...diffStyles };
+        };
+        
         // ベース展開関数
         function mergeDeep(base, override) {
           const result = { ...base };
