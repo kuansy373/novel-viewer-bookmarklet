@@ -741,7 +741,7 @@
           `;
           
           const pageLabel = doc.createElement('span');
-          pageLabel.textContent = 'ページ目に移動しますか？';
+          pageLabel.textContent = 'ページ目に移動しますか?';
           pageLabel.id = 'pageLabel';
           pageLabel.style.cssText = `
             font-size: 18px;
@@ -2239,14 +2239,9 @@
                       `;
                       resultInput.insertAdjacentElement('afterend', hexCopyBtn);
                       
-                      hexCopyBtn.addEventListener("click", function(){
+                      hexCopyBtn.addEventListener("click", () => {
                         if (resultInput && resultInput.value !== "-") {
-                          win.navigator.clipboard.writeText(resultInput.value).then(function(){
-                            hexCopyBtn.textContent = "Copied!";
-                            win.setTimeout(function(){ hexCopyBtn.textContent = "Copy"; }, 1500);
-                          }).catch(function(err){
-                            win.console.error("コピーに失敗しました:", err);
-                          });
+                          copyToClipboard(hexCopyBtn, resultInput.value);
                         }
                       });
                     }
@@ -2425,6 +2420,18 @@
             win.alert("指定されたコントラスト範囲に合うランダム色の組み合わせが見つかりませんでした")
           }
           doc.getElementById("randomColorBtn").onclick = changeColors;
+
+          // Copyボタン
+          doc.querySelectorAll(".copy-btn").forEach(function(button) {
+            button.addEventListener("click", function() {
+              var targetInput = doc.getElementById(button.getAttribute("data-target"));
+              if (targetInput && targetInput.value !== "-") {
+                copyToClipboard(button, targetInput.value);
+              }
+            });
+          });
+
+          // Swapボタン
           doc.getElementById("swapColorsBtn").onclick = () => {
             
             // ロック状態を無視してスワップ
@@ -2483,21 +2490,7 @@
             style.disabled = true;
             createPickrOpenButton();
           };
-          
-          doc.querySelectorAll(".copy-btn").forEach(function(button){
-            button.addEventListener("click", function(){
-              var targetId = button.getAttribute("data-target");
-              var targetInput = doc.getElementById(targetId);
-              if (targetInput && targetInput.value !== "-") {
-                win.navigator.clipboard.writeText(targetInput.value).then(function(){
-                  button.textContent = "Copied!";
-                  win.setTimeout(function(){ button.textContent = "Copy"; }, 1500);
-                }).catch(function(err){
-                  console.error("コピーに失敗しました:", err);
-                });
-              }
-            });
-          });
+
         }).catch((err) => {
           win.alert("Pickr の読み込みに失敗しました。CSP によってブロックされている可能性があります。");
           console.error("Pickr load error:", err);
@@ -2584,6 +2577,23 @@
           const [l1, l2] = [lum(fg), lum(bg)];
           return ((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2)
         }
+
+        async function copyToClipboard(button, text, labels = { default: "Copy", success: "Copied!" }) {
+          if (button.dataset.copying) return;
+          try {
+            button.dataset.copying = "true";
+            await win.navigator.clipboard.writeText(text);
+            button.textContent = labels.success;
+            win.setTimeout(() => {
+              button.textContent = labels.default;
+              delete button.dataset.copying;
+            }, 1500);
+          } catch (err) {
+            console.error("コピーに失敗しました:", err);
+            win.alert("コピーに失敗しました: " + err);
+            delete button.dataset.copying;
+          }
+        }
       
         // ==============================
         // JSONで各値を保存/反映
@@ -2615,13 +2625,13 @@
               <span class="label">⇒</span>
               <button id="applyJsonBtn" class="button">APPLY</button>
             </div>
-            <div class="button-set">
+            <div class="button-set" style="margin-bottom:2px;">
               <input id="bulkJsonInput" class="json-input" placeholder="複数のJSONを貼り付け" />
               <span class="label">⇒</span>
               <button id="bulkSaveBtn" class="button">SAVE</button>
             </div>
-            <div style="display:flex; gap:4px; align-items:stretch;">
-              <div id="styleRows" style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:4px; align-items:stretch; height: 243px;">
+              <div id="styleRows" class="style-rows">
               </div>
               <div id="pageNav">
                 <button id="prevPageBtn" class="button page-btn">◀</button>
@@ -2660,13 +2670,20 @@
             opacity: 0.7;
           }
 
+          .style-rows {
+            display:flex;
+            flex-direction:column;
+            justify-content: space-between;
+            width:144.33px;
+          }
+
           #pageNav {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            margin-left: 25px;
+            margin-left: 23px;
           }
 
           .page-btn {
@@ -2755,44 +2772,39 @@
           
           // 最終ページのみ「すべての保存済みJSONコピー」ボタンを追加
           if (page === maxPage) {
-            const copyAllDiv = doc.createElement('div');
-            copyAllDiv.className = 'button-set';
-            Object.assign(copyAllDiv.style, {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '4px',
-            });
-
             const copyAllBtn = doc.createElement('button');
             copyAllBtn.className = 'button';
             copyAllBtn.textContent = 'すべての保存済みJSONをコピー';
             Object.assign(copyAllBtn.style, {
-              width: '144px',
-              height: '143px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               writingMode: 'horizontal-tb',
+              marginTop: '4px',
+              borderRadius: '2px',
+              width: 'stretch',
+              height: '144px',
             });
             updateButtonStyle(copyAllBtn);
 
-            copyAllBtn.onclick = () => {
-              const COPY_ALL_LABEL = copyAllBtn.textContent;
-              const resetCopyAllBtn = () => win.setTimeout(() => { copyAllBtn.textContent = COPY_ALL_LABEL; }, 1500);
+            copyAllBtn.addEventListener("click", async () => {
+              if (copyAllBtn.dataset.copying) return;
 
               if (Object.keys(savedStyles).length === 0) {
-                copyAllBtn.textContent = '保存スタイルがありません';
-                resetCopyAllBtn();
+                copyAllBtn.dataset.copying = "true";
+                copyAllBtn.textContent = "保存スタイルがありません";
+                win.setTimeout(() => {
+                  copyAllBtn.textContent = "すべての保存済みJSONをコピー";
+                  delete copyAllBtn.dataset.copying;
+                }, 1500);
                 return;
               }
 
               const json = JSON.stringify(extractBase(savedStyles), null, 2);
-              win.navigator.clipboard.writeText(json).then(() => {
-                copyAllBtn.textContent = 'コピーしました！';
-                resetCopyAllBtn();
-              });
-            };
+              copyToClipboard(copyAllBtn, json, { default: "すべての保存済みJSONをコピー", success: "コピーしました!" });
+            });
 
-            copyAllDiv.appendChild(copyAllBtn);
-            styleRows.appendChild(copyAllDiv);
+            styleRows.appendChild(copyAllBtn);
           }
         }
 
@@ -2921,7 +2933,7 @@
           // 編集済みデータで保存
           savedStyles[name] = confirmed;
           
-          win.alert(`☆ 保存しました！`);
+          win.alert(`☆ 保存しました!`);
           updateApplyBtnColor(name);
         }
 
@@ -2968,7 +2980,7 @@
             
             // タイトル
             const title = doc.createElement('h3');
-            title.textContent = `☆ ${name} に保存しますか？`;
+            title.textContent = `☆ ${name} に保存しますか?`;
             title.id = 'title';
             title.style.cssText = `
               margin: 0 0 16px 0;
@@ -3084,22 +3096,9 @@
               font-size: 12px;
             `;
             
-            jsonCopyBtn.onclick = async () => {
-              if (jsonCopyBtn.disabled) return;
-              try {
-                jsonCopyBtn.disabled = true;
-                const textToCopy = preview.textContent;
-                await win.navigator.clipboard.writeText(textToCopy);
-                jsonCopyBtn.textContent = 'コピー完了!';
-                win.setTimeout(() => {
-                  jsonCopyBtn.textContent = 'コピー';
-                  jsonCopyBtn.disabled = false;
-                }, 1500);
-              } catch (err) {
-                jsonCopyBtn.disabled = false;
-                win.alert('コピーに失敗しました: ' + err);
-              }
-            };
+            jsonCopyBtn.addEventListener("click", () => {
+              copyToClipboard(jsonCopyBtn, preview.textContent, { default: "コピー", success: "コピー完了!" });
+            });
             
             topContainer.appendChild(prettyCheckbox);
             topContainer.appendChild(prettyLabel);
@@ -3530,7 +3529,7 @@
           // 既存キーの上書き確認
           const existingKeys = keys.filter(k => k in savedStyles);
           if (existingKeys.length > 0) {
-            const msg = `${existingKeys.join(', ')} はすでに存在します。上書きしますか？`;
+            const msg = `${existingKeys.join(', ')} はすでに存在します。上書きしますか?`;
             if (!win.confirm(msg)) return;
           }
 
@@ -3539,7 +3538,7 @@
             savedStyles[k] = styleMap[k];
           }
 
-          win.alert(`${keys.join(', ')} に保存しました！`);
+          win.alert(`${keys.join(', ')} に保存しました!`);
           bulkJsonInput.value = '';
           keys.forEach(updateApplyBtnColor);
         };
@@ -3567,7 +3566,7 @@
           // ①②相当（Styleキー1つ）→ 中身を適用
           const finalData = styleMap[keys[0]];
 
-          const proceed = win.confirm('☆ JSONデータを反映します！');
+          const proceed = win.confirm('☆ JSONデータを反映します!');
           if (!proceed) return;
 
           if (applyStyleData(finalData)) {
@@ -3699,7 +3698,7 @@
                   <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
                 </label>
                 <button id="compressJsonBtn">展開する</button>
-                <button id="copyJsonBtn">コピー</button>
+                <button id="jsonWinCopyBtn">コピー</button>
               </div>
               <button id="allJsonEditBtn">編集</button>
             </div>
@@ -3721,7 +3720,7 @@
             const jsonDisplay = jsonDoc.getElementById('jsonDisplay');
             const prettyCheckbox = jsonDoc.getElementById('prettyPrintCheckbox');
             const prettyLabel = jsonDoc.getElementById('prettyPrintLabel');
-            const copyJsonBtn = jsonDoc.getElementById('copyJsonBtn');
+            const jsonWinCopyBtn = jsonDoc.getElementById('jsonWinCopyBtn');
             const compressJsonBtn = jsonDoc.getElementById('compressJsonBtn');
             const allJsonEditBtn = jsonDoc.getElementById('allJsonEditBtn');
             let isAllEditing = false;
@@ -3741,20 +3740,20 @@
 
             compressJsonBtn.addEventListener('click', () => {
               if (compressJsonBtn.textContent === '展開する') {
-                if (!jsonWin.confirm('"_base"を各スタイルに展開しますか？')) return;
+                if (!jsonWin.confirm('"_base"を各スタイルに展開しますか?')) return;
                 currentJson = expandBase(currentJson);
               } else {
-                if (!jsonWin.confirm('各スタイルの共通した値を"_base"にまとめますか？')) return;
+                if (!jsonWin.confirm('各スタイルの共通した値を"_base"にまとめますか?')) return;
                 currentJson = extractBase(currentJson);
               }
               updateJsonDisplay();
               updateCompressBtn();
             });
 
-            copyJsonBtn.addEventListener('click', async () => {
+            jsonWinCopyBtn.addEventListener('click', async () => {
               try {
                 await jsonWin.navigator.clipboard.writeText(jsonDisplay.textContent);
-                jsonWin.alert('JSONをコピーしました！');
+                jsonWin.alert('コピーしました!');
               } catch (err) {
                 jsonWin.alert('コピーに失敗しました: ' + err);
               }
@@ -3765,7 +3764,7 @@
               allJsonEditBtn.textContent = isAllEditing ? '編集中…' : '編集';
               jsonDisplay.contentEditable = isAllEditing.toString();
 
-              [prettyCheckbox, copyJsonBtn, compressJsonBtn].forEach(el => {
+              [prettyCheckbox, jsonWinCopyBtn, compressJsonBtn].forEach(el => {
                 el.disabled = isAllEditing;
                 el.classList.toggle('disabled', isAllEditing);
               });
@@ -3784,7 +3783,7 @@
                   isAllEditing = true;
                   allJsonEditBtn.textContent = '編集中…';
                   jsonDisplay.contentEditable = 'true';
-                  [prettyCheckbox, copyJsonBtn, compressJsonBtn].forEach(el => {
+                  [prettyCheckbox, jsonWinCopyBtn, compressJsonBtn].forEach(el => {
                     el.disabled = true;
                     el.classList.add('disabled');
                   });
