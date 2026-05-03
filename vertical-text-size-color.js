@@ -2800,7 +2800,7 @@
                 return;
               }
 
-              const json = JSON.stringify(extractBase(savedStyles), null, 2);
+              const json = JSON.stringify(extractBase(getSortedStyles()), null, 2);
               copyToClipboard(copyAllBtn, json, { default: "すべての保存済みJSONをコピー", success: "コピーしました!" });
             });
 
@@ -3666,12 +3666,7 @@
         doc.getElementById('viewAllJsonBtn').onclick = () => {
 
           // 保存済みスタイルをキー順にソート
-          const sortedStyles = Object.fromEntries(
-            Object.entries(savedStyles).sort((a, b) =>
-              parseInt(a[0].replace(/\D/g, ''), 10) -
-              parseInt(b[0].replace(/\D/g, ''), 10)
-            )
-          );
+          const sortedStyles = getSortedStyles();
 
           const jsonHtml = `<!DOCTYPE html>
           <html lang="ja">
@@ -3773,7 +3768,7 @@
               if (!isAllEditing) {
                 try {
                   currentJson = JSON.parse(jsonDisplay.textContent);
-                  // 編集終了時に短縮可能箇所があれば「短縮する」に切り替え
+                  // 編集終了時に短縮できるなら「短縮する」に切り替え
                   const currentText = JSON.stringify(currentJson);
                   const compressed = extractBase(currentJson);
                   const compressedText = JSON.stringify(compressed);
@@ -3799,8 +3794,16 @@
         };
         // ---
 
-        // --- ベース抽出・短縮ロジック ---
-        // 2つの値が「同じ」かどうか（ディープ比較）
+        function getSortedStyles() {
+          return Object.fromEntries(
+            Object.entries(savedStyles).sort((a, b) =>
+              parseInt(a[0].replace(/\D/g, ''), 10) -
+              parseInt(b[0].replace(/\D/g, ''), 10)
+            )
+          );
+        }
+
+        // ベース抽出
         function deepEqual(a, b) {
           if (a === b) return true;
           if (typeof a !== typeof b) return false;
@@ -3817,10 +3820,8 @@
           return false;
         };
 
-        // すべてのスタイルで共通の値をベースとして抽出する
         function extractBase(styles) {
-          const { _base, ...rest } = styles;  // _baseを除外
-          const entries = Object.entries(rest); // restを使う
+          const entries = Object.entries(expandBase(styles)).filter(([k]) => k !== '_base');
           if (entries.length === 0) return {};
 
           // トップレベルのbaseを最頻値で構築
@@ -3836,7 +3837,13 @@
             }
             let bestKey = null, bestCount = 0;
             for (const [k, c] of counts) {
-              if (c > bestCount) { bestCount = c; bestKey = k; }
+              if (
+                c > bestCount ||
+                (c === bestCount && bestKey !== null && k.length > bestKey.length)
+              ) {
+                bestCount = c;
+                bestKey = k;
+              }
             }
 
             // 出現回数が2以上のものだけbaseに入れる
@@ -3875,7 +3882,7 @@
           return { _base: base, ...diffStyles };
         };
         
-        // ベース展開関数
+        // ベース展開
         function mergeDeep(base, override) {
           const result = { ...base };
           for (const key of Object.keys(override)) {
