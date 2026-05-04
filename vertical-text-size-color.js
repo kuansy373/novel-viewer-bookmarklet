@@ -1026,61 +1026,152 @@
         // Slider Settings
         // ==============================
       
+        const SS_ContainerStyle = doc.createElement('style');
+        SS_ContainerStyle.textContent = `
+          #scrollUI {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 8px;
+            background: inherit;
+            border: 1px solid;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 10007;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+          #scrollUI .title {
+            font-weight:bold;
+            margin-left: 3px;
+          }
+          #scrollUI label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+          }
+          #scrollUI .settingCheckbox {
+            height: 15px;
+            width: 15px;
+            flex-shrink: 0;
+            user-select: none;
+          }
+          #scrollUI .settingInputbox {
+            width: 60px;
+            border: 1px solid;
+            color: unset;
+          }
+        `;
+        doc.head.appendChild(SS_ContainerStyle);
+
         const scrollUI = doc.createElement('div');
-        Object.assign(scrollUI.style, {
-          position: 'fixed',
-          top: '10px',
-          left: '10px',
-          padding: '8px',
-          background: 'inherit',
-          border: '1px solid',
-          borderRadius: '4px',
-          fontSize: '14px',
-          zIndex: '10007',
-          fontFamily: 'sans-serif',
-        });
+        scrollUI.id = 'scrollUI';
         scrollUI.innerHTML = `
-          <div style="font-weight:bold;">< Slider Settings ></div>
-          <label><input id="scrollB" class="settingCheckbox" type="checkbox"><span class="labelText"> Border</span></label><br>
-          <label><input id="scrollC" class="settingCheckbox" type="checkbox"><span class="labelText"> Color in</span></label><br>
-          <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label><br>
-          <label>Opacity: <input id="scrollO" class="settingInputbox" type="text" inputmode="decimal" min="0" max="1" step="0.05" value="1"> (0~1)</label><br>
-          <label><input id="scrollRight" class="settingCheckbox" type="checkbox" checked><span class="labelText"> Right side</span></label><br>
-          <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"><span class="labelText"> Left side</span></label><br>
-          <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label><br>
-          <label>Width: <input id="scrollW" class="settingInputbox" type="number" value="80"> px</label><br>
-          <label>Speed scale: <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</label><br>
-          <label><input id="scrollHide" class="settingCheckbox" type="checkbox"><span class="labelText"> Slider ball</span></label><br>
+          <div class="title"> Slider Settings</div>
+          <label><input id="scrollRight" class="settingCheckbox" type="checkbox"> Right side</label>
+          <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"> Left side</label>
+          <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label>
+          <label>Opacity: <input id="scrollO" class="settingInputbox" type="number" min="0" max="100" value="100"> %</label>
+          <label><input id="scrollB" class="settingCheckbox" type="checkbox"> Border</label>
+          <label><input id="scrollC" class="settingCheckbox" type="checkbox"> Color in</label>
+          <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label>
+          <label>Width: <input id="scrollW" class="settingInputbox" type="number" value="80"> px</label>
+          <label>Speed scale: <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</label>
+          <label><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</label>
         `;
         doc.body.appendChild(scrollUI);
-        doc.querySelectorAll('.settingCheckbox').forEach(cb => {
-          Object.assign(cb.style, {
-            height: '15px',
-            width: '15px',
-            verticalAlign: 'middle',
-            userSelect: 'none',
-          });
-        });
-        doc.querySelectorAll('.settingInputbox').forEach(cb => {
-          Object.assign(cb.style, {
-            width: '60px',
-            border: '1px solid',
-            color: 'unset',
-          });
-        });
-        doc.querySelectorAll('.labelText').forEach(span => {
-          Object.assign(span.style, {
-            position: 'fixed',
-            paddingTop: '1.5px',
-          });
-        });
         
+        const scrollEventMap = {
+          scrollRight:      'change',
+          scrollLeft:       'change',
+          scrollS:          'input',
+          scrollO:          'input',
+          scrollB:          'change',
+          scrollC:          'change',
+          scrollX:          'input',
+          scrollW:          'input',
+          scrollSpeedScale: 'input',
+          scrollHide:       'change'
+        };
+
+        function applyScrollSettings(settings) {
+          const propMap = {
+            scrollB:          { prop: 'checked', value: settings.border },
+            scrollC:          { prop: 'checked', value: settings.colorIn },
+            scrollS:          { prop: 'value',   value: settings.shadow },
+            scrollRight:      { prop: 'checked', value: settings.right },
+            scrollLeft:       { prop: 'checked', value: settings.left },
+            scrollX:          { prop: 'value',   value: settings.position },
+            scrollW:          { prop: 'value',   value: settings.width },
+            scrollO:          { prop: 'value',   value: settings.opacity },
+            scrollSpeedScale: { prop: 'value',   value: settings.speedScale },
+            scrollHide:       { prop: 'checked', value: settings.hideBall }
+          };
+
+          Object.entries(propMap).forEach(([id, { prop, value }]) => {
+            if (value === undefined) return;
+            const el = doc.getElementById(id);
+            if (!el) return;
+            el[prop] = value;
+            el.dispatchEvent(new Event(scrollEventMap[id]));
+          });
+        }
+
         // === イベント ===
         // 共通のスタイル適用関数
         const applyToSliders = (fn) => {
           fn(scrollSliderRight);
           fn(scrollSliderLeft);
         };
+        
+        // Right/Left
+        const rightbox = doc.getElementById('scrollRight');
+        const leftbox = doc.getElementById('scrollLeft');
+
+        function updateDisplay() {
+          scrollSliderRight.style.display = rightbox.checked ? 'block' : 'none';
+          scrollSliderLeft.style.display = leftbox.checked ? 'block' : 'none';
+        }
+        
+        [rightbox, leftbox].forEach(box => {
+          box.addEventListener('change', updateDisplay);
+        });
+        
+        // Shadow
+        const scrollS = doc.getElementById('scrollS');
+        scrollS.addEventListener('input', () => {
+          const val = Number(scrollS.value) || 0;
+          const shadow = val < 0 ? `inset 0 0 ${Math.abs(val)}px` : `0 0 ${val}px`;
+          applyToSliders(el => el.style.boxShadow = shadow);
+        });
+        scrollS.addEventListener('blur', e => {
+          if (e.target.value === '') {
+            e.target.value = '0';
+            applyToSliders(el => el.style.boxShadow = '0 0 0px');
+          }
+        });
+
+        // Opacity
+        const opacityInput = doc.getElementById('scrollO');
+        opacityInput.addEventListener('input', e => {
+          const num = parseFloat(e.target.value);
+          if (!isNaN(num) && num >= 0 && num <= 100) {
+            applyToSliders(el => el.style.opacity = num / 100);
+          }
+        });
+        opacityInput.addEventListener('blur', e => {
+          let num = parseFloat(e.target.value);
+          if (e.target.value === '' || isNaN(num)) {
+            num = 0;
+          } else {
+            num = Math.max(0, Math.min(100, num));
+          }
+          e.target.value = num;
+          applyToSliders(el => el.style.opacity = num / 100);
+        });
         
         // Border & Color
         ['scrollB', 'scrollC'].forEach((id, i) => {
@@ -1108,66 +1199,8 @@
           });
         });
         
-        // Shadow
-        const scrollS = doc.getElementById('scrollS');
-        scrollS.addEventListener('input', () => {
-          const val = Number(scrollS.value) || 0;
-          const shadow = val < 0 ? `inset 0 0 ${Math.abs(val)}px` : `0 0 ${val}px`;
-          applyToSliders(el => el.style.boxShadow = shadow);
-        });
-        scrollS.addEventListener('blur', e => {
-          if (e.target.value === '') {
-            e.target.value = '0';
-            applyToSliders(el => el.style.boxShadow = '0 0 0px');
-          }
-        });
-
-        // Opacity
-        const opacityInput = doc.getElementById('scrollO');
-        let lastValue = opacityInput.value;
-        
-        opacityInput.addEventListener('input', e => {
-          if (e.target.value === '0' && lastValue !== '0.') {
-            e.target.value = '0.';
-          }
-          const num = parseFloat(e.target.value);
-          if (!isNaN(num) && num >= 0 && num <= 1) {
-            applyToSliders(el => el.style.opacity = num);
-          }
-          lastValue = e.target.value;
-        });
-        
-        opacityInput.addEventListener('focus', e => {
-          if (e.target.value === '0') e.target.value = '0.';
-        });
-        
-        opacityInput.addEventListener('blur', e => {
-          if (e.target.value === '0.' || e.target.value === '') {
-            e.target.value = '0';
-            applyToSliders(el => el.style.opacity = 0);
-          }
-        });
-        
-        // Right/Left
-        const rightbox = doc.getElementById('scrollRight');
-        const leftbox = doc.getElementById('scrollLeft');
-        
-        function updateDisplay() {
-          scrollSliderRight.style.display = rightbox.checked ? 'block' : 'none';
-          scrollSliderLeft.style.display = leftbox.checked ? 'block' : 'none';
-        }
-        
-        rightbox.checked = true;
-        updateDisplay();
-        
-        [rightbox, leftbox].forEach(box => {
-          box.addEventListener('change', updateDisplay);
-        });
-        
         // Position & Width
-        setupXWInput('scrollX', val => applyToSliders(el => {
-          el.style[el === scrollSliderRight ? 'right' : 'left'] = `${val}px`;
-        }));
+        setupXWInput('scrollX', val => applyToSliders(el => { el.style[el === scrollSliderRight ? 'right' : 'left'] = `${val}px`;}));
         setupXWInput('scrollW', val => applyToSliders(el => el.style.width = `${val}px`));
         
         function setupXWInput(inputId, applyWideXpos) {
@@ -1197,7 +1230,6 @@
             syncScrollSpeed(scrollSliderRight.value);
           }
         });
-        
         speedScaleInput.addEventListener('blur', e => {
           if (e.target.value === '') {
             e.target.value = '0';
@@ -1213,6 +1245,20 @@
             el.style.height = height;
             el.style.bottom = bottom;
           });
+        });
+
+        // 初期設定
+        applyScrollSettings({
+          right:      false,
+          left:       false,
+          shadow:     0,
+          opacity:    100,
+          border:     true,
+          colorIn:    false,
+          position:   30,
+          width:      80,
+          speedScale: 10,
+          hideBall:   true
         });
         
         // 開くボタン共通スタイル
@@ -1242,7 +1288,7 @@
         
         scrollUI.style.display = 'none';
         sUIOpenBtn.addEventListener('click', () => {
-          scrollUI.style.display = 'block';
+          scrollUI.style.display = 'flex';
         });
 
         // 閉じるボタン生成関数
@@ -2264,7 +2310,7 @@
               setCurrent(getSaved());
               applyStyle(prop, getSaved());
               updateSwatch(swatch, getSaved(), getSaved());
-              updateContrast()
+              updateContrast();
             });
 
             updateSwatch(swatch, getCurrent(), getSaved());
@@ -2296,12 +2342,12 @@
             };
             fgPickr = {
               setColor: (color) => {
-              colorState.currentFg = color;
-              colorState.savedFg = color;
-              applyStyle('color', color);
-              updateSwatch(doc.getElementById('fgSwatch'), color, color);
-              updateContrast();
-            },
+                colorState.currentFg = color;
+                colorState.savedFg = color;
+                applyStyle('color', color);
+                updateSwatch(doc.getElementById('fgSwatch'), color, color);
+                updateContrast();
+              },
               show: () => {},
               destroyAndRemove: () => {},
             }
@@ -2589,26 +2635,71 @@
         // JSONで各値を保存/反映
         // ==============================
 
+        const onetapUIStyle = doc.createElement('style');
+        onetapUIStyle.textContent = `
+          #onetapUI {
+            position: fixed;
+            top: 80px;
+            left: 10px;
+            padding: 8px;
+            border: 1px solid;
+            border-radius: 4px;
+            font-size: 14px;
+            background: inherit;
+            z-index: 10001;
+            font-family: sans-serif;
+            display: none;
+          }
+          #onetapUI .title {
+            font-weight:bold;
+            margin:0 0 10px 4px;
+          }
+          #onetapUI .ui-buttons {
+            display: flex;
+            flex-direction: column;
+            margin-left: 5px;
+            gap: 9px;
+            font-size: 14px;
+          }
+          #onetapUI .json-input {
+            font-size: 12px;
+            padding: 4px;
+            border: 1px solid;
+            border-radius: 2px;
+            width: 135px;
+            font-family: monospace;
+          }
+          #onetapUI #jsonInput::placeholder,
+          #onetapUI #bulkJsonInput::placeholder {
+            color: unset;
+            opacity: 0.7;
+          }
+          #onetapUI .style-rows {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 144.33px;
+          }
+          #onetapUI #pageNav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-left: 23px;
+          }
+          #onetapUI .page-btn {
+            flex: 1;
+            width: 28px;
+            user-select: none;
+          }
+        `;
+        doc.head.appendChild(onetapUIStyle);
+
         const onetapUI = doc.createElement('div');
-        Object.assign(onetapUI.style, {
-          position: 'fixed',
-          top: '80px',
-          left: '10px',
-          padding: '8px',
-          border: '1px solid',
-          borderRadius: '4px',
-          fontSize: '14px',
-          background: 'inherit',
-          zIndex: '10001',
-          fontFamily: 'sans-serif',
-          display: 'none',
-        });
-
-        const STYLES_PER_PAGE = 8;
-        let currentPage = 1;
-
+        onetapUI.id = 'onetapUI';
         onetapUI.innerHTML = `
-          <div style="font-weight:bold; margin-bottom:10px;">Apply Style with One Tap</div>
+          <div class="title">Apply Style with One Tap</div>
           <div class="ui-buttons">
             <div class="button-set">
               <input id="jsonInput" class="json-input" placeholder="個別のJSONを貼り付け" />
@@ -2621,8 +2712,7 @@
               <button id="bulkSaveBtn" class="button">SAVE</button>
             </div>
             <div style="display:flex; gap:4px; align-items:stretch; height: 243px;">
-              <div id="styleRows" class="style-rows">
-              </div>
+              <div id="styleRows" class="style-rows"></div>
               <div id="pageNav">
                 <button id="prevPageBtn" class="button page-btn">◀</button>
                 <button id="nextPageBtn" class="button page-btn">▶</button>
@@ -2634,55 +2724,8 @@
           </div>
         `;
 
-        const onetapUIStyle = doc.createElement('style');
-        onetapUIStyle.textContent = `
-
-          .ui-buttons {
-            display: flex;
-            flex-direction: column;
-            margin-left: 5px;
-            gap: 9px;
-            font-size: 14px;
-          }
-
-          .json-input {
-            font-size: 12px;
-            padding: 4px;
-            border: 1px solid;
-            border-radius: 2px;
-            width: 135px;
-            font-family: monospace;
-          }
-          
-          #jsonInput::placeholder,
-          #bulkJsonInput::placeholder {
-            color: unset;
-            opacity: 0.7;
-          }
-
-          .style-rows {
-            display:flex;
-            flex-direction:column;
-            justify-content: space-between;
-            width:144.33px;
-          }
-
-          #pageNav {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            margin-left: 23px;
-          }
-
-          .page-btn {
-            flex: 1;
-            width: 28px;
-            user-select: none;
-          }
-        `;
-        doc.head.appendChild(onetapUIStyle);
+        const STYLES_PER_PAGE = 8;
+        let currentPage = 1;
 
         // ボタンのスタイルを更新するヘルパー
         function updateButtonStyle(el) {
@@ -3612,41 +3655,7 @@
 
           // スライダーセッティングUIの状態反映
           if (data.scrollSettings) {
-            const s = data.scrollSettings;
-            const uiMap = {
-                scrollB:         { prop: 'checked', value: s.border },
-                scrollC:         { prop: 'checked', value: s.colorIn },
-                scrollS:         { prop: 'value',   value: s.shadow },
-                scrollRight:     { prop: 'checked', value: s.right },
-                scrollLeft:      { prop: 'checked', value: s.left },
-                scrollX:         { prop: 'value',   value: s.position },
-                scrollW:         { prop: 'value',   value: s.width },
-                scrollO:         { prop: 'value',   value: s.opacity },
-                scrollSpeedScale:{ prop: 'value',   value: s.speedScale },
-                scrollHide:      { prop: 'checked', value: s.hideBall }
-            };
-
-            // イベントタイプのマッピング
-            const eventMap = {
-                scrollB:         'change',
-                scrollC:         'change',
-                scrollS:         'input',
-                scrollRight:     'change',
-                scrollLeft:      'change',
-                scrollX:         'input',
-                scrollW:         'input',
-                scrollO:         'input',
-                scrollSpeedScale:'input',
-                scrollHide:      'change'
-            };
-
-            Object.entries(uiMap).forEach(([id, info]) => {
-                const el = doc.getElementById(id);
-                if (el) {
-                    el[info.prop] = info.value;
-                    el.dispatchEvent(new Event(eventMap[id]));
-                }
-            });
+            applyScrollSettings(data.scrollSettings);
           }
           
           return true;
