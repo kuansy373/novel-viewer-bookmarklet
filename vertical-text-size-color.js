@@ -1230,20 +1230,25 @@
         const speedScaleInput = doc.getElementById('scrollSpeedScale');
         let speedScale = parseFloat(speedScaleInput.value);
 
+        function updateScrollSpeed() {
+          const val = +scrollSliderRight.value;
+          scrollSpeed = val * speedScale;
+        }
+
         speedScaleInput.addEventListener('input', e => {
           let num = parseFloat(e.target.value);
           if (!isNaN(num)) {
             num = Math.max(0, Math.min(20, num));
             if (num !== parseFloat(e.target.value)) e.target.value = num;
             speedScale = num;
-            syncScrollSpeed(scrollSliderRight.value);
+            updateScrollSpeed();
           }
         });
         speedScaleInput.addEventListener('blur', e => {
           if (e.target.value === '') {
             e.target.value = '0';
             speedScale = 0;
-            syncScrollSpeed(scrollSliderRight.value);
+            updateScrollSpeed();
           }
         });
 
@@ -2062,11 +2067,8 @@
           // ドラッグ関数呼び出し
           const dragHandle = doc.getElementById('dragHandle');
           const dragTarget  = doc.getElementById('pickrContainer');
-          makeDraggable(
-            doc.getElementById('dragHandle'),
-            doc.getElementById('pickrContainer'),
-            doc
-          );
+
+          makeDraggable(dragHandle, dragTarget, doc);
 
           // bodyの色を取得しrgbをHex変換する関数
           const getHex = (prop) => {
@@ -2178,7 +2180,7 @@
               },
             });
 
-            pickr.on('init', instance => {
+            pickr.on('init', () => {
               win.setTimeout(() => {
                 doc.querySelectorAll('.pcr-app').forEach(app => {
                   // pcr-appドラッグボタン追加
@@ -2546,9 +2548,9 @@
           if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) {
             return { h: 0, s: 0, l: 0 };
           }
-          let r = parseInt(hex.substr(1,2),16)/255;
-          let g = parseInt(hex.substr(3,2),16)/255;
-          let b = parseInt(hex.substr(5,2),16)/255;
+          let r = parseInt(hex.slice(1, 3), 16) / 255;
+          let g = parseInt(hex.slice(3, 5), 16) / 255;
+          let b = parseInt(hex.slice(5, 7), 16) / 255;
           let max = Math.max(r,g,b), min = Math.min(r,g,b);
           let h, s, l = (max + min)/2;
           if(max == min){
@@ -3390,7 +3392,6 @@
         function collectInvalidKeys(obj) {
           const keys = Object.keys(obj);
           const hasAnyStyleKey = keys.some(k => /^Style\d+$/.test(k));
-          const hasAnyNonStyleKey = keys.some(k => !/^Style\d+$/.test(k));
 
           // Style形式と判断する条件：Styleキーが1つ以上ある、
           // かつrootの有効キーに一つも一致しない（通常形式との区別）
@@ -4108,7 +4109,7 @@
           });
         }
 
-        doc.addEventListener('mouseup', (e) => {
+        doc.addEventListener('mouseup', () => {
           if (!pendingSelection) return;
 
           showMenus(pendingSelection);
