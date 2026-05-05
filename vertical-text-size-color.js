@@ -218,17 +218,17 @@
     textInfoPanel.style.cssText = panelStyles.panel;
     document.body.appendChild(textInfoPanel);
 
-    // 可視文字長を測るための要素
+    // 可視文字長を測る
     const measurer = document.createElement('div');
     measurer.style.cssText = 'position:absolute; visibility:hidden; pointer-events:none;';
     document.body.appendChild(measurer);
 
-    // HTMLから可視文字数を取得
     measurer.innerHTML = text;
     measurer.querySelectorAll('rt, rp').forEach(el => el.remove());
     const fullText = measurer.textContent;
     const totalVisibleChars = fullText.length;
     console.log('総文字数:', totalVisibleChars);
+    measurer.remove();
 
     // 1ページあたりの上限文字数
     const MAX_PER_PAGE = 10000;
@@ -568,8 +568,6 @@
 
       prevEndVisiblePos = endVisiblePos;
     }
-
-    measurer.remove();
 
     // ページが有効かチェックする関数
     function isValidPage(pageIndex) {
@@ -1093,39 +1091,27 @@
         `;
         doc.body.appendChild(scrollUI);
 
-        const scrollEventMap = {
-          scrollRight:      'change',
-          scrollLeft:       'change',
-          scrollS:          'input',
-          scrollO:          'input',
-          scrollB:          'change',
-          scrollC:          'change',
-          scrollX:          'input',
-          scrollW:          'input',
-          scrollSpeedScale: 'input',
-          scrollHide:       'change'
+        const SCROLL_FIELD_MAP = {
+          scrollB:          { prop: 'checked', event: 'change',  key: 'border',      parser: null },
+          scrollC:          { prop: 'checked', event: 'change',  key: 'colorIn',     parser: null },
+          scrollS:          { prop: 'value',   event: 'input',   key: 'shadow',      parser: Number },
+          scrollRight:      { prop: 'checked', event: 'change',  key: 'right',       parser: null },
+          scrollLeft:       { prop: 'checked', event: 'change',  key: 'left',        parser: null },
+          scrollX:          { prop: 'value',   event: 'input',   key: 'position',    parser: Number },
+          scrollW:          { prop: 'value',   event: 'input',   key: 'width',       parser: Number },
+          scrollO:          { prop: 'value',   event: 'input',   key: 'opacity',     parser: parseFloat },
+          scrollSpeedScale: { prop: 'value',   event: 'input',   key: 'speedScale',  parser: parseFloat },
+          scrollHide:       { prop: 'checked', event: 'change',  key: 'hideBall',    parser: null },
         };
 
         function applyScrollSettings(settings) {
-          const propMap = {
-            scrollB:          { prop: 'checked', value: settings.border },
-            scrollC:          { prop: 'checked', value: settings.colorIn },
-            scrollS:          { prop: 'value',   value: settings.shadow },
-            scrollRight:      { prop: 'checked', value: settings.right },
-            scrollLeft:       { prop: 'checked', value: settings.left },
-            scrollX:          { prop: 'value',   value: settings.position },
-            scrollW:          { prop: 'value',   value: settings.width },
-            scrollO:          { prop: 'value',   value: settings.opacity },
-            scrollSpeedScale: { prop: 'value',   value: settings.speedScale },
-            scrollHide:       { prop: 'checked', value: settings.hideBall }
-          };
-
-          Object.entries(propMap).forEach(([id, { prop, value }]) => {
+          Object.entries(SCROLL_FIELD_MAP).forEach(([id, { prop, event, key }]) => {
+            const value = settings[key];
             if (value === undefined) return;
             const el = doc.getElementById(id);
             if (!el) return;
             el[prop] = value;
-            el.dispatchEvent(new Event(scrollEventMap[id]));
+            el.dispatchEvent(new Event(event));
           });
         }
 
@@ -2956,32 +2942,14 @@
           backgroundColor = rgbToHex(backgroundColor);
 
           // スクロールUIの値を取得
-          const scrollSettings = (() => {
-            const map = {
-              border:       ['scrollB', 'checked'],
-              colorIn:      ['scrollC', 'checked'],
-              shadow:       ['scrollS', 'value',   Number],
-              right:        ['scrollRight', 'checked'],
-              left:         ['scrollLeft', 'checked'],
-              position:     ['scrollX', 'value',   Number],
-              width:        ['scrollW', 'value',   Number],
-              opacity:      ['scrollO', 'value',   parseFloat],
-              speedScale:   ['scrollSpeedScale', 'value', parseFloat],
-              hideBall:     ['scrollHide', 'checked']
-            };
-            const result = {};
-            for (const key in map) {
-              const [id, prop, parser] = map[key];
+          const scrollSettings = Object.fromEntries(
+            Object.entries(SCROLL_FIELD_MAP).map(([id, { prop, key, parser }]) => {
               const el = doc.getElementById(id);
-              if (!el) {
-                result[key] = null;
-                continue;
-              }
+              if (!el) return [key, null];
               const raw = el[prop];
-              result[key] = parser ? parser(raw) : raw;
-            }
-            return result;
-          })();
+              return [key, parser ? parser(raw) : raw];
+            })
+          );
 
           // 保存プレビューオブジェクト
           const savePreview = {
