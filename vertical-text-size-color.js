@@ -991,7 +991,10 @@
         let lastTimestamp = null;
 
         function forceScroll(timestamp) {
-          if (lastTimestamp !== null && scrollSpeed !== 0) {
+          if (lastTimestamp === null) {
+            lastTimestamp = timestamp;
+          }
+          if (scrollSpeed !== 0) {
             const elapsed = timestamp - lastTimestamp;
             scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
           }
@@ -999,28 +1002,34 @@
           win.requestAnimationFrame(forceScroll);
         }
 
-        // スライダー入力に応じてスクロール速度を変更
-        function syncScrollSpeed(value) {
-          scrollSpeed = parseInt(value, 10) * speedScale;
-        }
-
         // 両方のスライダーの値を同期
-        [scrollSliderRight, scrollSliderLeft].forEach(slider => {
-          slider.addEventListener('input', () => {
-            syncScrollSpeed(slider.value);
-            scrollSliderRight.value = slider.value;
-            scrollSliderLeft.value = slider.value;
-          });
+        function onSliderInput(e) {
+          const val = +e.target.value;
+          scrollSpeed = val * speedScale;
+
+          if (scrollSliderRight !== e.target) {
+            scrollSliderRight.value = val;
+          }
+          if (scrollSliderLeft !== e.target) {
+            scrollSliderLeft.value = val;
+          }
+        }
+        [scrollSliderRight, scrollSliderLeft].forEach((slider) => {
+          slider.addEventListener("input", onSliderInput);
         });
 
         win.requestAnimationFrame(forceScroll);
 
         // タブまたはウィンドウの非アクティブでスライダー値リセット
-        doc.addEventListener('visibilitychange', () => {
-        if (doc.hidden) resetScrollSliders();
+        doc.addEventListener("visibilitychange", () => {
+          if (doc.hidden) {
+            resetScrollSliders(); // 離れたときに値リセット
+          } else {
+            lastTimestamp = null; // 復帰したときにタイムスタンプリセット
+          }
         });
 
-        win.addEventListener('blur', resetScrollSliders);
+        win.addEventListener("blur", resetScrollSliders);
 
         // ==============================
         // Slider Settings
