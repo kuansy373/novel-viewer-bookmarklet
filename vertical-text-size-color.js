@@ -2672,13 +2672,10 @@
             opacity: 0.7;
           }
           #onetapUI .style-rows {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            display: grid;
+            align-content: space-between;
             width: 144.33px;
             height: 243px;
-            gap: 10.43px;
-            overflow: hidden;
           }
           #onetapUI #pageNav {
             display: flex;
@@ -2756,15 +2753,22 @@
         function updatePage(page) {
           currentPage = page;
           const styleRows = doc.getElementById('styleRows');
-          styleRows.innerHTML = '';  // 既存行をクリア
+          styleRows.innerHTML = '';
+          styleRows.style.position = 'relative'; // absolute配置の基準
 
           const start = (page - 1) * STYLES_PER_PAGE + 1;
           for (let i = 0; i < STYLES_PER_PAGE; i++) {
             const n = start + i;
-            if (n > 99) break;
             const div = doc.createElement('div');
             div.className = 'button-set style-row';
             Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px', height: '22px' });
+
+            // 100以上は高さ確保だけ
+            if (n > 99) {
+              div.style.visibility = 'hidden';
+              styleRows.appendChild(div);
+              continue;
+            }
 
             const span1 = doc.createElement('span');
             span1.className = 'label';
@@ -2807,7 +2811,7 @@
 
           // 最終ページのみにボタンを追加
           if (page === maxPage) {
-            function createLastPageBtn(text, height) {
+            function createLastPageBtn(text) {
               const btn = doc.createElement('button');
               btn.className = 'button';
               btn.textContent = text;
@@ -2817,8 +2821,7 @@
                 justifyContent: 'center',
                 writingMode: 'horizontal-tb',
                 borderRadius: '2px',
-                width: 'stretch',
-                height,
+                position: 'absolute',
               });
               updateButtonStyle(btn);
               return btn;
@@ -2835,7 +2838,11 @@
               return false;
             }
 
-            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー', '91px');
+            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー');
+            Object.assign(copyAllBtn.style, {
+              top: '99px',
+              height: '80px',
+            });
             copyAllBtn.addEventListener('click', async () => {
               if (Object.keys(savedStyles).length === 0) {
                 flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
@@ -2846,7 +2853,11 @@
             });
             styleRows.appendChild(copyAllBtn);
 
-            const randomApplyBtn = createLastPageBtn('Random Apply', '50px');
+            const randomApplyBtn = createLastPageBtn('Random Apply');
+            Object.assign(randomApplyBtn.style, {
+              top: '185px',
+              height: 'stretch',
+            });
             randomApplyBtn.addEventListener('click', () => {
               const savedKeys = Object.keys(savedStyles);
               if (savedKeys.length === 0) {
