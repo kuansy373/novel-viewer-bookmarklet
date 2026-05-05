@@ -3572,7 +3572,7 @@
           // 既存キーの上書き確認
           const existingKeys = keys.filter(k => k in savedStyles);
           if (existingKeys.length > 0) {
-            const msg = `${existingKeys.join(', ')} はすでに存在します。上書きしますか?`;
+            const msg = `${compressKeys(existingKeys)} はすでに存在します。\n上書きしますか?`;
             if (!win.confirm(msg)) return;
           }
 
@@ -3581,10 +3581,39 @@
             savedStyles[k] = styleMap[k];
           }
 
-          win.alert(`${keys.join(', ')} に保存しました!`);
+          win.alert(`${compressKeys(keys)} に保存しました!`);
           bulkJsonInput.value = '';
           keys.forEach(updateApplyBtnColor);
         };
+
+        // アラートのStyle連番を～で省略
+        function compressKeys(keys) {
+          const nums = keys
+            .map(k => k.match(/^Style(\d+)$/))
+            .map((m, i) => m ? parseInt(m[1]) : null);
+
+          const groups = [];
+          let i = 0;
+
+          while (i < keys.length) {
+            if (nums[i] === null) {
+              groups.push(keys[i]);
+              i++;
+              continue;
+            }
+
+            let j = i + 1;
+            while (j < keys.length && nums[j] === nums[j-1] + 1) j++;
+
+            const len = j - i;
+            if (len === 1)      groups.push(keys[i]);
+            else if (len === 2) groups.push(`${keys[i]}, ${keys[j-1]}`);
+            else                groups.push(`${keys[i]}～${keys[j-1]}`);
+            i = j;
+          }
+
+          return groups.join(', ');
+        }
 
         // jsonInputのAPPLYボタン
         doc.getElementById('applyJsonBtn').onclick = () => {
@@ -3917,7 +3946,10 @@
           );
         }
 
-        // ---テキスト選択メニュー---
+        // ==============================
+        // テキスト選択で検索ショートカット
+        // ==============================
+
         const novelText = doc.getElementById('novelDisplay');
         let pendingSelection = null;
 
