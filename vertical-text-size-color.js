@@ -2688,16 +2688,20 @@
           #onetapUI .style-rows {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
             width: 144.33px;
+            height: 243px;
+            gap: 10.43px;
+            overflow: hidden;
           }
           #onetapUI #pageNav {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            align-self: flex-end;
             margin-left: 23px;
+            border-radius: 1px;
+            height: 148px;
+            gap: 6px;
           }
           #onetapUI .page-btn {
             flex: 1;
@@ -2774,7 +2778,7 @@
             if (n > 99) break;
             const div = doc.createElement('div');
             div.className = 'button-set style-row';
-            Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px' });
+            Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px', height: '22px' });
 
             const span1 = doc.createElement('span');
             span1.className = 'label';
@@ -2826,7 +2830,6 @@
                 alignItems: 'center',
                 justifyContent: 'center',
                 writingMode: 'horizontal-tb',
-                marginTop: '4px',
                 borderRadius: '2px',
                 width: 'stretch',
                 height,
@@ -2846,7 +2849,7 @@
               return false;
             }
 
-            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー', '84px');
+            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー', '91px');
             copyAllBtn.addEventListener('click', async () => {
               if (Object.keys(savedStyles).length === 0) {
                 flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
@@ -2857,12 +2860,11 @@
             });
             styleRows.appendChild(copyAllBtn);
 
-            const randomApplyBtn = createLastPageBtn('🎲 Random Apply', '50px');
-            randomApplyBtn.style.marginTop = '0px';
+            const randomApplyBtn = createLastPageBtn('Random Apply', '50px');
             randomApplyBtn.addEventListener('click', () => {
               const savedKeys = Object.keys(savedStyles);
               if (savedKeys.length === 0) {
-                flashText(randomApplyBtn, 'No styles saved yet', '🎲 Random Apply', 'notifying');
+                flashText(randomApplyBtn, 'No styles saved yet', 'Random Apply', 'notifying');
                 return;
               }
               const candidates = savedKeys.length > 1
