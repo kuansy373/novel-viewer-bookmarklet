@@ -2736,6 +2736,7 @@
         `;
 
         const STYLES_PER_PAGE = 8;
+        const maxPage = Math.ceil(99 / STYLES_PER_PAGE);
         let currentPage = 1;
 
         // ボタンのスタイルを更新するヘルパー
@@ -2759,7 +2760,7 @@
 
         // 保存されたスタイルを保持するローカル変数
         const savedStyles = {};
-        const maxPage = Math.ceil(99 / STYLES_PER_PAGE);
+        let lastRandomKey = null;
 
         // ページネーション：ボタンセット行を動的に描画
         function updatePage(page) {
@@ -2814,41 +2815,64 @@
             updateApplyBtnColor(`Style${i}`);
           }
 
-          // 最終ページのみ「すべての保存済みJSONコピー」ボタンを追加
+          // 最終ページのみにボタンを追加
           if (page === maxPage) {
-            const copyAllBtn = doc.createElement('button');
-            copyAllBtn.className = 'button';
-            copyAllBtn.textContent = 'すべての保存済みJSONをコピー';
-            Object.assign(copyAllBtn.style, {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              writingMode: 'horizontal-tb',
-              marginTop: '4px',
-              borderRadius: '2px',
-              width: 'stretch',
-              height: '144px',
-            });
-            updateButtonStyle(copyAllBtn);
+            function createLastPageBtn(text, height) {
+              const btn = doc.createElement('button');
+              btn.className = 'button';
+              btn.textContent = text;
+              Object.assign(btn.style, {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                writingMode: 'horizontal-tb',
+                marginTop: '4px',
+                borderRadius: '2px',
+                width: 'stretch',
+                height,
+              });
+              updateButtonStyle(btn);
+              return btn;
+            }
 
-            copyAllBtn.addEventListener("click", async () => {
-              if (copyAllBtn.dataset.copying) return;
+            function flashText(btn, message, original, flag) {
+              if (btn.dataset[flag]) return true;
+              btn.dataset[flag] = 'true';
+              btn.textContent = message;
+              win.setTimeout(() => {
+                btn.textContent = original;
+                delete btn.dataset[flag];
+              }, 1500);
+              return false;
+            }
 
+            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー', '84px');
+            copyAllBtn.addEventListener('click', async () => {
               if (Object.keys(savedStyles).length === 0) {
-                copyAllBtn.dataset.copying = "true";
-                copyAllBtn.textContent = "保存スタイルがありません";
-                win.setTimeout(() => {
-                  copyAllBtn.textContent = "すべての保存済みJSONをコピー";
-                  delete copyAllBtn.dataset.copying;
-                }, 1500);
+                flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
                 return;
               }
-
               const json = JSON.stringify(extractBase(getSortedStyles()), null, 2);
-              copyToClipboard(copyAllBtn, json, { default: "すべての保存済みJSONをコピー", success: "コピーしました!" });
+              copyToClipboard(copyAllBtn, json, { default: 'すべての保存済みJSONをコピー', success: 'コピーしました!' });
             });
-
             styleRows.appendChild(copyAllBtn);
+
+            const randomApplyBtn = createLastPageBtn('🎲 Random Apply', '50px');
+            randomApplyBtn.style.marginTop = '0px';
+            randomApplyBtn.addEventListener('click', () => {
+              const savedKeys = Object.keys(savedStyles);
+              if (savedKeys.length === 0) {
+                flashText(randomApplyBtn, 'No styles saved yet', '🎲 Random Apply', 'notifying');
+                return;
+              }
+              const candidates = savedKeys.length > 1
+                ? savedKeys.filter(k => k !== lastRandomKey)
+                : savedKeys;
+              const randomKey = candidates[Math.floor(Math.random() * candidates.length)];
+              lastRandomKey = randomKey;
+              applyStyleByName(randomKey);
+            });
+            styleRows.appendChild(randomApplyBtn);
           }
         }
 
@@ -3590,7 +3614,7 @@
         function compressKeys(keys) {
           const nums = keys
             .map(k => k.match(/^Style(\d+)$/))
-            .map((m, i) => m ? parseInt(m[1]) : null);
+            .map(m => m ? parseInt(m[1]) : null);
 
           const groups = [];
           let i = 0;
