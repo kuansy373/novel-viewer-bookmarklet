@@ -1,10 +1,10 @@
 (() => {
-  
+
   // webページのDOM完成を待って実行
   function run() {
-    
+
     let text = '';
-    
+
     function escapeHTML(str) {
       return str.replace(/[&<>"']/g, function (m) {
         return ({
@@ -16,29 +16,29 @@
         })[m];
       });
     }
-    
+
     function extractWithRubyTags(node) {
-      
+
       let result = '';
       const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
       const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
 
       function traverse(el) {
         for (const child of el.childNodes) {
-    
+
           if (child.nodeType === Node.TEXT_NODE) {
             result += escapeHTML(child.textContent);
-    
+
           } else if (child.nodeType === Node.ELEMENT_NODE) {
             const tagName = child.tagName.toLowerCase();
-    
+
             if (ALLOWED_TAGS.has(tagName)) {
               const attrs = Array.from(child.attributes)
                 .filter(attr => !/^on/i.test(attr.name))
                 .filter(attr => ALLOWED_ATTRS.has(attr.name))
                 .map(attr => ` ${attr.name}="${escapeHTML(attr.value)}"`)
                 .join('');
-              
+
               result += `<${tagName}${attrs}>`;
               traverse(child);
               result += `</${tagName}>`;
@@ -50,11 +50,11 @@
           }
         }
       }
-    
+
       traverse(node);
       return result;
     }
-    
+
     document.querySelectorAll(
       // 青空文庫
       'body > h1, ' +
@@ -78,20 +78,20 @@
     .forEach(node => {
       text += extractWithRubyTags(node);
     });
-    
+
     // カクヨムの傍点
     text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
       const chars = content.replace(/<\/?span>/gi, '');
       return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
     });
-    
+
     // 改行の処理
     text = text.trim()
       .replace(/(\r\n|\r)+/g, '\n')
       .replace(/\n{2,}/g, '\n')
       .replace(/\n/g, '　')
       .replace(/　{2,}/g, '　');
-  
+
     // テキスト情報パネル
     const panelStyles = {
       panel: `
@@ -166,7 +166,7 @@
         user-select: none;
       `
     };
-    
+
     function createPanelHTML(totalChars, numPages, charsPerPage) {
       return `
         <div id="contentContainer" style="${panelStyles.contentContainer}">
@@ -203,7 +203,7 @@
         </div>
       `;
     }
-    
+
     function createPartInfoHTML(partNumber, charCount) {
       return `
         <strong>ページ${partNumber}:</strong>
@@ -212,43 +212,43 @@
         </span>
       `;
     }
-    
+
     // パネル追加
     const textInfoPanel = document.createElement('div');
     textInfoPanel.style.cssText = panelStyles.panel;
     document.body.appendChild(textInfoPanel);
-    
+
     // 可視文字長を測るための要素
     const measurer = document.createElement('div');
     measurer.style.cssText = 'position:absolute; visibility:hidden; pointer-events:none;';
     document.body.appendChild(measurer);
-    
+
     // HTMLから可視文字数を取得
     measurer.innerHTML = text;
     measurer.querySelectorAll('rt, rp').forEach(el => el.remove());
     const fullText = measurer.textContent;
     const totalVisibleChars = fullText.length;
     console.log('総文字数:', totalVisibleChars);
-    
+
     // 1ページあたりの上限文字数
     const MAX_PER_PAGE = 10000;
-    
+
     // 必要なページ数を計算
     const numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
     const charsPerPage = Math.ceil(totalVisibleChars / numPages);
     console.log('ページ数:', numPages);
     console.log('1ページあたりの目標文字数:', charsPerPage);
-  
+
     // パネル作成
     textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
     const partsList = textInfoPanel.querySelector('#partsList');
 
     // 小説タブを開く
     const popupRetry = textInfoPanel.querySelector('#popupRetry');
-    
+
     if (popupRetry) {
       popupRetry.addEventListener('click', () => openNovelWindow());
-    
+
       ['mouseenter', 'mouseleave'].forEach(evtType => {
         popupRetry.addEventListener(evtType, () => {
           popupRetry.style.color = evtType === 'mouseenter' ? '#000' : '#444';
@@ -257,13 +257,13 @@
         });
       });
     }
-  
+
     // ドラッグ関数
     function makeDraggable(dragHandle, dragTarget, dragDoc) {
       let isDragging = false;
       let offsetX = 0;
       let offsetY = 0;
-    
+
       dragHandle.addEventListener('mousedown', e => {
         isDragging = true;
         const rect = dragTarget.getBoundingClientRect();
@@ -271,7 +271,7 @@
         offsetY = e.clientY - rect.top;
         e.preventDefault();
       });
-    
+
       dragDoc.addEventListener('mousemove', e => {
         if (!isDragging) return;
         dragTarget.style.left = e.clientX - offsetX + 'px';
@@ -279,11 +279,11 @@
         dragTarget.style.right = 'auto';
         dragTarget.style.bottom = 'auto';
       });
-    
+
       dragDoc.addEventListener('mouseup', () => {
         isDragging = false;
       });
-    
+
       dragHandle.addEventListener('touchstart', e => {
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
@@ -293,19 +293,19 @@
         isDragging = true;
         e.preventDefault();
       });
-    
+
       dragDoc.addEventListener('touchmove', e => {
         if (!isDragging || e.touches.length !== 1) return;
         const touch = e.touches[0];
         dragTarget.style.left = touch.clientX - offsetX + 'px';
         dragTarget.style.top  = touch.clientY - offsetY + 'px';
       }, { passive: false });
-    
+
       dragDoc.addEventListener('touchend', () => {
         isDragging = false;
       });
     }
-    
+
     // ドラッグ関数呼び出し
     makeDraggable(
       textInfoPanel.querySelector('#dragHandle'),
@@ -317,18 +317,18 @@
     function parseTag(html, start) {
       const end = html.indexOf('>', start + 1);
       if (end === -1) return null;
-    
+
       const content = html.slice(start + 1, end);
       const isClosing = /^\s*\//.test(content);
       const nameMatch = content.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
-    
+
       return {
         end,
         name: nameMatch ? nameMatch[1].toLowerCase() : '',
         isClosing
       };
     }
-    
+
     // 長文の負荷軽減のため50文字毎にspan分割する関数
     // タグ内<>とエンティティ内&;は避ける
     function chunkHTMLSafe(html, chunkSize) {
@@ -371,32 +371,32 @@
       if (last < len) chunks.push(html.slice(last));
       return chunks;
     }
-    
+
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
       const map = [];
       let htmlPos = 0;
       let visiblePos = 0;
       let rubyDepth = 0;
-    
+
       // rt / rp の中かどうか
       const skipStack = [];
       let skipVisible = false;
-    
+
       while (htmlPos < html.length) {
         const ch = html[htmlPos];
-    
+
         // タグ開始
         if (ch === '<') {
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
-        
+
           // ruby 深さ管理
           if (tag.name === 'ruby') {
             rubyDepth += tag.isClosing ? -1 : 1;
             rubyDepth = Math.max(0, rubyDepth);
           }
-        
+
           // rt / rp は可視文字として数えない
           if (tag.name === 'rt' || tag.name === 'rp') {
             if (!tag.isClosing) {
@@ -407,24 +407,24 @@
               skipVisible = skipStack.length > 0;
             }
           }
-        
+
           htmlPos = tag.end + 1;
           continue;
         }
-    
+
         // テキストノード文字
         if (!skipVisible) {
           map.push({ visiblePos, htmlPos, rubyDepth });
           visiblePos++;
         }
-    
+
         htmlPos++;
       }
-    
+
       map.push({ visiblePos, htmlPos: html.length, rubyDepth });
       return map;
     }
-    
+
     // 可視文字位置からHTML位置を取得
     function getHtmlPos(map, targetVisiblePos) {
       // map は visiblePos 昇順である想定
@@ -436,7 +436,7 @@
       }
       return map[lo] ? map[lo].htmlPos : (map.length ? map[map.length - 1].htmlPos : 0);
     }
-    
+
     const fullHTML = text;
 
     // タグ内を避ける関数
@@ -459,14 +459,14 @@
       posMap
     }) {
       let startVisiblePos = prevEndVisiblePos;
-    
+
       if (pageIndex > 0) {
         const rawOverlapStart = Math.max(0, prevEndVisiblePos - overlap);
         startVisiblePos = avoidInsideRuby(posMap, rawOverlapStart);
       }
-    
+
       let endVisiblePos = startVisiblePos + charsPerPage;
-    
+
       if (pageIndex === numPages - 1) {
         endVisiblePos = fullText.length;
       } else {
@@ -475,10 +475,10 @@
           fullText.length,
           endVisiblePos + Math.floor(charsPerPage * 0.05)
         );
-    
+
         let bestPos = endVisiblePos;
         const delimiters = ['　', '。', '」', '…'];
-    
+
         outer:
         for (const d of delimiters) {
           for (let j = searchStart; j < searchEnd; j++) {
@@ -490,28 +490,28 @@
         }
         endVisiblePos = bestPos;
       }
-    
+
       const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
       const endHtmlPos =
         pageIndex === numPages - 1
           ? fullHTML.length
           : getHtmlPos(posMap, endVisiblePos);
-    
+
       const partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
-    
+
       let part;
-    
+
       if (pageIndex > 0 && overlap > 0) {
         const overlapEndHtmlPos = getHtmlPos(
           posMap,
           startVisiblePos + overlap
         );
-    
+
         const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
-    
+
         const overlapPart = partHTML.slice(0, overlapLengthInHTML);
         const mainPart = partHTML.slice(overlapLengthInHTML);
-    
+
         part = {
           overlap: [overlapPart],
           main: chunkHTMLSafe(mainPart, 50)
@@ -522,29 +522,29 @@
           main: chunkHTMLSafe(partHTML, 50)
         };
       }
-    
+
       const actualStartPos =
         pageIndex > 0 ? Math.max(0, prevEndVisiblePos - overlap) : 0;
-    
+
       const actualLen = endVisiblePos - actualStartPos;
-    
+
       return {
         part,
         endVisiblePos,
         actualLen
       };
     }
-    
+
     // 位置マップ作成
     const posMap = buildPositionMap(fullHTML);
-    
+
     // 均等分割でパート作成
     const parts = [];
-    
+
     let prevEndVisiblePos = 0;  // 前ページの終わり位置を保持
     const overlap = 10;         // 重複させたい文字数
     const pageCharCounts = [];  // 各ページの実際の文字数を保存する配列
-    
+
     for (let i = 0; i < numPages; i++) {
       const { part, endVisiblePos, actualLen } = createPagePart({
         pageIndex: i,
@@ -556,31 +556,31 @@
         fullHTML,
         posMap
       });
-    
+
       parts.push(part);
       pageCharCounts.push(actualLen);
       console.log(`ページ${i + 1}: ${actualLen}文字`);
-    
+
       const partInfo = document.createElement('div');
       partInfo.style.cssText = panelStyles.partInfo;
       partInfo.innerHTML = createPartInfoHTML(i + 1, actualLen);
       partsList.appendChild(partInfo);
-    
+
       prevEndVisiblePos = endVisiblePos;
     }
-    
+
     measurer.remove();
-  
+
     // ページが有効かチェックする関数
     function isValidPage(pageIndex) {
-      return pageIndex >= 0 && 
-             pageIndex < parts.length && 
+      return pageIndex >= 0 &&
+             pageIndex < parts.length &&
              pageCharCounts[pageIndex] > 0;
     }
-  
+
     // 有効なページ数を計算
     const validPageCount = pageCharCounts.filter(count => count > 0).length;
-    
+
     // 新しいウィンドウを開く関数
     function openNovelWindow() {
       const html = `<!DOCTYPE html>
@@ -639,39 +639,39 @@
 
       const win = window.open(url, '_blank');
       if (!win) return;
-      
+
       win.addEventListener('load', () => {
         try { URL.revokeObjectURL(url); } catch (e) {}
-        
+
         const doc = win.document;
-        
+
         // データを新しいウィンドウに渡す
         win.parts = parts;
         win.pageCharCounts = pageCharCounts;
-        
+
         // レンダリング関数
         win.renderPart = function(pageIndex) {
           const container = doc.getElementById('novelDisplay');
           container.innerHTML = '';
           const frag = doc.createDocumentFragment();
           const page = win.parts[pageIndex] || { overlap: [], main: [] };
-          
+
           for (const chunkHTML of page.overlap) {
             const span = doc.createElement('span');
             span.style.opacity = '0.5';
             span.innerHTML = chunkHTML;
             frag.appendChild(span);
           }
-          
+
           for (const chunkHTML of page.main) {
             const span = doc.createElement('span');
             span.innerHTML = chunkHTML;
             frag.appendChild(span);
           }
-          
+
           container.appendChild(frag);
         };
-      
+
         // 初期表示
         win.renderPart(0);
 
@@ -691,7 +691,7 @@
             align-items: center;
             z-index: 10005;
           `;
-          
+
           const dialog = doc.createElement('div');
           dialog.style.cssText = `
             padding: 30px;
@@ -699,7 +699,7 @@
             text-align: center;
             max-width: 400px;
           `;
-          
+
           const message = doc.createElement('p');
           message.id = 'overlay-message';
           message.style.cssText = `
@@ -707,7 +707,7 @@
             margin-bottom: 15px;
             color: #333;
           `;
-          
+
           const inputContainer = doc.createElement('div');
           inputContainer.style.cssText = `
             display: flex;
@@ -717,7 +717,7 @@
             gap: 5px;
             margin-bottom: 20px;
           `;
-          
+
           const pageInput = doc.createElement('input');
           pageInput.type = 'number';
           pageInput.min = '1';
@@ -729,7 +729,7 @@
             border-radius: 5px;
             text-align: center;
           `;
-          
+
           const pageLabel = doc.createElement('span');
           pageLabel.textContent = 'ページ目に移動しますか?';
           pageLabel.id = 'pageLabel';
@@ -737,17 +737,17 @@
             font-size: 18px;
             color: unset;
           `;
-          
+
           inputContainer.appendChild(pageInput);
           inputContainer.appendChild(pageLabel);
-          
+
           const buttonContainer = doc.createElement('div');
           buttonContainer.style.cssText = `
             display: flex;
             gap: 10px;
             justify-content: center;
           `;
-          
+
           const createChoiceButton = (doc, text, id) => {
             const btn = doc.createElement('button');
             btn.textContent = text;
@@ -766,7 +766,7 @@
 
           const yesButton = createChoiceButton(doc, 'はい', 'yesButton');
           const noButton = createChoiceButton(doc, 'いいえ', 'noButton');
-          
+
           buttonContainer.appendChild(yesButton);
           buttonContainer.appendChild(noButton);
           dialog.appendChild(message);
@@ -774,7 +774,7 @@
           dialog.appendChild(buttonContainer);
           overlay.appendChild(dialog);
           doc.body.appendChild(overlay);
-          
+
           return { overlay, message, pageInput, yesButton, noButton };
         }
 
@@ -783,7 +783,7 @@
           const digits = input.value.length || 1;
           input.style.width = `${digits + 2}ch`;
         }
-        
+
         const overlayElements = createOverlay();
 
         // オーバーレイ表示関数
@@ -819,7 +819,7 @@
             overlayElements.pageInput.value = val;
             adjustInputWidth(overlayElements.pageInput);
           };
-          
+
           // はい
           const handleYes = () => {
             const targetPage = parseInt(overlayElements.pageInput.value);
@@ -835,7 +835,7 @@
             onYes(targetPage);
             resetScrollSliders();
           };
-          
+
           // いいえ
           const handleNo = () => {
             overlayElements.overlay.style.display = 'none';
@@ -846,14 +846,14 @@
             promptShownForward = false;
             promptShownBackward = false;
           };
-      
+
           // オーバーレイ背景クリック
           const handleOverlayClick = (e) => {
             if (e.target === overlayElements.overlay) {
               handleNo();
             }
           };
-      
+
           // イベントリスナー削除
           const cleanup = () => {
             overlayElements.pageInput.removeEventListener('input', handleInput);
@@ -861,31 +861,31 @@
             overlayElements.noButton.removeEventListener('click', handleNo);
             overlayElements.overlay.removeEventListener('click', handleOverlayClick);
           };
-      
+
           // イベントリスナー追加
           overlayElements.pageInput.addEventListener('input', handleInput);
           overlayElements.yesButton.addEventListener('click', handleYes);
           overlayElements.noButton.addEventListener('click', handleNo);
           overlayElements.overlay.addEventListener('click', handleOverlayClick);
         }
-        
+
         // 初回表示
         let currentIndex = 0;
         win.renderPart(currentIndex);
-        
+
         // ページ切り替え可能フラグ
         let promptShownForward = false;
         let promptShownBackward = false;
         // 切り替え中フラグ
         let isSwitching = false;
-        
+
         win.addEventListener('scroll', () => {
           if (isSwitching) return;
-        
+
           const scrollBottom = win.scrollY + win.innerHeight;
           const scrollTop = win.scrollY;
           const bodyHeight = doc.body.offsetHeight;
-        
+
           // 下方向・最下部で次ページ
           if (
             totalVisibleChars > 10000 &&
@@ -910,7 +910,7 @@
             // 最上部から（25%）離れたらフラグON
             promptShownForward = true;
           }
-        
+
           // 上方向・最上部で前ページ
           if (
             totalVisibleChars > 10000 &&
@@ -947,17 +947,17 @@
           if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
           if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
         }
-        
+
         function disableBodyScroll() {
           doc.body.style.overflow = 'hidden';
           doc.documentElement.style.overflow = 'hidden';
         }
-        
+
         function enableBodyScroll() {
           doc.body.style.overflow = '';
           doc.documentElement.style.overflow = '';
         }
-        
+
         // スライダー作成関数
         function createSlider(position, additionalStyle = {}) {
           const slider = doc.createElement('input');
@@ -980,16 +980,16 @@
           doc.body.appendChild(slider);
           return slider;
         }
-        
+
         // 左右スライダー作成
         const scrollSliderRight = createSlider('right');
         const scrollSliderLeft = createSlider('left', { direction: 'rtl' });
-        
+
         // === スクロール処理 ===
         const scroller = doc.scrollingElement || doc.documentElement;
         let scrollSpeed = 0;
         let lastTimestamp = null;
-        
+
         function forceScroll(timestamp) {
           if (lastTimestamp !== null && scrollSpeed !== 0) {
             const elapsed = timestamp - lastTimestamp;
@@ -998,12 +998,12 @@
           lastTimestamp = timestamp;
           win.requestAnimationFrame(forceScroll);
         }
-        
+
         // スライダー入力に応じてスクロール速度を変更
         function syncScrollSpeed(value) {
           scrollSpeed = parseInt(value, 10) * speedScale;
         }
-        
+
         // 両方のスライダーの値を同期
         [scrollSliderRight, scrollSliderLeft].forEach(slider => {
           slider.addEventListener('input', () => {
@@ -1012,7 +1012,7 @@
             scrollSliderLeft.value = slider.value;
           });
         });
-        
+
         win.requestAnimationFrame(forceScroll);
 
         // タブまたはウィンドウの非アクティブでスライダー値リセット
@@ -1021,11 +1021,11 @@
         });
 
         win.addEventListener('blur', resetScrollSliders);
-          
+
         // ==============================
         // Slider Settings
         // ==============================
-      
+
         const SS_ContainerStyle = doc.createElement('style');
         SS_ContainerStyle.textContent = `
           #scrollUI {
@@ -1083,7 +1083,7 @@
           <label><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</label>
         `;
         doc.body.appendChild(scrollUI);
-        
+
         const scrollEventMap = {
           scrollRight:      'change',
           scrollLeft:       'change',
@@ -1126,7 +1126,7 @@
           fn(scrollSliderRight);
           fn(scrollSliderLeft);
         };
-        
+
         // Right/Left
         const rightbox = doc.getElementById('scrollRight');
         const leftbox = doc.getElementById('scrollLeft');
@@ -1135,11 +1135,11 @@
           scrollSliderRight.style.display = rightbox.checked ? 'block' : 'none';
           scrollSliderLeft.style.display = leftbox.checked ? 'block' : 'none';
         }
-        
+
         [rightbox, leftbox].forEach(box => {
           box.addEventListener('change', updateDisplay);
         });
-        
+
         // Shadow
         const scrollS = doc.getElementById('scrollS');
         scrollS.addEventListener('input', () => {
@@ -1172,7 +1172,7 @@
           e.target.value = num;
           applyToSliders(el => el.style.opacity = num / 100);
         });
-        
+
         // Border & Color
         ['scrollB', 'scrollC'].forEach((id, i) => {
           const el = doc.getElementById(id);
@@ -1198,11 +1198,11 @@
             });
           });
         });
-        
+
         // Position & Width
         setupXWInput('scrollX', val => applyToSliders(el => { el.style[el === scrollSliderRight ? 'right' : 'left'] = `${val}px`;}));
         setupXWInput('scrollW', val => applyToSliders(el => el.style.width = `${val}px`));
-        
+
         function setupXWInput(inputId, applyWideXpos) {
           const input = doc.getElementById(inputId);
           input.addEventListener('input', e => {
@@ -1216,11 +1216,11 @@
             }
           });
         }
-        
+
         // Speed Scale
         const speedScaleInput = doc.getElementById('scrollSpeedScale');
         let speedScale = parseFloat(speedScaleInput.value);
-        
+
         speedScaleInput.addEventListener('input', e => {
           let num = parseFloat(e.target.value);
           if (!isNaN(num)) {
@@ -1237,8 +1237,8 @@
             syncScrollSpeed(scrollSliderRight.value);
           }
         });
-        
-        // Slider ball 
+
+        // Slider ball
         doc.getElementById('scrollHide').addEventListener('change', e => {
           const [height, bottom] = e.target.checked ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
           applyToSliders(el => {
@@ -1260,7 +1260,7 @@
           speedScale: 10,
           hideBall:   true
         });
-        
+
         // 開くボタン共通スタイル
         const baseOpenBtnStyle = {
           position: 'fixed',
@@ -1270,7 +1270,7 @@
           opacity: '0.3',
           display: 'block'
         };
-        
+
         // 開くボタン △
         const sUIOpenBtn = doc.createElement('div');
         sUIOpenBtn.innerHTML = `
@@ -1285,7 +1285,7 @@
           zIndex: '10006',
         });
         doc.body.appendChild(sUIOpenBtn);
-        
+
         scrollUI.style.display = 'none';
         sUIOpenBtn.addEventListener('click', () => {
           scrollUI.style.display = 'flex';
@@ -1306,29 +1306,29 @@
           });
           return closeBtn;
         };
-        
+
         // 閉じるボタン ✕
         const sUICloseBtn = createCloseBtn();
         scrollUI.appendChild(sUICloseBtn);
-        
+
         sUICloseBtn.addEventListener('click', () => {
           scrollUI.style.display = 'none';
         });
-        
+
         // ==============================
         // Font Control Panel
         // ==============================
-      
+
         ['fontPanel', 'fontOpenBtn'].forEach(id => {
           const el = doc.getElementById(id);
           if (el) el.remove();
         });
-        
+
         let target = doc.getElementById('novelDisplay');
         if (!target) {
           console.error('#novelDisplay が見つかりません');
         }
-        
+
         // パネルコンテナ
         const panel = doc.createElement('div');
         panel.id = 'fontPanel';
@@ -1346,7 +1346,7 @@
           display: 'none',
           fontFamily: 'sans-serif'
         });
-      
+
         // モードボタン
         const modes = ['Text shadow','Font weight','Font size'];
         let currentMode = 'Font size';
@@ -1357,13 +1357,13 @@
           gap: '4px',
           marginBottom: '8px'
         });
-      
+
         // 選択切り替えスタイル制御
         const setActive = (btn, isActive) => {
           btn.style.opacity = isActive ? '1' : '0.5';
           btn.style.boxShadow = isActive ? 'inset 0 0 3px' : 'none';
         };
-        
+
         modes.forEach(mode => {
           const btn = doc.createElement('button');
           btn.textContent = mode;
@@ -1377,9 +1377,9 @@
             textAlign: 'left',
           });
           if (mode === 'Font weight') btn.style.margin = '0 7px';
-          
+
           setActive(btn, mode === currentMode);
-          
+
           btn.addEventListener('click', () => {
             currentMode = mode;
             [...modeContainer.children].forEach(c => setActive(c, false));
@@ -1388,19 +1388,19 @@
           });
           modeContainer.appendChild(btn);
         });
-        
+
         // コントロールエリア
         const controlArea = doc.createElement('div');
         Object.assign(controlArea.style, {
         });
-        
+
         // ラベル
         const label = doc.createElement('div');
         Object.assign(label.style, {
           fontSize: '14px',
           marginBottom: '4px'
         });
-          
+
         // 増減ボタン
         const decAndIncBtnStyle = {
           position: 'absolute',
@@ -1425,7 +1425,7 @@
         Object.assign(increaseBtn.style, decAndIncBtnStyle, {
           left: '255px'
         });
-      
+
         // 増減ボタンの共通処理
         function adjustSlider(delta) {
           let value = parseInt(slider.value) + delta * parseInt(slider.step || 1);
@@ -1434,10 +1434,10 @@
             slider.dispatchEvent(new Event('input'));
           }
         }
-      
+
         decreaseBtn.addEventListener('click', () => adjustSlider(-1));
         increaseBtn.addEventListener('click', () => adjustSlider(1));
-          
+
         // スライダー
         const slider = doc.createElement('input');
         slider.type = 'range';
@@ -1448,11 +1448,11 @@
           marginBottom:'4px',
           blockSize: '5px',
         });
-        
+
         // 更新処理
         function updateControls() {
           if (!target) return;
-        
+
           if (currentMode === 'Font size') {
             slider.min = 10;
             slider.max = 50;
@@ -1479,12 +1479,12 @@
             slider.min = 0;
             slider.max = 30;
             slider.step = 1;
-          
+
             // 現在のスライダー値を保持（前回の設定を使う）
             let blur = parseInt(target.dataset.textShadow || 0);
             slider.value = blur;
             label.textContent = `Text shadow: ${slider.value}px`;
-          
+
             slider.oninput = () => {
               const b = slider.value;
               if (b > 0) {
@@ -1493,7 +1493,7 @@
                 target.style.textShadow = 'none';
               }
               label.textContent = `Text shadow: ${b}px`;
-          
+
               // blur 値を保持しておく
               target.dataset.textShadow = b;
             };
@@ -1510,21 +1510,21 @@
         // controlArea に横並びコンテナを追加
         controlArea.appendChild(sliderContainer);
         // ラベルとスライダーを横並びコンテナに追加
-        sliderContainer.appendChild(label);        
+        sliderContainer.appendChild(label);
         sliderContainer.appendChild(slider);
         sliderContainer.appendChild(decreaseBtn);
         sliderContainer.appendChild(increaseBtn);
-        
+
         panel.appendChild(modeContainer);
         panel.appendChild(controlArea);
         doc.body.appendChild(panel);
-        
+
         // Font Family セレクトボックス
         const fontFamilyContainer = doc.createElement('div');
         Object.assign(fontFamilyContainer.style, {
           display: 'flex',
         });
-        
+
         // ラベル
         const fontFamilyLabel = doc.createElement('div');
         fontFamilyLabel.textContent = 'Font family:';
@@ -1533,7 +1533,7 @@
           marginBottom: '4px'
         });
         fontFamilyContainer.appendChild(fontFamilyLabel);
-        
+
         // セレクトボックス
         const fontSelect = doc.createElement('select');
           Object.assign(fontSelect.style, {
@@ -1563,10 +1563,10 @@
           opt.textContent = font;
           fontSelect.appendChild(opt);
         });
-        
+
         // グローバル変数として現在のフォントを保持
         let currentFont = '游明朝';
-        
+
         // セレクト切り替え時にフォント適用
         fontSelect.addEventListener('change', () => {
           const font = fontSelect.value;
@@ -1582,7 +1582,7 @@
           const saveBtn = doc.getElementById('saveBtn');
           // 適用対象を配列にまとめる
           const elements = [target, pageLabel, yesButton, noButton, title, prettyLabel, jsonCopyBtn, cancelBtn, saveBtn];
-          
+
           if (font === '游明朝') {
             doc.body.style.fontFamily = '';
             elements.forEach(el => { if (el) el.style.fontFamily = ''; });
@@ -1606,10 +1606,10 @@
           });
         });
         fontFamilyContainer.appendChild(fontSelect);
-        
+
         // controlArea に追加
         controlArea.appendChild(fontFamilyContainer);
-        
+
         // 開くボタン 〇
         const fUIOpenBtn = doc.createElement('div');
         fUIOpenBtn.id = 'fontOpenBtn';
@@ -1625,11 +1625,11 @@
           zIndex: '10006'
         });
         doc.body.appendChild(fUIOpenBtn);
-      
+
         fUIOpenBtn.addEventListener('click', () => {
           panel.style.display = 'block';
         });
-      
+
         // 閉じるボタン ✕
         const fUICloseBtn = createCloseBtn();
         Object.assign(fUICloseBtn.style, {
@@ -1637,18 +1637,18 @@
           right: '9px',
         });
         panel.appendChild(fUICloseBtn);
-        
+
         fUICloseBtn.addEventListener('click', () => {
           panel.style.display = 'none';
         });
-      
+
         // 初期化
         updateControls();
-        
+
         // ==============================
         // Color Pickr
         // ==============================
-        
+
         // スコープ確保
         let applyStyle;
         let colorState;
@@ -1666,7 +1666,7 @@
           el.onerror = reject;
           doc.head.appendChild(el);
         });
-        
+
         // バージョン固定とSRI対応可能な形で読み込み
         Promise.all([
           load('link', {
@@ -1701,7 +1701,7 @@
               min-width: max-content;
               max-width: max-content;
             }
-          
+
             #pickrClose {
               font-size: 15px;
               font-weight: bolder;
@@ -1711,7 +1711,7 @@
               top: 5px;
               right: 7px;
             }
-          
+
             #dragHandle {
               cursor: move;
               padding: 0px;
@@ -1720,28 +1720,28 @@
               margin-right: 20px;
               background: #F4F4F4;
             }
-          
+
             #dragHandle:active {
               transform: none;
             }
-          
+
             #pickrContainer .row {
               display: flex;
               align-items: center;
               margin-bottom: 2px;
               gap: 5px;
             }
-          
+
             #pickrContainer .row.contrast-row {
               justify-content: flex-start;
               gap: 4px;
             }
-          
+
             #pickrContainer .row.contrast-row > strong {
               display: inline-block;
               min-width: 60px;
             }
-          
+
             #pickrContainer .label {
               font-weight: bold;
               font-family: monospace;
@@ -1753,7 +1753,7 @@
               font-weight: normal;
               font-size: 19px;
             }
-          
+
             .color-swatch {
               width: 30px;
               height: 30px;
@@ -1764,15 +1764,15 @@
               flex-direction: column;
               overflow: hidden;
             }
-          
+
             .color-swatch > div {
               flex: 1;
             }
-          
+
             .color-saved {
               border-bottom: 1px solid #999;
             }
-          
+
             .hex-display {
               font-family: monospace;
               font-size: 14px;
@@ -1785,7 +1785,7 @@
               width: 86px;
               height: 13px;
             }
-          
+
             .copy-btn {
               position: absolute;
               right: 55px;
@@ -1797,7 +1797,7 @@
               background: #F0FFEC;
               cursor: pointer;
             }
-          
+
             .hex-load-btn {
               cursor: pointer;
               padding: 2px 2px;
@@ -1807,11 +1807,11 @@
               background: #fafafa;
               border-radius: 4px;
             }
-          
+
             .hex-load-btn:active {
               transform: translateY(1px);
             }
-          
+
             .switch-bgfg {
               all: initial;
               font-family: monospace;
@@ -1824,11 +1824,11 @@
               text-align: center;
               margin-left: 3px;
             }
-          
+
             .switch-bgfg:active {
               transform: translateY(1px);
             }
-          
+
             input.contrast-display {
               font-family: monospace;
               font-size: 14px;
@@ -1840,12 +1840,12 @@
               border-radius: 4px;
               text-align: center;
             }
-      
+
             .btn-wrapper {
               position: relative;
               display: inline-block;
             }
-      
+
             #randomColorBtn {
               background: #E6FDFF;
               border: 1px solid #aaa;
@@ -1854,7 +1854,7 @@
               font-size: 15px;
               font-family: monospace;
             }
-            
+
             .click-block {
               position: absolute;
               left: 0;
@@ -1864,11 +1864,11 @@
               background: transparent;
               pointer-events: auto;
             }
-          
+
             #randomColorBtn:active {
               transform: translateY(1px);
             }
-          
+
             #bgLockIcon,
             #fgLockIcon {
               font-size: 14px;
@@ -1884,7 +1884,7 @@
               display: inline-flex;
               align-items:center;
             }
-      
+
             .pickr .pcr-button {
               height: 25px;
               width: 25px;
@@ -1895,7 +1895,7 @@
               background-size: 0;
               transition: all .3s;
             }
-          
+
             /* ---- .pcr-app 関連 ---- */
             .pcr-app {
               position: fixed !important;
@@ -1908,44 +1908,44 @@
               background: unset !important;
               border: 1px solid !important;
             }
-          
+
             .pcr-selection {
               height: 114px !important;
             }
-          
+
             .pcr-color-palette {
               height: auto !important;
               border: 1px solid !important;
               border-radius: 0px !important;
             }
-      
+
             .pcr-palette {
               border-radius: 0px !important;
             }
-          
+
             .pcr-color-preview {
               width: 22px !important;
               margin-right: 10px !important;
               border: 1px solid !important;
             }
-          
+
             .pcr-color-chooser {
               margin-left: 10px !important;
             }
-      
+
             .pcr-current-color {
               border-radius: 0px !important;
             }
-      
+
             .pcr-swatches{
               margin-top: .65em !important;
             }
-      
+
             .pcr-interaction {
               height: 25px !important;
               margin: 0px !important;
             }
-          
+
             .pcr-result {
               height: 20px !important;
               margin: 0px !important;
@@ -1957,7 +1957,7 @@
               border-radius: 4px !important;
               box-shadow: 0 0 0px !important;
             }
-          
+
             .pcr-save {
               position: relative !important;
               right: 10px !important;
@@ -1974,13 +1974,13 @@
               box-shadow: 0 0 0px !important;
             }
           `;
-          
+
           doc.head.appendChild(style);
           const container = doc.createElement('div');
           container.id = 'pickrContainer';
           container.innerHTML = `
             <div id="pickrClose">✕</div>
-          
+
             <div class="row">
               <div class="label">BG:</div>
               <div id="bgSwatch" class="color-swatch">
@@ -1992,7 +1992,7 @@
               <button class="copy-btn" data-target="bgHex">Copy</button>
               <div id="dragHandle" class="hex-load-btn">🟰</div>
             </div>
-          
+
             <div class="row">
               <div class="label">FG:</div>
               <div id="fgSwatch" class="color-swatch">
@@ -2004,7 +2004,7 @@
               <button class="copy-btn" data-target="fgHex">Copy</button>
               <button id="swapColorsBtn" class="switch-bgfg">↕</button>
             </div>
-          
+
             <div class="row">
               <div class="label label-lock">BG:</div>
               <label id="bgLockLabel">
@@ -2021,7 +2021,7 @@
                 <div class="click-block"></div>
               </div>
             </div>
-          
+
             <div class="row contrast-row" style="align-items: center;">
               <strong>Contrast:</strong>
               <span id="contrastRatio" style="width: 51px;">-</span>
@@ -2049,7 +2049,7 @@
             </div>
           `;
           doc.body.appendChild(container);
-      
+
           // ドラッグ関数呼び出し
           const dragHandle = doc.getElementById('dragHandle');
           const dragTarget  = doc.getElementById('pickrContainer');
@@ -2058,17 +2058,17 @@
             doc.getElementById('pickrContainer'),
             doc
           );
-      
+
           // bodyの色を取得しrgbをHex変換する関数
           const getHex = (prop) => {
             const rgb = getComputedStyle(doc.body)[prop];
             return rgbToHex(rgb);
           };
-      
+
           // applyStyle関数
           applyStyle = function (prop, value) {
             if (!value) return;
-      
+
             // color / background-color
             const id = prop === 'color' ? '__fgOverride' : '__bgOverride';
             let el = doc.getElementById(id);
@@ -2081,10 +2081,10 @@
             *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
               ${prop}: ${value};
             }`;
-      
+
             updateScrollbarColor();
           };
-          
+
           // scrollbar-colorを更新する関数
           const updateScrollbarColor = () => {
             let scrollbarEl = doc.getElementById('__scrollbarOverride');
@@ -2098,19 +2098,19 @@
               scrollbar-color: ${colorState.currentFg} ${colorState.currentBg};
             }`;
           };
-      
+
           const updateSwatch = (swatch, current, saved) => {
             if (!swatch) return;
             swatch.querySelector('.color-current').style.background = current;
             swatch.querySelector('.color-saved').style.background = saved
           };
-      
+
           updateColorHexDisplays = () => {
             doc.getElementById("bgHex").value = colorState.currentBg;
             doc.getElementById("fgHex").value = colorState.currentFg;
             updateLockIcons();
           };
-      
+
           // Pickr関連・状態変数の初期化
           const contrastEl = doc.getElementById('contrastRatio');
 
@@ -2129,11 +2129,11 @@
               colorState.currentFg,
               colorState.currentBg
             ));
-          
+
           // pcr-appドラッグ用グローバル変数を追加
           let globalDragStyle = null;
           let globalDragRuleIndex = null;
-          
+
           const initPickr = (id, prop) => {
             const swatch = doc.getElementById(id + 'Swatch');
             const isFg = id === 'fg';
@@ -2168,7 +2168,7 @@
                 },
               },
             });
-            
+
             pickr.on('init', instance => {
               win.setTimeout(() => {
                 doc.querySelectorAll('.pcr-app').forEach(app => {
@@ -2190,10 +2190,10 @@
                         height: 25px;
                       `;
                       saveBtn.insertAdjacentElement('afterend', dragBtn);
-            
+
                       // ドラッグ処理
                       let isDragging = false, offsetX = 0, offsetY = 0;
-            
+
                       // グローバルなドラッグ用CSSルールを使う
                       function applyDragCss(left, top) {
                         if (!globalDragStyle) {
@@ -2209,7 +2209,7 @@
                         const rule = `.pcr-app { left: ${left}px !important; top: ${top}px !important; right: auto !important; bottom: auto !important; position: fixed !important; }`;
                         globalDragRuleIndex = sheet.insertRule(rule, sheet.cssRules.length);
                       }
-            
+
                       dragBtn.addEventListener('mousedown', e => {
                         isDragging = true;
                         const rect = app.getBoundingClientRect();
@@ -2228,7 +2228,7 @@
                           isDragging = false;
                         }
                       });
-            
+
                       // タッチ対応
                       dragBtn.addEventListener('touchstart', e => {
                         if (e.touches.length !== 1) return;
@@ -2253,7 +2253,7 @@
                       });
                     }
                   }
-            
+
                   // Copyボタン追加
                   if (!app.querySelector('.pcr-copy')) {
                     const resultInput = app.querySelector('.pcr-result');
@@ -2274,7 +2274,7 @@
                         line-height: 17px;
                       `;
                       resultInput.insertAdjacentElement('afterend', hexCopyBtn);
-                      
+
                       hexCopyBtn.addEventListener("click", () => {
                         if (resultInput && resultInput.value !== "-") {
                           copyToClipboard(hexCopyBtn, resultInput.value);
@@ -2293,7 +2293,7 @@
               updateSwatch(swatch, hex, getSaved());
               updateContrast()
             });
-            
+
             pickr.on('save', (color) => {
               const hex = color.toHEXA().toString();
               setCurrent(hex);
@@ -2359,12 +2359,12 @@
           function updateLockIcons() {
             const bgLocked = doc.getElementById('color-toggle-bg-lock').checked;
             const fgLocked = doc.getElementById('color-toggle-fg-lock').checked;
-            
+
             const bgLockIcon = doc.getElementById('bgLockIcon');
             const fgLockIcon = doc.getElementById('fgLockIcon');
             bgLockIcon.textContent = bgLocked ? '🔒' : '🔓';
             fgLockIcon.textContent = fgLocked ? '🔒' : '🔓';
-            
+
             const bgColor = bgLocked
               ? colorState.savedBg
               : doc.getElementById('bgHex').value;
@@ -2372,10 +2372,10 @@
             const fgColor = fgLocked
               ? colorState.savedFg
               : doc.getElementById('fgHex').value;
-            
+
             bgLockIcon.style.background = bgColor;
             fgLockIcon.style.background = fgColor;
-            
+
             bgLockIcon.style.border = bgLocked ? `6px ridge ${bgColor}` : '';
             fgLockIcon.style.border = fgLocked ? `6px ridge ${fgColor}` : '';
             bgLockIcon.style.borderRadius = bgLocked ? '0px' : '4px';
@@ -2386,7 +2386,7 @@
           doc.getElementById('color-toggle-bg-lock').addEventListener('change', updateLockIcons);
           doc.getElementById('color-toggle-fg-lock').addEventListener('change', updateLockIcons);
           updateLockIcons();
-      
+
           doc.getElementById('bgHexLoad').onclick = () => {
             const val = doc.getElementById('bgHex').value.trim();
             if (/^#[0-9a-fA-F]{6}$/.test(val)) {
@@ -2403,7 +2403,7 @@
             fgPickr.show();
             updateLockIcons();
           };
-        
+
           function changeColors() {
             const bgLocked = doc.getElementById("color-toggle-bg-lock").checked;
             const fgLocked = doc.getElementById("color-toggle-fg-lock").checked;
@@ -2442,7 +2442,7 @@
                   colorState.currentFg = fgHex;
                   colorState.savedFg = fgHex;
                 }
-                
+
                 applyStyle("background-color", colorState.savedBg);
                 applyStyle("color", colorState.savedFg);
                 updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.currentBg);
@@ -2469,7 +2469,7 @@
 
           // Swapボタン
           doc.getElementById("swapColorsBtn").onclick = () => {
-            
+
             // ロック状態を無視してスワップ
             [colorState.currentFg, colorState.currentBg] = [colorState.currentBg, colorState.currentFg];
             [colorState.savedFg, colorState.savedBg] = [colorState.savedBg, colorState.savedFg];
@@ -2506,20 +2506,20 @@
               right: '18px',
               zIndex: '20000'
             });
-          
+
             pUIOpenBtn.onclick = () => {
               container.style.display = 'block';
               style.disabled = false;
               pUIOpenBtn.remove();
             };
-          
+
             doc.body.appendChild(pUIOpenBtn);
             return pUIOpenBtn;
           }
-          
+
           // 最初の □ ボタンを作成
           createPickrOpenButton();
-          
+
           // Pickr の閉じるボタンの処理
           doc.getElementById('pickrClose').onclick = () => {
             container.style.display = 'none';
@@ -2630,7 +2630,7 @@
             delete button.dataset.copying;
           }
         }
-      
+
         // ==============================
         // JSONで各値を保存/反映
         // ==============================
@@ -2802,7 +2802,7 @@
           for (let i = start; i < start + STYLES_PER_PAGE && i <= 99; i++) {
             updateApplyBtnColor(`Style${i}`);
           }
-          
+
           // 最終ページのみ「すべての保存済みJSONコピー」ボタンを追加
           if (page === maxPage) {
             const copyAllBtn = doc.createElement('button');
@@ -2965,7 +2965,7 @@
 
           // 編集済みデータで保存
           savedStyles[name] = confirmed;
-          
+
           win.alert(`☆ 保存しました!`);
           updateApplyBtnColor(name);
         }
@@ -2973,14 +2973,14 @@
         // オーバーレイを表示する関数
         let __saveConfirmOpen = false;
         function showSaveConfirmOverlay(name, initialData) {
-          
+
           // 二重表示を防ぐ
           if (__saveConfirmOpen) return Promise.resolve(false);
           __saveConfirmOpen = true;
           isSwitching = true;
           resetScrollSliders();
           disableBodyScroll();
-          
+
           return new Promise((resolve) => {
             // オーバーレイ
             const overlay = doc.createElement('div');
@@ -2996,7 +2996,7 @@
               align-items: center;
               z-index: 10005;
             `;
-          
+
             // コンテンツボックス
             const box = doc.createElement('div');
             box.style.cssText = `
@@ -3010,7 +3010,7 @@
               scrollbar-width: thin;
               z-index: 10008
             `;
-            
+
             // タイトル
             const title = doc.createElement('h3');
             title.textContent = `☆ ${name} に保存しますか?`;
@@ -3020,7 +3020,7 @@
               font-size: 16px;
               font-weight: bold;
             `;
-            
+
             // 上段コンテナ
             const topContainer = doc.createElement('div');
             topContainer.style.cssText = `
@@ -3029,7 +3029,7 @@
               align-items: center;
               gap: 8px;
             `;
-            
+
             // チェックボックス
             const prettyCheckbox = doc.createElement('input');
             prettyCheckbox.type = 'checkbox';
@@ -3038,7 +3038,7 @@
             prettyCheckbox.style.cssText = `
               cursor: pointer;
             `;
-            
+
             // ラベル
             const prettyLabel = doc.createElement('label');
             prettyLabel.htmlFor = 'prettyPrintCheckbox';
@@ -3128,23 +3128,23 @@
               cursor: pointer;
               font-size: 12px;
             `;
-            
+
             jsonCopyBtn.addEventListener("click", () => {
               copyToClipboard(jsonCopyBtn, preview.textContent, { default: "コピー", success: "コピー完了!" });
             });
-            
+
             topContainer.appendChild(prettyCheckbox);
             topContainer.appendChild(prettyLabel);
             topContainer.appendChild(jsonEditBtn);
             topContainer.appendChild(jsonCopyBtn);
-            
+
             // プレビューコンテナ
             const previewContainer = doc.createElement('div');
             previewContainer.style.cssText = `
               position: relative;
               margin: 0 0 20px 0;
             `;
-            
+
             // プレビュー内容
             const preview = doc.createElement('pre');
             preview.style.cssText = `
@@ -3175,7 +3175,7 @@
 
             // プリティプリントチェックイベント
             prettyCheckbox.onchange = () => updatePreviewText();
-            
+
             // 下段コンテナ
             const bottomContainer = doc.createElement('div');
             bottomContainer.style.cssText = `
@@ -3194,7 +3194,7 @@
               doc.removeEventListener('keydown', handleKeydown);
               resolve(result ? currentData : false);
             };
-            
+
             // キャンセルボタン
             const cancelBtn = doc.createElement('button');
             cancelBtn.textContent = 'キャンセル';
@@ -3209,7 +3209,7 @@
               font-size: 14px;
             `;
             cancelBtn.onclick = () => cleanupAndResolve(false);
-            
+
             // 保存ボタン
             const saveBtn = doc.createElement('button');
             saveBtn.textContent = '保存する';
@@ -3232,7 +3232,7 @@
               }
             };
             doc.addEventListener('keydown', handleKeydown);
-            
+
             // 組み立て
             previewContainer.appendChild(preview);
             bottomContainer.appendChild(cancelBtn);
@@ -3252,21 +3252,21 @@
               doc.getElementById('cancelBtn'),
               doc.getElementById('saveBtn')
             ];
-            
+
             if (currentFont && currentFont !== '游明朝') {
-              const fontFamily = currentFont === 'sans-serif' 
-                ? 'sans-serif' 
+              const fontFamily = currentFont === 'sans-serif'
+                ? 'sans-serif'
                 : `'${currentFont}', sans-serif`;
-              
+
               overlayElements.forEach(el => {
                 if (el) el.style.fontFamily = fontFamily;
               });
             }
-            
+
             // フォーカスをオーバーレイに移してキーボードの影響を抑える
             overlay.tabIndex = -1;
             overlay.focus();
-            
+
             // オーバーレイ背景クリック
             overlay.onclick = (e) => {
               if (e.target === overlay) cleanupAndResolve(false);
@@ -3277,14 +3277,14 @@
         // APPLYボタン
         function applyStyleByName(name) {
           const data = savedStyles[name];
-        
+
           if (!data) {
             return win.alert(`${name} は保存されていません`);
           }
-        
+
           const proceed = win.confirm(`☆ ${name} を反映します！`);
           if (!proceed) return;
-        
+
           if (applyStyleData(data)) {
             win.appConfig = data;
             createMenus();
@@ -3640,7 +3640,7 @@
 
           updateContrast();
           updateColorHexDisplays();
-          
+
           if (data.fontSize) target.style.fontSize = data.fontSize;
           if (data.fontWeight) target.style.fontWeight = data.fontWeight;
           if (data.textShadow !== null && data.textShadow !== undefined) {
@@ -3657,10 +3657,10 @@
           if (data.scrollSettings) {
             applyScrollSettings(data.scrollSettings);
           }
-          
+
           return true;
         }
-        
+
         // --- 保存済みのすべてのJSONを表示するボタンのイベント登録 ---
         doc.getElementById('viewAllJsonBtn').onclick = () => {
 
@@ -3880,7 +3880,7 @@
 
           return { _base: base, ...diffStyles };
         };
-        
+
         // ベース展開
         function mergeDeep(base, override) {
           const result = { ...base };
@@ -3906,7 +3906,7 @@
             Object.entries(styles).map(([name, diff]) => [name, mergeDeep(_base, diff)])
           );
         }
-        
+
         // ---テキスト選択メニュー---
         const novelText = doc.getElementById('novelDisplay');
         let pendingSelection = null;
@@ -4058,7 +4058,7 @@
 
             // 横位置
             if (cfg.side === 'right') {
-              div.style.left = (centerX + offset + win.scrollX) + 'px'; 
+              div.style.left = (centerX + offset + win.scrollX) + 'px';
             } else {
               div.style.left = (centerX - offset - width + win.scrollX) + 'px';
             }
