@@ -2822,6 +2822,7 @@
                 writingMode: 'horizontal-tb',
                 borderRadius: '2px',
                 position: 'absolute',
+                width: 'stretch',
               });
               updateButtonStyle(btn);
               return btn;
@@ -2838,25 +2839,10 @@
               return false;
             }
 
-            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー');
-            Object.assign(copyAllBtn.style, {
-              top: '99px',
-              height: '80px',
-            });
-            copyAllBtn.addEventListener('click', async () => {
-              if (Object.keys(savedStyles).length === 0) {
-                flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
-                return;
-              }
-              const json = JSON.stringify(extractBase(getSortedStyles()), null, 2);
-              copyToClipboard(copyAllBtn, json, { default: 'すべての保存済みJSONをコピー', success: 'コピーしました!' });
-            });
-            styleRows.appendChild(copyAllBtn);
-
             const randomApplyBtn = createLastPageBtn('Random Apply');
             Object.assign(randomApplyBtn.style, {
-              top: '185px',
-              height: 'stretch',
+              top: '95px',
+              height: '60px',
             });
             randomApplyBtn.addEventListener('click', () => {
               const savedKeys = Object.keys(savedStyles);
@@ -2872,6 +2858,21 @@
               applyStyleByName(randomKey);
             });
             styleRows.appendChild(randomApplyBtn);
+
+            const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー');
+            Object.assign(copyAllBtn.style, {
+              top: '163px',
+              height: 'stretch',
+            });
+            copyAllBtn.addEventListener('click', async () => {
+              if (Object.keys(savedStyles).length === 0) {
+                flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
+                return;
+              }
+              const json = JSON.stringify(extractBase(getSortedStyles()), null, 2);
+              copyToClipboard(copyAllBtn, json, { default: 'すべての保存済みJSONをコピー', success: 'コピーしました!' });
+            });
+            styleRows.appendChild(copyAllBtn);
           }
         }
 
