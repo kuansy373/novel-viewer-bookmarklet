@@ -2681,14 +2681,30 @@
             width: 144.33px;
             height: 243px;
           }
-          #onetapUI #pageNav {
+          #onetapUI #toolbar {
             display: flex;
             flex-direction: column;
-            align-self: flex-end;
-            margin-left: 23px;
+            justify-content: space-between;
+            margin-left: 16px;
             border-radius: 1px;
-            height: 148px;
+            height: 243px;
             gap: 6px;
+          }
+          #onetapUI #toolbarTop {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 13px;
+          }
+          #onetapUI .showAreaBtn {
+            height: 24px;
+          }
+          #onetapUI #toolbarBottom {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            height: 148px;
+            margin-left: 7px;
           }
           #onetapUI .page-btn {
             flex: 1;
@@ -2715,9 +2731,15 @@
             </div>
             <div style="display:flex; gap:4px; align-items:stretch; height: 243px;">
               <div id="styleRows" class="style-rows"></div>
-              <div id="pageNav">
-                <button id="prevPageBtn" class="button page-btn">◀</button>
-                <button id="nextPageBtn" class="button page-btn">▶</button>
+              <div id="toolbar">
+                <div id="toolbarTop">
+                  <button id="moveBtn" class="button showAreaBtn">MOVE</button>
+                  <button id="delBtn" class="button showAreaBtn">DEL</button>
+                </div>
+                <div id="toolbarBottom">
+                  <button id="prevPageBtn" class="button page-btn">◀</button>
+                  <button id="nextPageBtn" class="button page-btn">▶</button>
+                </div>
               </div>
             </div>
             <div class="button-set">
@@ -2749,9 +2771,11 @@
         onetapUI.querySelectorAll('.button').forEach(updateButtonStyle);
         onetapUI.querySelectorAll('.label').forEach(updateLabelStyle);
 
-        // 保存されたスタイルを保持するローカル変数
         const savedStyles = {};
+
         let lastRandomKey = null;
+        let isMoveMode = false;
+        let selectedStyleKey = null;
 
         // ページネーション：ボタンセット行を動的に描画
         function updatePage(page) {
@@ -2806,7 +2830,46 @@
             styleRows.appendChild(div);
 
             saveBtn.onclick = () => saveStyle(`Style${n}`);
-            applyBtn.onclick = () => applyStyleByName(`Style${n}`);
+
+            applyBtn.onclick = () => {
+              const name = `Style${n}`;
+
+              // 通常モード
+              if (!isMoveMode) {
+                applyStyleByName(name);
+                return;
+              }
+
+              // ===== 移動モード =====
+
+              // 未選択 → 選択
+              if (!selectedStyleKey) {
+                selectedStyleKey = name;
+                clearAllHighlights();
+                highlightApplyBtn(name);
+                return;
+              }
+
+              // 同じものを再クリック → 解除
+              if (selectedStyleKey === name) {
+                selectedStyleKey = null;
+                clearAllHighlights();
+                setApplyButtonsDimmed(true);
+                return;
+              }
+
+              // 別のものクリック → 入れ替え
+              swapStyles(selectedStyleKey, name);
+
+              // ボタン色更新
+              updateApplyBtnColor(selectedStyleKey);
+              updateApplyBtnColor(name);
+
+              // リセット
+              selectedStyleKey = null;
+              clearAllHighlights();
+              setApplyButtonsDimmed(true);
+            };
           }
 
           for (let i = start; i < start + STYLES_PER_PAGE && i <= 99; i++) {
@@ -2878,6 +2941,9 @@
             });
             styleRows.appendChild(copyAllBtn);
           }
+          if (isMoveMode) {
+            setApplyButtonsDimmed(true);
+          }
         }
 
         // 開くボタン ☆
@@ -2909,12 +2975,70 @@
         // UIをbodyに追加
         doc.body.appendChild(onetapUI);
 
+        // 初期ページを描画（Style1〜8）
+        updatePage(1);
+
         // ◀▶ページナビのイベント
         doc.getElementById('prevPageBtn').addEventListener('click', () => {
           updatePage(currentPage > 1 ? currentPage - 1 : maxPage);
         });
         doc.getElementById('nextPageBtn').addEventListener('click', () => {
           updatePage(currentPage < maxPage ? currentPage + 1 : 1);
+        });
+
+        function setApplyButtonsDimmed(dimmed) {
+          for (let i = 1; i <= 99; i++) {
+            const btn = doc.getElementById(`applyBtn${i}`);
+            if (!btn) continue;
+            if (dimmed) {
+              btn.style.borderStyle = 'dotted';
+            } else {
+              btn.style.border = '1px solid';
+            }
+          }
+        }
+
+        function highlightApplyBtn(name) {
+          const num = name.replace('Style', '');
+          const btn = doc.getElementById(`applyBtn${num}`);
+          if (btn) {
+              const bodyColor = getComputedStyle(doc.body).color;
+              btn.style.outline = `1.5px solid ${bodyColor}`;
+            }
+        }
+
+        function clearAllHighlights() {
+          for (let i = 1; i <= 99; i++) {
+            const btn = doc.getElementById(`applyBtn${i}`);
+            if (!btn) continue;
+            btn.style.outline = '';
+          }
+        }
+
+        function swapStyles(a, b) {
+          if (!savedStyles[a] || !savedStyles[b]) return;
+          const temp = savedStyles[a];
+          savedStyles[a] = savedStyles[b];
+          savedStyles[b] = temp;
+        }
+
+        const moveBtn = doc.getElementById('moveBtn');
+
+        moveBtn.addEventListener('click', () => {
+          isMoveMode = !isMoveMode;
+          selectedStyleKey = null;
+          clearAllHighlights();
+
+          if (isMoveMode) {
+            setApplyButtonsDimmed(true);
+
+            moveBtn.style.borderStyle = 'dashed';
+
+          } else {
+            setApplyButtonsDimmed(false);
+
+            moveBtn.style.border = '1px solid';
+          }
         });
 
         // APPLYボタンに保存済みスタイルの色を反映
@@ -2926,9 +3050,6 @@
           if (data.color) btn.style.color = data.color;
           if (data.backgroundColor) btn.style.backgroundColor = data.backgroundColor;
         }
-
-        // 初期ページを描画（Style1〜8）
-        updatePage(1);
 
         // RGB → HEX 変換関数
         function rgbToHex(rgb) {
@@ -3874,7 +3995,9 @@
 
           // トップレベルのbaseを最頻値で構築
           const base = {};
+          const EXCLUDE_BASE_KEYS = new Set(['color', 'backgroundColor']);
           for (const key of Object.keys(entries[0][1])) {
+            if (EXCLUDE_BASE_KEYS.has(key)) continue;
             const values = entries.map(([, s]) => s[key]);
 
             // 最頻値とその出現回数を取得
