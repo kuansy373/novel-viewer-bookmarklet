@@ -1059,6 +1059,10 @@
             align-items: center;
             gap: 4px;
             user-select: none;
+            pointer-events: none;
+          }
+          #scrollUI label > * {
+            pointer-events: auto;
           }
           #scrollUI .settingCheckbox {
             height: 15px;
@@ -1078,16 +1082,16 @@
         scrollUI.id = 'scrollUI';
         scrollUI.innerHTML = `
           <div class="title"> Slider Settings</div>
-          <label><input id="scrollRight" class="settingCheckbox" type="checkbox"> Right side</label>
-          <label><input id="scrollLeft" class="settingCheckbox" type="checkbox"> Left side</label>
-          <label>Shadow: <input id="scrollS" class="settingInputbox" type="number" value="0"> px</label>
-          <label>Opacity: <input id="scrollO" class="settingInputbox" type="number" min="0" max="100" value="100"> %</label>
-          <label><input id="scrollB" class="settingCheckbox" type="checkbox"> Border</label>
-          <label><input id="scrollC" class="settingCheckbox" type="checkbox"> Color in</label>
-          <label>Position: <input id="scrollX" class="settingInputbox" type="number" value="30"> px</label>
-          <label>Width: <input id="scrollW" class="settingInputbox" type="number" value="80"> px</label>
-          <label>Speed scale: <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</label>
-          <label><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</label>
+          <label><span><input id="scrollRight" class="settingCheckbox" type="checkbox"> Right side</span></label>
+          <label><span><input id="scrollLeft" class="settingCheckbox" type="checkbox"> Left side</span></label>
+          <label><span>Shadow :  <input id="scrollS" class="settingInputbox" type="number" value="0"> px</span></label>
+          <label><span>Opacity :  <input id="scrollO" class="settingInputbox" type="number" min="0" max="100" value="100"> %</span></label>
+          <label><span><input id="scrollB" class="settingCheckbox" type="checkbox"> Border</span></label>
+          <label><span><input id="scrollC" class="settingCheckbox" type="checkbox"> Color in</span></label>
+          <label><span>Position :  <input id="scrollX" class="settingInputbox" type="number" value="30"> px</span></label>
+          <label><span>Width :  <input id="scrollW" class="settingInputbox" type="number" value="80"> px</span></label>
+          <label><span>Speed scale :  <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</span></label>
+          <label><span><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</span></label>
         `;
         doc.body.appendChild(scrollUI);
 
