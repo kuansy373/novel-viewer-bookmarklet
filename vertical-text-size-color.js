@@ -2083,21 +2083,26 @@
               ${prop}: ${value};
             }`;
 
-            updateScrollbarColor();
+            updateGlobalColors();
           };
 
-          // scrollbar-colorを更新する関数
-          const updateScrollbarColor = () => {
-            let scrollbarEl = doc.getElementById('__scrollbarOverride');
-            if (!scrollbarEl) {
-              scrollbarEl = doc.createElement('style');
-              scrollbarEl.id = '__scrollbarOverride';
-              doc.head.appendChild(scrollbarEl);
+          // その他のプロパティを更新する関数
+          const updateGlobalColors = () => {
+            let styleEl = doc.getElementById('__globalColorOverride');
+            if (!styleEl) {
+              styleEl = doc.createElement('style');
+              styleEl.id = '__globalColorOverride';
+              doc.head.appendChild(styleEl);
             }
-            scrollbarEl.textContent = `
+
+            styleEl.textContent = `
+            :root {
+              --body-fg-color: ${colorState.currentFg};
+            }
             * {
               scrollbar-color: ${colorState.currentFg} ${colorState.currentBg};
             }`;
+
           };
 
           const updateSwatch = (swatch, current, saved) => {
@@ -2834,19 +2839,19 @@
             applyBtn.onclick = () => {
               const name = `Style${n}`;
 
-              // 通常モード
+              // === 通常モード ===
               if (!isMoveMode) {
                 applyStyleByName(name);
                 return;
               }
 
-              // ===== 移動モード =====
-
+              // === 移動モード ===
               // 未選択 → 選択
               if (!selectedStyleKey) {
                 selectedStyleKey = name;
                 clearAllHighlights();
                 highlightApplyBtn(name);
+                syncMoveBtnStyle(name);
                 return;
               }
 
@@ -2855,6 +2860,9 @@
                 selectedStyleKey = null;
                 clearAllHighlights();
                 setApplyButtonsDimmed(true);
+                moveBtn.style.color = '';
+                moveBtn.style.backgroundColor = '';
+                moveBtn.style.outline = '2px dotted';
                 return;
               }
 
@@ -2911,7 +2919,8 @@
               top: '95px',
               height: '60px',
             });
-            randomApplyBtn.addEventListener('click', () => {
+
+            randomApplyBtn.onclick = () => {
               const savedKeys = Object.keys(savedStyles);
               if (savedKeys.length === 0) {
                 flashText(randomApplyBtn, 'No styles saved yet', 'Random Apply', 'notifying');
@@ -2923,7 +2932,8 @@
               const randomKey = candidates[Math.floor(Math.random() * candidates.length)];
               lastRandomKey = randomKey;
               applyStyleByName(randomKey);
-            });
+            };
+
             styleRows.appendChild(randomApplyBtn);
 
             const copyAllBtn = createLastPageBtn('すべての保存済みJSONをコピー');
@@ -2931,14 +2941,16 @@
               top: '163px',
               height: 'stretch',
             });
-            copyAllBtn.addEventListener('click', async () => {
+
+            copyAllBtn.onclick = () => {
               if (Object.keys(savedStyles).length === 0) {
-                flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'copying');
+                flashText(copyAllBtn, '保存スタイルがありません', 'すべての保存済みJSONをコピー', 'flashCopying');
                 return;
               }
               const json = JSON.stringify(extractBase(getSortedStyles()), null, 2);
               copyToClipboard(copyAllBtn, json, { default: 'すべての保存済みJSONをコピー', success: 'コピーしました!' });
-            });
+            };
+
             styleRows.appendChild(copyAllBtn);
           }
           if (isMoveMode) {
@@ -2986,12 +2998,13 @@
           updatePage(currentPage < maxPage ? currentPage + 1 : 1);
         });
 
+        // MOVEボタンのイベント
         function setApplyButtonsDimmed(dimmed) {
           for (let i = 1; i <= 99; i++) {
             const btn = doc.getElementById(`applyBtn${i}`);
             if (!btn) continue;
             if (dimmed) {
-              btn.style.borderStyle = 'dotted';
+              btn.style.border = '1px dotted';
             } else {
               btn.style.border = '1px solid';
             }
@@ -3002,9 +3015,18 @@
           const num = name.replace('Style', '');
           const btn = doc.getElementById(`applyBtn${num}`);
           if (btn) {
-              const bodyColor = getComputedStyle(doc.body).color;
-              btn.style.outline = `1.5px solid ${bodyColor}`;
-            }
+            btn.style.border = 'none';
+            btn.style.outline = `2px solid var(--body-fg-color)`;
+          }
+        }
+
+        function syncMoveBtnStyle(name) {
+          const num = name.replace('Style', '');
+          const applyBtn = doc.getElementById(`applyBtn${num}`);
+          if (!applyBtn) return;
+          moveBtn.style.color = applyBtn.style.color;
+          moveBtn.style.backgroundColor = applyBtn.style.backgroundColor;
+          moveBtn.style.outline = '1px dotted var(--body-fg-color)'
         }
 
         function clearAllHighlights() {
@@ -3020,6 +3042,10 @@
           const temp = savedStyles[a];
           savedStyles[a] = savedStyles[b];
           savedStyles[b] = temp;
+          moveBtn.style.color = '';
+          moveBtn.style.backgroundColor = '';
+          moveBtn.style.border = 'none';
+          moveBtn.style.outline = '2px dotted currentColor';
         }
 
         const moveBtn = doc.getElementById('moveBtn');
@@ -3031,13 +3057,14 @@
 
           if (isMoveMode) {
             setApplyButtonsDimmed(true);
-
-            moveBtn.style.borderStyle = 'dashed';
-
+            moveBtn.style.border = 'none';
+            moveBtn.style.outline = '2px dotted';
           } else {
             setApplyButtonsDimmed(false);
-
+            moveBtn.style.color = '';
+            moveBtn.style.backgroundColor = '';
             moveBtn.style.border = '1px solid';
+            moveBtn.style.outline = 'none'
           }
         });
 
