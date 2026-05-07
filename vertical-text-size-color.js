@@ -2955,6 +2955,9 @@
           }
           if (isMoveMode) {
             setApplyButtonsDimmed(true);
+            if (selectedStyleKey) {
+              highlightApplyBtn(selectedStyleKey);
+            }
           }
         }
 
@@ -3038,10 +3041,20 @@
         }
 
         function swapStyles(a, b) {
-          if (!savedStyles[a] || !savedStyles[b]) return;
           const temp = savedStyles[a];
-          savedStyles[a] = savedStyles[b];
-          savedStyles[b] = temp;
+
+          if (savedStyles[b] === undefined) {
+            delete savedStyles[a];
+          } else {
+            savedStyles[a] = savedStyles[b];
+          }
+
+          if (temp === undefined) {
+            delete savedStyles[b];
+          } else {
+            savedStyles[b] = temp;
+          }
+
           moveBtn.style.color = '';
           moveBtn.style.backgroundColor = '';
           moveBtn.style.border = 'none';
@@ -3073,9 +3086,14 @@
           const num = name.replace('Style', '');
           const data = savedStyles[name];
           const btn = doc.getElementById(`applyBtn${num}`);
-          if (!btn || !data) return;
-          if (data.color) btn.style.color = data.color;
-          if (data.backgroundColor) btn.style.backgroundColor = data.backgroundColor;
+          if (!btn) return;
+          if (!data) {
+            btn.style.color = '';
+            btn.style.backgroundColor = '';
+            return;
+          }
+          btn.style.color = data.color || '';
+          btn.style.backgroundColor = data.backgroundColor || '';
         }
 
         // RGB → HEX 変換関数
