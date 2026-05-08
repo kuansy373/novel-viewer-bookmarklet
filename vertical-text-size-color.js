@@ -1667,7 +1667,7 @@
         // ==============================
 
         // スコープ確保
-        let applyStyle;
+        let applyColor;
         let colorState;
         let updateContrast;
         let updateColorHexDisplays;
@@ -2104,8 +2104,8 @@
             return rgbToHex(rgb);
           };
 
-          // applyStyle関数
-          applyStyle = function (prop, value) {
+          // applyColor関数
+          applyColor = function (prop, value) {
             if (!value) return;
 
             // color / background-color
@@ -2310,7 +2310,7 @@
             pickr.on('change', (color) => {
               const hex = color.toHEXA().toString();
               setCurrent(hex);
-              applyStyle(prop, hex);
+              applyColor(prop, hex);
               updateSwatch(swatch, hex, getSaved());
               updateContrast()
             });
@@ -2319,7 +2319,7 @@
               const hex = color.toHEXA().toString();
               setCurrent(hex);
               setSaved(hex);
-              applyStyle(prop, hex);
+              applyColor(prop, hex);
               updateSwatch(swatch, hex, hex);
               updateContrast();
               updateLockIcons();
@@ -2329,13 +2329,13 @@
 
             pickr.on('hide', () => {
               setCurrent(getSaved());
-              applyStyle(prop, getSaved());
+              applyColor(prop, getSaved());
               updateSwatch(swatch, getSaved(), getSaved());
               updateContrast();
             });
 
             updateSwatch(swatch, getCurrent(), getSaved());
-            applyStyle(prop, getCurrent());
+            applyColor(prop, getCurrent());
             updateContrast();
             return pickr
           };
@@ -2354,7 +2354,7 @@
               setColor: (color) => {
                 colorState.currentBg = color;
                 colorState.savedBg = color;
-                applyStyle('background-color', color);
+                applyColor('background-color', color);
                 updateSwatch(doc.getElementById('bgSwatch'), color, color);
                 updateContrast();
               },
@@ -2365,7 +2365,7 @@
               setColor: (color) => {
                 colorState.currentFg = color;
                 colorState.savedFg = color;
-                applyStyle('color', color);
+                applyColor('color', color);
                 updateSwatch(doc.getElementById('fgSwatch'), color, color);
                 updateContrast();
               },
@@ -2464,8 +2464,8 @@
                   colorState.savedFg = fgHex;
                 }
 
-                applyStyle("background-color", colorState.savedBg);
-                applyStyle("color", colorState.savedFg);
+                applyColor("background-color", colorState.savedBg);
+                applyColor("color", colorState.savedFg);
                 updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.currentBg);
                 updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.currentFg);
                 updateColorHexDisplays();
@@ -2495,8 +2495,8 @@
             [colorState.currentFg, colorState.currentBg] = [colorState.currentBg, colorState.currentFg];
             [colorState.savedFg, colorState.savedBg] = [colorState.savedBg, colorState.savedFg];
 
-            applyStyle("color", colorState.currentFg);
-            applyStyle("background-color", colorState.currentBg);
+            applyColor("color", colorState.currentFg);
+            applyColor("background-color", colorState.currentBg);
             updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.savedBg);
             updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.savedFg);
             updateColorHexDisplays();
@@ -3851,7 +3851,7 @@
           if (data.color) {
             const hex = data.color;
             colorState.currentFg = colorState.savedFg = hex;
-            applyStyle('color', hex);
+            applyColor('color', hex);
             win.__fgHSL = hexToHSL(hex);
             const fgHex = doc.getElementById('fgHex');
             if (fgHex) fgHex.value = hex;
@@ -3861,7 +3861,7 @@
           if (data.backgroundColor) {
             const hex = data.backgroundColor;
             colorState.currentBg = colorState.savedBg = hex;
-            applyStyle('background-color', hex);
+            applyColor('background-color', hex);
             win.__bgHSL = hexToHSL(hex);
             const bgHex = doc.getElementById('bgHex');
             if (bgHex) bgHex.value = hex;
