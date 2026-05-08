@@ -1698,6 +1698,20 @@
             crossorigin: 'anonymous'
           })
         ]).then(() => {
+          // 既存イベントを破棄
+          if (win.__pickrAbortController) {
+            win.__pickrAbortController.abort();
+          }
+
+          // 新しい controller
+          const abortController = new AbortController();
+          win.__pickrAbortController = abortController;
+
+          // addEventListener 用 signal
+          const listenerOptions = {
+            signal: abortController.signal
+          };
+
           const style = doc.createElement('style');
           const PickrClass = win.Pickr;
           style.textContent = `
@@ -2137,8 +2151,8 @@
               --current-fg: ${colorState.currentFg};
               --current-bg: ${colorState.currentBg};
             }
-            * {
-                scrollbar-color: var(--current-fg) var(--current-bg);
+            html {
+              scrollbar-color: var(--current-fg) var(--current-bg);
             }`;
           };
 
@@ -2251,7 +2265,7 @@
                         applyDragCss(rect.left, rect.top);
                         e.preventDefault();
                         e.stopPropagation();
-                      });
+                      }, listenerOptions);
                       doc.addEventListener('mousemove', e => {
                         if (!isDragging) return;
                         applyDragCss(e.clientX - offsetX, e.clientY - offsetY);
@@ -2260,7 +2274,7 @@
                         if (isDragging) {
                           isDragging = false;
                         }
-                      });
+                      }, listenerOptions);
 
                       // タッチ対応
                       dragBtn.addEventListener('touchstart', e => {
@@ -2278,12 +2292,15 @@
                         if (!isDragging || e.touches.length !== 1) return;
                         const touch = e.touches[0];
                         applyDragCss(touch.clientX - offsetX, touch.clientY - offsetY);
-                      }, { passive: false });
+                      }, {
+                        passive: false,
+                        signal: abortController.signal
+                      });
                       doc.addEventListener('touchend', () => {
                         if (isDragging) {
                           isDragging = false;
                         }
-                      });
+                      }, listenerOptions);
                     }
                   }
 
@@ -2428,44 +2445,38 @@
           function changeColors() {
             const bgLocked = doc.getElementById("color-toggle-bg-lock").checked;
             const fgLocked = doc.getElementById("color-toggle-fg-lock").checked;
+
             if (bgLocked && fgLocked) { win.alert("BGとFGの両方がロックされています");
               return;
             }
-            const contrastMin = parseFloat(doc.getElementById("contrastMin").value) || 1;
-            const contrastMax = parseFloat(doc.getElementById("contrastMax").value) || 21;
+
+            const contrastMin = parseFloat(doc.getElementById("contrastMin").value);
+            const contrastMax = parseFloat(doc.getElementById("contrastMax").value);
             let trials = 0;
             const maxTrials = 300;
 
-            // HSLオブジェクトが不正な場合は初期化
-            if (!win.__bgHSL || typeof win.__bgHSL.h !== 'number' || typeof win.__bgHSL.s !== 'number' || typeof win.__bgHSL.l !== 'number') {
-              win.__bgHSL = hexToHSL(colorState.currentBg);
+            if (isNaN(contrastMin) || isNaN(contrastMax) ||contrastMin > 21 || contrastMax < 1 || contrastMin > contrastMax) {
+              win.alert("指定されたコントラスト範囲が無効です\n（1〜21で指定してください）");
+              return;
             }
-            if (!win.__fgHSL || typeof win.__fgHSL.h !== 'number' || typeof win.__fgHSL.s !== 'number' || typeof win.__fgHSL.l !== 'number') {
-              win.__fgHSL = hexToHSL(colorState.currentFg);
-            }
+
             while (trials < maxTrials) {
               trials++;
-              if (!bgLocked) {
-                win.__bgHSL = getRandomHSL()
-              }
-              if (!fgLocked) {
-                win.__fgHSL = getRandomHSL()
-              }
-              const bgHex = hslToHex(win.__bgHSL.h, win.__bgHSL.s, win.__bgHSL.l);
-              const fgHex = hslToHex(win.__fgHSL.h, win.__fgHSL.s, win.__fgHSL.l);
+              const bgHex = bgLocked
+                ? colorState.currentBg
+                : hslToHex(...Object.values(getRandomHSL()));
+              const fgHex = fgLocked
+                ? colorState.currentFg
+                : hslToHex(...Object.values(getRandomHSL()));
+
               const ratio = parseFloat(getContrast(fgHex, bgHex));
               if (ratio >= contrastMin && ratio <= contrastMax) {
-                if (!bgLocked) {
-                  colorState.currentBg = bgHex;
-                  colorState.savedBg = bgHex;
-                }
-                if (!fgLocked) {
-                  colorState.currentFg = fgHex;
-                  colorState.savedFg = fgHex;
-                }
-
+                // 適用
+                if (!bgLocked) { colorState.currentBg = bgHex; colorState.savedBg = bgHex; }
+                if (!fgLocked) { colorState.currentFg = fgHex; colorState.savedFg = fgHex; }
                 applyColor("background-color", colorState.savedBg);
                 applyColor("color", colorState.savedFg);
+
                 updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.currentBg);
                 updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.currentFg);
                 updateColorHexDisplays();
@@ -2474,7 +2485,7 @@
                 return;
               }
             }
-            win.alert("指定されたコントラスト範囲に合うランダム色の組み合わせが見つかりませんでした")
+            win.alert("指定されたコントラスト範囲に合うランダム色の組み合わせが見つかりませんでした");
           }
           doc.getElementById("randomColorBtn").onclick = changeColors;
 
@@ -2546,7 +2557,6 @@
             style.disabled = true;
             createPickrOpenButton();
           };
-
         }).catch((err) => {
           win.alert("Pickr の読み込みに失敗しました。CSP によってブロックされている可能性があります。");
           console.error("Pickr load error:", err);
