@@ -141,8 +141,11 @@
         background: #F4F4F4;
         font-size: 14px;
         padding: 1px 3px;
-        margin-top: -3px;
+        margin-top: -4px;
         cursor: move;
+        color: #8578c1;
+        width: 19px;
+        height: 23px;
       `,
       valueSpan: `
         float: right;
@@ -172,7 +175,7 @@
         <div id="contentContainer" style="${panelStyles.contentContainer}">
           <div style="${panelStyles.header}">
             🔖 テキスト情報
-            <div id="dragHandle" style="${panelStyles.dragHandle}">🟰</div>
+            <div id="dragHandle" style="${panelStyles.dragHandle}">${createEqualsIcon()}</div>
           </div>
           <div>
             <strong>総文字数:</strong>
@@ -256,6 +259,16 @@
           popupRetry.style.textDecoration = evtType === 'mouseenter' ? 'underline' : 'none';
         });
       });
+    }
+
+    // ドラッグボタン
+    function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
+      return `
+      <svg width="100%" height="100%" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="22" height="24" rx="4" fill="${bg}"/>
+        <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
+        <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
+      </svg>`;
     }
 
     // ドラッグ関数
@@ -1719,10 +1732,10 @@
             #dragHandle {
               cursor: move;
               padding: 0px;
-              padding-bottom: 2px;
-              padding-left: 0.3px;
               margin-right: 20px;
               background: #F4F4F4;
+              height: 25px;
+              width: 22px;
             }
 
             #dragHandle:active {
@@ -1881,6 +1894,9 @@
               display: inline-block;
               user-select: none;
             }
+            #fgLockIcon {
+              border-color: var(--current-bg);
+            }
 
             #bgLockLabel,
             #fgLockLabel {
@@ -1977,6 +1993,28 @@
               color: #000000 !important;
               box-shadow: 0 0 0px !important;
             }
+
+            .pcr-drag-handle {
+              margin: 0px !important;
+              cursor: move;
+              border: 1px solid #aaa;
+              border-radius: 4px;
+              background: #F4F4F4;
+              height: 25px;
+            }
+
+            .pcr-copy {
+              position: relative;
+              right: 20px;
+              margin: 0px !important;
+              cursor: pointer;
+              border: 1px solid #999;
+              border-radius: 4px;
+              color: #000000;
+              background: #F0FFEC;
+              font-size: 12px;
+              line-height: 17px;
+            }
           `;
 
           doc.head.appendChild(style);
@@ -1994,7 +2032,7 @@
               <button id="bgHexLoad" class="hex-load-btn">⇦</button>
               <input id="bgHex" class="hex-display" value="-">
               <button class="copy-btn" data-target="bgHex">Copy</button>
-              <div id="dragHandle" class="hex-load-btn">🟰</div>
+              <div id="dragHandle" class="hex-load-btn">${createEqualsIcon()}</div>
             </div>
 
             <div class="row">
@@ -2094,15 +2132,14 @@
               styleEl.id = '__globalColorOverride';
               doc.head.appendChild(styleEl);
             }
-
             styleEl.textContent = `
             :root {
-              --body-fg-color: ${colorState.currentFg};
+              --current-fg: ${colorState.currentFg};
+              --current-bg: ${colorState.currentBg};
             }
             * {
-              scrollbar-color: ${colorState.currentFg} ${colorState.currentBg};
+                scrollbar-color: var(--current-fg) var(--current-bg);
             }`;
-
           };
 
           const updateSwatch = (swatch, current, saved) => {
@@ -2183,18 +2220,8 @@
                     const saveBtn = app.querySelector('.pcr-save');
                     if (saveBtn) {
                       const dragBtn = doc.createElement('button');
-                      dragBtn.textContent = '🟰';
+                      dragBtn.innerHTML = createEqualsIcon();
                       dragBtn.className = 'pcr-drag-handle';
-                      dragBtn.style.cssText = `
-                        margin: 0px !important;
-                        cursor: move;
-                        font-size: 16px;
-                        padding: 0px 4px 3px;
-                        border: 1px solid #aaa;
-                        border-radius: 4px;
-                        background: #F4F4F4;
-                        height: 25px;
-                      `;
                       saveBtn.insertAdjacentElement('afterend', dragBtn);
 
                       // ドラッグ処理
@@ -2267,18 +2294,6 @@
                       const hexCopyBtn = doc.createElement('button');
                       hexCopyBtn.textContent = 'Copy';
                       hexCopyBtn.className = 'pcr-copy';
-                      hexCopyBtn.style.cssText = `
-                        position: relative;
-                        right: 20px;
-                        margin: 0px !important;
-                        cursor: pointer;
-                        border: 1px solid #999;
-                        border-radius: 4px;
-                        color: #000000;
-                        background: #F0FFEC;
-                        font-size: 12px;
-                        line-height: 17px;
-                      `;
                       resultInput.insertAdjacentElement('afterend', hexCopyBtn);
 
                       hexCopyBtn.addEventListener("click", () => {
@@ -2485,7 +2500,6 @@
             updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.savedBg);
             updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.savedFg);
             updateColorHexDisplays();
-            updateContrast();
             win.__bgHSL = hexToHSL(colorState.currentBg);
             win.__fgHSL = hexToHSL(colorState.currentFg);
             updateLockIcons();
@@ -3019,7 +3033,7 @@
           const btn = doc.getElementById(`applyBtn${num}`);
           if (btn) {
             btn.style.border = 'none';
-            btn.style.outline = `2px solid var(--body-fg-color)`;
+            btn.style.outline = `2px solid var(--current-fg)`;
           }
         }
 
@@ -3029,7 +3043,7 @@
           if (!applyBtn) return;
           moveBtn.style.color = applyBtn.style.color;
           moveBtn.style.backgroundColor = applyBtn.style.backgroundColor;
-          moveBtn.style.outline = '1px dotted var(--body-fg-color)'
+          moveBtn.style.outline = '1px dotted var(--current-fg)'
         }
 
         function clearAllHighlights() {
