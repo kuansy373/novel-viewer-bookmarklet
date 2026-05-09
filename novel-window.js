@@ -236,7 +236,7 @@ if (container && data) {
     overlayElements.overlay.addEventListener('click', handleOverlayClick);
   }
 
-  // 表示
+  // 初回表示
   let currentIndex = 0;
   win.renderPart(currentIndex);
 
@@ -1054,17 +1054,18 @@ if (container && data) {
       crossorigin: 'anonymous'
     })
   ]).then(() => {
-    // ドラッグのイベントリスナーを削除
-    let pickrAbortController;
-
-    if (pickrAbortController) {
-      pickrAbortController.abort();
+    // 既存イベントを破棄
+    if (win.__pickrAbortController) {
+      win.__pickrAbortController.abort();
     }
 
-    pickrAbortController = new AbortController();
+    // 新しい controller
+    const abortController = new AbortController();
+    win.__pickrAbortController = abortController;
 
+    // addEventListener 用 signal
     const listenerOptions = {
-      signal: pickrAbortController.signal
+      signal: abortController.signal
     };
 
     const style = doc.createElement('style');
@@ -1621,12 +1622,10 @@ if (container && data) {
                   e.preventDefault();
                   e.stopPropagation();
                 }, listenerOptions);
-
                 doc.addEventListener('mousemove', e => {
                   if (!isDragging) return;
                   applyDragCss(e.clientX - offsetX, e.clientY - offsetY);
                 });
-
                 doc.addEventListener('mouseup', () => {
                   if (isDragging) {
                     isDragging = false;
@@ -1645,16 +1644,14 @@ if (container && data) {
                   e.preventDefault();
                   e.stopPropagation();
                 });
-
                 doc.addEventListener('touchmove', e => {
                   if (!isDragging || e.touches.length !== 1) return;
                   const touch = e.touches[0];
                   applyDragCss(touch.clientX - offsetX, touch.clientY - offsetY);
                 }, {
                   passive: false,
-                  signal: pickrAbortController.signal
+                  signal: abortController.signal
                 });
-
                 doc.addEventListener('touchend', () => {
                   if (isDragging) {
                     isDragging = false;
