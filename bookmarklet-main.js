@@ -652,7 +652,7 @@
           <script>
           window.__NOVEL_DATA__ = ${safeJson};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@1e45228/novel-window.js?v=${Date.now()}"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@a8d4120/novel-window.js"></script>
         </body>
         </html>
       `;
