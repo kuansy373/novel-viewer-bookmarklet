@@ -2324,6 +2324,14 @@
               }, 0);
             });
 
+            pickr.on('show', (color) => {
+              const hex = color.toHEXA().toString();
+              setCurrent(hex);
+              applyColor(prop, hex);
+              updateSwatch(swatch, hex, getSaved());
+              updateContrast();
+            });
+
             pickr.on('change', (color) => {
               const hex = color.toHEXA().toString();
               setCurrent(hex);
