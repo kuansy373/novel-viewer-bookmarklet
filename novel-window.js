@@ -2,12 +2,38 @@ console.log('novel-window loaded');
 
 const data = window.__NOVEL_DATA__;
 
-console.log(data);
+const {
+  parts,
+  pageCharCounts,
+  validPageCount
+} = data;
 
-const container =
-  document.getElementById('novelDisplay');
+const container = document.getElementById('novelDisplay');
 
-if (container && data) {
-  container.textContent =
-    'novel-window.js 読み込み成功';
+function renderPart(pageIndex) {
+  container.innerHTML = '';
+
+  const frag = document.createDocumentFragment();
+
+  const page = parts[pageIndex] || {
+    overlap: [],
+    main: []
+  };
+
+  for (const chunkHTML of page.overlap) {
+    const span = document.createElement('span');
+    span.style.opacity = '0.5';
+    span.innerHTML = chunkHTML;
+    frag.appendChild(span);
+  }
+
+  for (const chunkHTML of page.main) {
+    const span = document.createElement('span');
+    span.innerHTML = chunkHTML;
+    frag.appendChild(span);
+  }
+
+  container.appendChild(frag);
 }
+
+renderPart(0);

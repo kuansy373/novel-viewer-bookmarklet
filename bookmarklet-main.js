@@ -582,16 +582,6 @@
       prevEndVisiblePos = endVisiblePos;
     }
 
-    // ページが有効かチェックする関数
-    function isValidPage(pageIndex) {
-      return pageIndex >= 0 &&
-             pageIndex < parts.length &&
-             pageCharCounts[pageIndex] > 0;
-    }
-
-    // 有効なページ数を計算
-    const validPageCount = pageCharCounts.filter(count => count > 0).length;
-
     // 新しいウィンドウを開く関数
     function openNovelWindow() {
 
@@ -653,6 +643,11 @@
       if (!win) {
         alert('ポップアップがブロックされました');
       }
+
+      win.addEventListener('load', () => {
+        URL.revokeObjectURL(url);
+      }, { once: true });
+
     }
     openNovelWindow();
   }
