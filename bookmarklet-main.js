@@ -670,7 +670,11 @@
       }
 
       win.addEventListener('load', () => {
-        URL.revokeObjectURL(url);
+        try { URL.revokeObjectURL(url); } catch (e) {}
+
+        win.createEqualsIcon = createEqualsIcon;
+        win.makeDraggable = makeDraggable;
+
       }, { once: true });
     }
     openNovelWindow();
