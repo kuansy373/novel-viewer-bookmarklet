@@ -1,6 +1,9 @@
-console.log('novel-window loaded 3');
+console.log('novel-window loaded 4');
 
-const data = window.__NOVEL_DATA__;
+const win = window;
+const doc = document;
+
+const data = win.__NOVEL_DATA__;
 
 const {
   parts,
@@ -8,7 +11,7 @@ const {
   validPageCount
 } = data;
 
-const container = document.getElementById('novelDisplay');
+const container = doc.getElementById('novelDisplay');
 if (container && data) {
 
   // レンダリング
@@ -41,7 +44,7 @@ if (container && data) {
 
   // ページ切り替えオーバーレイ作成関数
   function createOverlay() {
-    const overlay = createElement('div');
+    const overlay = doc.createElement('div');
     overlay.id = 'page-switch-overlay';
     overlay.style.cssText = `
       position: fixed;
@@ -56,7 +59,7 @@ if (container && data) {
       z-index: 10005;
     `;
 
-    const dialog = createElement('div');
+    const dialog = doc.createElement('div');
     dialog.style.cssText = `
       padding: 30px;
       border-radius: 6px;
@@ -64,7 +67,7 @@ if (container && data) {
       max-width: 400px;
     `;
 
-    const message = createElement('p');
+    const message = doc.createElement('p');
     message.id = 'overlay-message';
     message.style.cssText = `
       font-size: 18px;
@@ -72,7 +75,7 @@ if (container && data) {
       color: #333;
     `;
 
-    const inputContainer = createElement('div');
+    const inputContainer = doc.createElement('div');
     inputContainer.style.cssText = `
       display: flex;
       flex-direction: column;
@@ -82,7 +85,7 @@ if (container && data) {
       margin-bottom: 20px;
     `;
 
-    const pageInput = createElement('input');
+    const pageInput = doc.createElement('input');
     pageInput.type = 'number';
     pageInput.min = '1';
     pageInput.id = 'page-input';
@@ -94,7 +97,7 @@ if (container && data) {
       text-align: center;
     `;
 
-    const pageLabel = createElement('span');
+    const pageLabel = doc.createElement('span');
     pageLabel.textContent = 'ページ目に移動しますか?';
     pageLabel.id = 'pageLabel';
     pageLabel.style.cssText = `
@@ -105,15 +108,15 @@ if (container && data) {
     inputContainer.appendChild(pageInput);
     inputContainer.appendChild(pageLabel);
 
-    const buttonContainer = createElement('div');
+    const buttonContainer = doc.createElement('div');
     buttonContainer.style.cssText = `
       display: flex;
       gap: 10px;
       justify-content: center;
     `;
 
-    const createChoiceButton = (text, id) => {
-      const btn = createElement('button');
+    const createChoiceButton = (doc, text, id) => {
+      const btn = doc.createElement('button');
       btn.textContent = text;
       btn.id = id;
       btn.style.cssText = `
@@ -128,8 +131,8 @@ if (container && data) {
       return btn;
     };
 
-    const yesButton = createChoiceButton('はい', 'yesButton');
-    const noButton = createChoiceButton('いいえ', 'noButton');
+    const yesButton = createChoiceButton(doc, 'はい', 'yesButton');
+    const noButton = createChoiceButton(doc, 'いいえ', 'noButton');
 
     buttonContainer.appendChild(yesButton);
     buttonContainer.appendChild(noButton);
@@ -137,7 +140,7 @@ if (container && data) {
     dialog.appendChild(inputContainer);
     dialog.appendChild(buttonContainer);
     overlay.appendChild(dialog);
-    body.appendChild(overlay);
+    doc.body.appendChild(overlay);
 
     return { overlay, message, pageInput, yesButton, noButton };
   }
@@ -189,7 +192,7 @@ if (container && data) {
       const targetPage = parseInt(overlayElements.pageInput.value);
 
       if (isNaN(targetPage)) {
-        alert(`1から${maxPage}の範囲で入力してください。`);
+        win.alert(`1から${maxPage}の範囲で入力してください。`);
         return;
       }
 
@@ -233,8 +236,9 @@ if (container && data) {
     overlayElements.overlay.addEventListener('click', handleOverlayClick);
   }
 
-  // ページ切り替え表示
-  renderPart(currentIndex);
+  // 表示
+  let currentIndex = 0;
+  win.renderPart(currentIndex);
 
   // ページ切り替え可能フラグ
   let promptShownForward = false;
@@ -242,12 +246,12 @@ if (container && data) {
   // 切り替え中フラグ
   let isSwitching = false;
 
-  addEventListener('scroll', () => {
+  win.addEventListener('scroll', () => {
     if (isSwitching) return;
 
-    const scrollBottom = scrollY + innerHeight;
-    const scrollTop = scrollY;
-    const bodyHeight = body.offsetHeight;
+    const scrollBottom = win.scrollY + win.innerHeight;
+    const scrollTop = win.scrollY;
+    const bodyHeight = doc.body.offsetHeight;
 
     // 下方向・最下部で次ページ
     if (
@@ -261,15 +265,15 @@ if (container && data) {
       showOverlay(nextPage, numPages, (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
-        renderPart(currentIndex);
-        scrollTo(0, 0);
-        setTimeout(() => {
+        win.renderPart(currentIndex);
+        win.scrollTo(0, 0);
+        win.setTimeout(() => {
           isSwitching = false;
         }, 50);
         promptShownForward = false;
         promptShownBackward = false;
       });
-    } else if (scrollBottom < bodyHeight - innerHeight / 4) {
+    } else if (scrollBottom < bodyHeight - win.innerHeight / 4) {
       // 最上部から（25%）離れたらフラグON
       promptShownForward = true;
     }
@@ -285,21 +289,21 @@ if (container && data) {
       showOverlay(targetPageForPrompt, numPages , (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
-        renderPart(currentIndex);
-        requestAnimationFrame(() => {
+        win.renderPart(currentIndex);
+        win.requestAnimationFrame(() => {
           if (currentIndex === parts.length - 1) {
-            scrollTo(0, 0);
+            win.scrollTo(0, 0);
           } else {
-            scrollTo(0, 1e9);
+            win.scrollTo(0, 1e9);
           }
-          setTimeout(() => {
+          win.setTimeout(() => {
             isSwitching = false;
           }, 50);
           promptShownForward = false;
           promptShownBackward = false;
         });
       });
-    } else if (scrollTop > (currentIndex === 0 ? innerHeight / 1.5625 : innerHeight / 4)) {
+    } else if (scrollTop > (currentIndex === 0 ? win.innerHeight / 1.5625 : win.innerHeight / 4)) {
       // 最上部から（1ページ目:64%、それ以外:25%）離れたらフラグON
       promptShownBackward = true;
     }
@@ -312,18 +316,18 @@ if (container && data) {
   }
 
   function disableBodyScroll() {
-    body.style.overflow = 'hidden';
-    documentElement.style.overflow = 'hidden';
+    doc.body.style.overflow = 'hidden';
+    doc.documentElement.style.overflow = 'hidden';
   }
 
   function enableBodyScroll() {
-    body.style.overflow = '';
-    documentElement.style.overflow = '';
+    doc.body.style.overflow = '';
+    doc.documentElement.style.overflow = '';
   }
 
   // スライダー作成関数
   function createSlider(position, additionalStyle = {}) {
-    const slider = createElement('input');
+    const slider = doc.createElement('input');
     slider.type = 'range';
     slider.min = 0;
     slider.max = 25;
@@ -340,7 +344,7 @@ if (container && data) {
       [position]: '30px',
       ...additionalStyle,
     });
-    body.appendChild(slider);
+    doc.body.appendChild(slider);
     return slider;
   }
 
@@ -349,7 +353,7 @@ if (container && data) {
   const scrollSliderLeft = createSlider('left', { direction: 'rtl' });
 
   // === スクロール処理 ===
-  const scroller = scrollingElement || documentElement;
+  const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
   let lastTimestamp = null;
 
@@ -362,7 +366,7 @@ if (container && data) {
       scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
     }
     lastTimestamp = timestamp;
-    requestAnimationFrame(forceScroll);
+    win.requestAnimationFrame(forceScroll);
   }
 
   // 両方のスライダーの値を同期
@@ -381,24 +385,24 @@ if (container && data) {
     slider.addEventListener("input", onSliderInput);
   });
 
-  requestAnimationFrame(forceScroll);
+  win.requestAnimationFrame(forceScroll);
 
   // タブまたはウィンドウの非アクティブでスライダー値リセット
-  addEventListener("visibilitychange", () => {
-    if (hidden) {
+  doc.addEventListener("visibilitychange", () => {
+    if (doc.hidden) {
       resetScrollSliders(); // 離れたときに値リセット
     } else {
       lastTimestamp = null; // 復帰したときにタイムスタンプリセット
     }
   });
 
-  addEventListener("blur", resetScrollSliders);
+  win.addEventListener("blur", resetScrollSliders);
 
   // ==============================
   // Slider Settings
   // ==============================
 
-  const SS_ContainerStyle = createElement('style');
+  const SS_ContainerStyle = doc.createElement('style');
   SS_ContainerStyle.textContent = `
     #scrollUI {
       position: fixed;
@@ -441,9 +445,9 @@ if (container && data) {
       color: unset;
     }
   `;
-  head.appendChild(SS_ContainerStyle);
+  doc.head.appendChild(SS_ContainerStyle);
 
-  const scrollUI = createElement('div');
+  const scrollUI = doc.createElement('div');
   scrollUI.id = 'scrollUI';
   scrollUI.innerHTML = `
     <div class="title"> Slider Settings</div>
@@ -458,7 +462,7 @@ if (container && data) {
     <label><span>Speed scale :  <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</span></label>
     <label><span><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</span></label>
   `;
-  body.appendChild(scrollUI);
+  doc.body.appendChild(scrollUI);
 
   const SCROLL_FIELD_MAP = {
     scrollB:          { prop: 'checked', event: 'change',  key: 'border',      parser: null },
@@ -477,7 +481,7 @@ if (container && data) {
     Object.entries(SCROLL_FIELD_MAP).forEach(([id, { prop, event, key }]) => {
       const value = settings[key];
       if (value === undefined) return;
-      const el = getElementById(id);
+      const el = doc.getElementById(id);
       if (!el) return;
       el[prop] = value;
       el.dispatchEvent(new Event(event));
@@ -492,8 +496,8 @@ if (container && data) {
   };
 
   // Right/Left
-  const rightbox = getElementById('scrollRight');
-  const leftbox = getElementById('scrollLeft');
+  const rightbox = doc.getElementById('scrollRight');
+  const leftbox = doc.getElementById('scrollLeft');
 
   function updateDisplay() {
     scrollSliderRight.style.display = rightbox.checked ? 'block' : 'none';
@@ -505,7 +509,7 @@ if (container && data) {
   });
 
   // Shadow
-  const scrollS = getElementById('scrollS');
+  const scrollS = doc.getElementById('scrollS');
   scrollS.addEventListener('input', () => {
     const val = Number(scrollS.value) || 0;
     const shadow = val < 0 ? `inset 0 0 ${Math.abs(val)}px` : `0 0 ${val}px`;
@@ -519,7 +523,7 @@ if (container && data) {
   });
 
   // Opacity
-  const opacityInput = getElementById('scrollO');
+  const opacityInput = doc.getElementById('scrollO');
   opacityInput.addEventListener('input', e => {
     const num = parseFloat(e.target.value);
     if (!isNaN(num) && num >= 0 && num <= 100) {
@@ -539,18 +543,18 @@ if (container && data) {
 
   // Border & Color
   ['scrollB', 'scrollC'].forEach((id, i) => {
-    const el = getElementById(id);
+    const el = doc.getElementById(id);
     el.addEventListener('change', e => {
       const otherId = i ? 'scrollB' : 'scrollC';
-      const otherEl = getElementById(otherId);
+      const otherEl = doc.getElementById(otherId);
 
       if (e.target.checked) {
         otherEl.checked = false;
         otherEl.dispatchEvent(new Event('change'));
       }
 
-      const isBorder  = getElementById('scrollB').checked;
-      const isColorIn = getElementById('scrollC').checked;
+      const isBorder  = doc.getElementById('scrollB').checked;
+      const isColorIn = doc.getElementById('scrollC').checked;
 
       applyToSliders(sl => {
         sl.style.border = isBorder ? '1px solid currentColor' : 'none';
@@ -568,7 +572,7 @@ if (container && data) {
   setupXWInput('scrollW', val => applyToSliders(el => el.style.width = `${val}px`));
 
   function setupXWInput(inputId, applyWideXpos) {
-    const input = getElementById(inputId);
+    const input = doc.getElementById(inputId);
     input.addEventListener('input', e => {
       const val = parseFloat(e.target.value);
       if (!isNaN(val)) applyWideXpos(val);
@@ -582,7 +586,7 @@ if (container && data) {
   }
 
   // Speed Scale
-  const speedScaleInput = getElementById('scrollSpeedScale');
+  const speedScaleInput = doc.getElementById('scrollSpeedScale');
   let speedScale = parseFloat(speedScaleInput.value);
 
   function updateScrollSpeed() {
@@ -608,7 +612,7 @@ if (container && data) {
   });
 
   // Slider ball
-  getElementById('scrollHide').addEventListener('change', e => {
+  doc.getElementById('scrollHide').addEventListener('change', e => {
     const [height, bottom] = e.target.checked ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
     applyToSliders(el => {
       el.style.height = height;
@@ -641,7 +645,7 @@ if (container && data) {
   };
 
   // 開くボタン △
-  const sUIOpenBtn = createElement('div');
+  const sUIOpenBtn = doc.createElement('div');
   sUIOpenBtn.innerHTML = `
     <svg width="14" height="14" viewBox="0 0 24 24">
       <polygon points="12,6.144 20,20 4,20" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -653,7 +657,7 @@ if (container && data) {
     left: '18px',
     zIndex: '10006',
   });
-  body.appendChild(sUIOpenBtn);
+  doc.body.appendChild(sUIOpenBtn);
 
   scrollUI.style.display = 'none';
   sUIOpenBtn.addEventListener('click', () => {
@@ -662,7 +666,7 @@ if (container && data) {
 
   // 閉じるボタン生成関数
   const createCloseBtn = () => {
-    const closeBtn = createElement('div');
+    const closeBtn = doc.createElement('div');
     closeBtn.textContent = '✕';
     Object.assign(closeBtn.style, {
       position: 'absolute',
@@ -689,17 +693,17 @@ if (container && data) {
   // ==============================
 
   ['fontPanel', 'fontOpenBtn'].forEach(id => {
-    const el = getElementById(id);
+    const el = doc.getElementById(id);
     if (el) el.remove();
   });
 
-  let target = getElementById('novelDisplay');
+  let target = doc.getElementById('novelDisplay');
   if (!target) {
     console.error('#novelDisplay が見つかりません');
   }
 
   // パネルコンテナ
-  const panel = createElement('div');
+  const panel = doc.createElement('div');
   panel.id = 'fontPanel';
   Object.assign(panel.style, {
     position: 'fixed',
@@ -719,7 +723,7 @@ if (container && data) {
   // モードボタン
   const modes = ['Text shadow','Font weight','Font size'];
   let currentMode = 'Font size';
-  const modeContainer = createElement('div');
+  const modeContainer = doc.createElement('div');
   Object.assign(modeContainer.style, {
     display: 'block',
     flexDirection: 'column',
@@ -734,7 +738,7 @@ if (container && data) {
   };
 
   modes.forEach(mode => {
-    const btn = createElement('button');
+    const btn = doc.createElement('button');
     btn.textContent = mode;
     Object.assign(btn.style, {
       fontSize: '13px',
@@ -759,12 +763,12 @@ if (container && data) {
   });
 
   // コントロールエリア
-  const controlArea = createElement('div');
+  const controlArea = doc.createElement('div');
   Object.assign(controlArea.style, {
   });
 
   // ラベル
-  const label = createElement('div');
+  const label = doc.createElement('div');
   Object.assign(label.style, {
     fontSize: '14px',
     marginBottom: '4px'
@@ -781,14 +785,14 @@ if (container && data) {
     cursor: 'pointer'
   };
 
-  const decreaseBtn = createElement('button');
+  const decreaseBtn = doc.createElement('button');
   decreaseBtn.id = 'sliderDecrease';
   decreaseBtn.textContent = '◀';
   Object.assign(decreaseBtn.style, decAndIncBtnStyle, {
     left: '135px'
   });
 
-  const increaseBtn = createElement('button');
+  const increaseBtn = doc.createElement('button');
   increaseBtn.id = 'sliderIncrease';
   increaseBtn.textContent = '▶';
   Object.assign(increaseBtn.style, decAndIncBtnStyle, {
@@ -808,7 +812,7 @@ if (container && data) {
   increaseBtn.addEventListener('click', () => adjustSlider(1));
 
   // スライダー
-  const slider = createElement('input');
+  const slider = doc.createElement('input');
   slider.type = 'range';
   Object.assign(slider.style, {
     position: 'absolute',
@@ -870,7 +874,7 @@ if (container && data) {
   }
 
   // 横並び用コンテナを作る
-  const sliderContainer = createElement('div');
+  const sliderContainer = doc.createElement('div');
   Object.assign(sliderContainer.style, {
     display: 'flex',
     alignItems: 'center',
@@ -886,16 +890,16 @@ if (container && data) {
 
   panel.appendChild(modeContainer);
   panel.appendChild(controlArea);
-  body.appendChild(panel);
+  doc.body.appendChild(panel);
 
   // Font Family セレクトボックス
-  const fontFamilyContainer = createElement('div');
+  const fontFamilyContainer = doc.createElement('div');
   Object.assign(fontFamilyContainer.style, {
     display: 'flex',
   });
 
   // ラベル
-  const fontFamilyLabel = createElement('div');
+  const fontFamilyLabel = doc.createElement('div');
   fontFamilyLabel.textContent = 'Font family:';
   Object.assign(fontFamilyLabel.style, {
     fontSize: '14px',
@@ -904,7 +908,7 @@ if (container && data) {
   fontFamilyContainer.appendChild(fontFamilyLabel);
 
   // セレクトボックス
-  const fontSelect = createElement('select');
+  const fontSelect = doc.createElement('select');
     Object.assign(fontSelect.style, {
       alignItems: 'center',
       border: '1px solid',
@@ -927,7 +931,7 @@ if (container && data) {
     'DotGothic16',
     'Rampart One',
   ].forEach(font => {
-    const opt = createElement('option');
+    const opt = doc.createElement('option');
     opt.value = font;
     opt.textContent = font;
     fontSelect.appendChild(opt);
@@ -941,19 +945,19 @@ if (container && data) {
     const font = fontSelect.value;
     currentFont = font; // 現在のフォントを保存
     // target以外の適用先をIDで取得する
-    const pageLabel = getElementById('pageLabel');
-    const yesButton = getElementById('yesButton');
-    const noButton = getElementById('noButton');
-    const title = getElementById('title');
-    const prettyLabel = getElementById('prettyLabel');
-    const jsonCopyBtn = getElementById('jsonCopyBtn');
-    const cancelBtn = getElementById('cancelBtn');
-    const saveBtn = getElementById('saveBtn');
+    const pageLabel = doc.getElementById('pageLabel');
+    const yesButton = doc.getElementById('yesButton');
+    const noButton = doc.getElementById('noButton');
+    const title = doc.getElementById('title');
+    const prettyLabel = doc.getElementById('prettyLabel');
+    const jsonCopyBtn = doc.getElementById('jsonCopyBtn');
+    const cancelBtn = doc.getElementById('cancelBtn');
+    const saveBtn = doc.getElementById('saveBtn');
     // 適用対象を配列にまとめる
     const elements = [target, pageLabel, yesButton, noButton, title, prettyLabel, jsonCopyBtn, cancelBtn, saveBtn];
 
     if (font === '游明朝') {
-      body.style.fontFamily = '';
+      doc.body.style.fontFamily = '';
       elements.forEach(el => { if (el) el.style.fontFamily = ''; });
       return;
     }
@@ -963,12 +967,12 @@ if (container && data) {
     }
     // Google Fonts 読み込み
     const id = "gf-font-" + font.replace(/\s+/g, '-');
-    if (!getElementById(id)) {
-      const link = createElement('link');
+    if (!doc.getElementById(id)) {
+      const link = doc.createElement('link');
       link.id = id;
       link.rel = "stylesheet";
       link.href = "https://fonts.googleapis.com/css2?family=" + font.replace(/ /g, '+') + "&display=swap";
-      head.appendChild(link);
+      doc.head.appendChild(link);
     }
     elements.forEach(el => {
       if (el) el.style.fontFamily = `'${font}', sans-serif`;
@@ -980,7 +984,7 @@ if (container && data) {
   controlArea.appendChild(fontFamilyContainer);
 
   // 開くボタン 〇
-  const fUIOpenBtn = createElement('div');
+  const fUIOpenBtn = doc.createElement('div');
   fUIOpenBtn.id = 'fontOpenBtn';
   fUIOpenBtn.innerHTML = `
     <svg width="14" height="14" viewBox="0 0 24 24">
@@ -993,7 +997,7 @@ if (container && data) {
     right: '18px',
     zIndex: '10006'
   });
-  body.appendChild(fUIOpenBtn);
+  doc.body.appendChild(fUIOpenBtn);
 
   fUIOpenBtn.addEventListener('click', () => {
     panel.style.display = 'block';
@@ -1026,14 +1030,14 @@ if (container && data) {
 
   // 読み込み制御関数
   const load = (tag, attrs) => new Promise((resolve, reject) => {
-    const el = createElement(tag);
+    const el = doc.createElement(tag);
     for (const [k, v] of Object.entries(attrs)) {
       // 属性として設定
       el.setAttribute(k, v);
     }
     el.onload = resolve;
     el.onerror = reject;
-    head.appendChild(el);
+    doc.head.appendChild(el);
   });
 
   // バージョン固定とSRI対応可能な形で読み込み
@@ -1050,22 +1054,21 @@ if (container && data) {
       crossorigin: 'anonymous'
     })
   ]).then(() => {
-    // 既存イベントを破棄
-    if (__pickrAbortController) {
-      __pickrAbortController.abort();
+    // ドラッグのイベントリスナーを削除
+    let pickrAbortController;
+
+    if (pickrAbortController) {
+      pickrAbortController.abort();
     }
 
-    // 新しい controller
-    const abortController = new AbortController();
-    __pickrAbortController = abortController;
+    pickrAbortController = new AbortController();
 
-    // addEventListener 用 signal
     const listenerOptions = {
-      signal: abortController.signal
+      signal: pickrAbortController.signal
     };
 
-    const style = createElement('style');
-    const PickrClass = Pickr;
+    const style = doc.createElement('style');
+    const PickrClass = win.Pickr;
     style.textContent = `
       /* ---- #pickrContainer 関連 ---- */
       #pickrContainer {
@@ -1383,8 +1386,8 @@ if (container && data) {
       }
     `;
 
-    head.appendChild(style);
-    const container = createElement('div');
+    doc.head.appendChild(style);
+    const container = doc.createElement('div');
     container.id = 'pickrContainer';
     container.innerHTML = `
       <div id="pickrClose">✕</div>
@@ -1456,17 +1459,17 @@ if (container && data) {
         >
       </div>
     `;
-    body.appendChild(container);
+    doc.body.appendChild(container);
 
     // ドラッグ関数呼び出し
-    const dragHandle = getElementById('dragHandle');
-    const dragTarget  = getElementById('pickrContainer');
+    const dragHandle = doc.getElementById('dragHandle');
+    const dragTarget  = doc.getElementById('pickrContainer');
 
     makeDraggable(dragHandle, dragTarget, doc);
 
     // bodyの色を取得しrgbをHex変換する関数
     const getHex = (prop) => {
-      const rgb = getComputedStyle(body)[prop];
+      const rgb = getComputedStyle(doc.body)[prop];
       return rgbToHex(rgb);
     };
 
@@ -1476,11 +1479,11 @@ if (container && data) {
 
       // color / background-color
       const id = prop === 'color' ? '__fgOverride' : '__bgOverride';
-      let el = getElementById(id);
+      let el = doc.getElementById(id);
       if (!el) {
-        el = createElement('style');
+        el = doc.createElement('style');
         el.id = id;
-        head.appendChild(el);
+        doc.head.appendChild(el);
       }
       el.textContent = `
       *:not(#pickrContainer):not(#pickrContainer *):not(.pcr-app):not(.pcr-app *) {
@@ -1492,11 +1495,11 @@ if (container && data) {
 
     // その他のプロパティを更新する関数
     const updateGlobalColors = () => {
-      let styleEl = getElementById('__globalColorOverride');
+      let styleEl = doc.getElementById('__globalColorOverride');
       if (!styleEl) {
-        styleEl = createElement('style');
+        styleEl = doc.createElement('style');
         styleEl.id = '__globalColorOverride';
-        head.appendChild(styleEl);
+        doc.head.appendChild(styleEl);
       }
       styleEl.textContent = `
       :root {
@@ -1515,13 +1518,13 @@ if (container && data) {
     };
 
     updateColorHexDisplays = () => {
-      getElementById("bgHex").value = colorState.currentBg;
-      getElementById("fgHex").value = colorState.currentFg;
+      doc.getElementById("bgHex").value = colorState.currentBg;
+      doc.getElementById("fgHex").value = colorState.currentFg;
       updateLockIcons();
     };
 
     // Pickr関連・状態変数の初期化
-    const contrastEl = getElementById('contrastRatio');
+    const contrastEl = doc.getElementById('contrastRatio');
 
     colorState = {
       savedFg: getHex('color') || '#000000',
@@ -1544,7 +1547,7 @@ if (container && data) {
     let globalDragRuleIndex = null;
 
     const initPickr = (id, prop) => {
-      const swatch = getElementById(id + 'Swatch');
+      const swatch = doc.getElementById(id + 'Swatch');
       const isFg = id === 'fg';
 
       const setCurrent = (v) => {
@@ -1579,13 +1582,13 @@ if (container && data) {
       });
 
       pickr.on('init', () => {
-        setTimeout(() => {
-          querySelectorAll('.pcr-app').forEach(app => {
+        win.setTimeout(() => {
+          doc.querySelectorAll('.pcr-app').forEach(app => {
             // pcr-appドラッグボタン追加
             if (!app.querySelector('.pcr-drag-handle')) {
               const saveBtn = app.querySelector('.pcr-save');
               if (saveBtn) {
-                const dragBtn = createElement('button');
+                const dragBtn = doc.createElement('button');
                 dragBtn.innerHTML = createEqualsIcon();
                 dragBtn.className = 'pcr-drag-handle';
                 saveBtn.insertAdjacentElement('afterend', dragBtn);
@@ -1596,9 +1599,9 @@ if (container && data) {
                 // グローバルなドラッグ用CSSルールを使う
                 function applyDragCss(left, top) {
                   if (!globalDragStyle) {
-                    globalDragStyle = createElement('style');
+                    globalDragStyle = doc.createElement('style');
                     globalDragStyle.setAttribute('data-pcr-drag', '1');
-                    head.appendChild(globalDragStyle);
+                    doc.head.appendChild(globalDragStyle);
                   }
                   const sheet = globalDragStyle.sheet;
                   if (globalDragRuleIndex !== null) {
@@ -1618,11 +1621,13 @@ if (container && data) {
                   e.preventDefault();
                   e.stopPropagation();
                 }, listenerOptions);
-                addEventListener('mousemove', e => {
+
+                doc.addEventListener('mousemove', e => {
                   if (!isDragging) return;
                   applyDragCss(e.clientX - offsetX, e.clientY - offsetY);
                 });
-                addEventListener('mouseup', () => {
+
+                doc.addEventListener('mouseup', () => {
                   if (isDragging) {
                     isDragging = false;
                   }
@@ -1640,15 +1645,17 @@ if (container && data) {
                   e.preventDefault();
                   e.stopPropagation();
                 });
-                addEventListener('touchmove', e => {
+
+                doc.addEventListener('touchmove', e => {
                   if (!isDragging || e.touches.length !== 1) return;
                   const touch = e.touches[0];
                   applyDragCss(touch.clientX - offsetX, touch.clientY - offsetY);
                 }, {
                   passive: false,
-                  signal: abortController.signal
+                  signal: pickrAbortController.signal
                 });
-                addEventListener('touchend', () => {
+
+                doc.addEventListener('touchend', () => {
                   if (isDragging) {
                     isDragging = false;
                   }
@@ -1660,7 +1667,7 @@ if (container && data) {
             if (!app.querySelector('.pcr-copy')) {
               const resultInput = app.querySelector('.pcr-result');
               if (resultInput) {
-                const hexCopyBtn = createElement('button');
+                const hexCopyBtn = doc.createElement('button');
                 hexCopyBtn.textContent = 'Copy';
                 hexCopyBtn.className = 'pcr-copy';
                 resultInput.insertAdjacentElement('afterend', hexCopyBtn);
@@ -1700,8 +1707,8 @@ if (container && data) {
         updateSwatch(swatch, hex, hex);
         updateContrast();
         updateLockIcons();
-        if (isFg) __fgHSL = hexToHSL(hex);
-        else __bgHSL = hexToHSL(hex);
+        if (isFg) win.__fgHSL = hexToHSL(hex);
+        else win.__bgHSL = hexToHSL(hex);
       });
 
       pickr.on('hide', () => {
@@ -1726,13 +1733,13 @@ if (container && data) {
       fgPickr = initPickr('fg', 'color')
     } catch (e) {
       console.warn('Pickrの初期化に失敗しました:', e);
-      alert('Pickrの初期化に失敗しました: ' + (e && e.message ? e.message : e));
+      win.alert('Pickrの初期化に失敗しました: ' + (e && e.message ? e.message : e));
       bgPickr = {
         setColor: (color) => {
           colorState.currentBg = color;
           colorState.savedBg = color;
           applyColor('background-color', color);
-          updateSwatch(getElementById('bgSwatch'), color, color);
+          updateSwatch(doc.getElementById('bgSwatch'), color, color);
           updateContrast();
         },
         show: () => {},
@@ -1743,7 +1750,7 @@ if (container && data) {
           colorState.currentFg = color;
           colorState.savedFg = color;
           applyColor('color', color);
-          updateSwatch(getElementById('fgSwatch'), color, color);
+          updateSwatch(doc.getElementById('fgSwatch'), color, color);
           updateContrast();
         },
         show: () => {},
@@ -1755,21 +1762,21 @@ if (container && data) {
 
     // ロックアイコン制御関数
     function updateLockIcons() {
-      const bgLocked = getElementById('color-toggle-bg-lock').checked;
-      const fgLocked = getElementById('color-toggle-fg-lock').checked;
+      const bgLocked = doc.getElementById('color-toggle-bg-lock').checked;
+      const fgLocked = doc.getElementById('color-toggle-fg-lock').checked;
 
-      const bgLockIcon = getElementById('bgLockIcon');
-      const fgLockIcon = getElementById('fgLockIcon');
+      const bgLockIcon = doc.getElementById('bgLockIcon');
+      const fgLockIcon = doc.getElementById('fgLockIcon');
       bgLockIcon.textContent = bgLocked ? '🔒' : '🔓';
       fgLockIcon.textContent = fgLocked ? '🔒' : '🔓';
 
       const bgColor = bgLocked
         ? colorState.savedBg
-        : getElementById('bgHex').value;
+        : doc.getElementById('bgHex').value;
 
       const fgColor = fgLocked
         ? colorState.savedFg
-        : getElementById('fgHex').value;
+        : doc.getElementById('fgHex').value;
 
       bgLockIcon.style.background = bgColor;
       fgLockIcon.style.background = fgColor;
@@ -1781,20 +1788,20 @@ if (container && data) {
       bgLockIcon.style.padding = bgLocked ? '0px 0px' : '6px 6px';
       fgLockIcon.style.padding = fgLocked ? '0px 0px' : '6px 6px';
     }
-    getElementById('color-toggle-bg-lock').addEventListener('change', updateLockIcons);
-    getElementById('color-toggle-fg-lock').addEventListener('change', updateLockIcons);
+    doc.getElementById('color-toggle-bg-lock').addEventListener('change', updateLockIcons);
+    doc.getElementById('color-toggle-fg-lock').addEventListener('change', updateLockIcons);
     updateLockIcons();
 
-    getElementById('bgHexLoad').onclick = () => {
-      const val = getElementById('bgHex').value.trim();
+    doc.getElementById('bgHexLoad').onclick = () => {
+      const val = doc.getElementById('bgHex').value.trim();
       if (/^#[0-9a-fA-F]{6}$/.test(val)) {
         bgPickr.setColor(val, !0)
       }
       bgPickr.show();
       updateLockIcons();
     };
-    getElementById('fgHexLoad').onclick = () => {
-      const val = getElementById('fgHex').value.trim();
+    doc.getElementById('fgHexLoad').onclick = () => {
+      const val = doc.getElementById('fgHex').value.trim();
       if (/^#[0-9a-fA-F]{6}$/.test(val)) {
         fgPickr.setColor(val, !0)
       }
@@ -1803,20 +1810,20 @@ if (container && data) {
     };
 
     function changeColors() {
-      const bgLocked = getElementById("color-toggle-bg-lock").checked;
-      const fgLocked = getElementById("color-toggle-fg-lock").checked;
+      const bgLocked = doc.getElementById("color-toggle-bg-lock").checked;
+      const fgLocked = doc.getElementById("color-toggle-fg-lock").checked;
 
-      if (bgLocked && fgLocked) { alert("BGとFGの両方がロックされています");
+      if (bgLocked && fgLocked) { win.alert("BGとFGの両方がロックされています");
         return;
       }
 
-      const contrastMin = parseFloat(getElementById("contrastMin").value);
-      const contrastMax = parseFloat(getElementById("contrastMax").value);
+      const contrastMin = parseFloat(doc.getElementById("contrastMin").value);
+      const contrastMax = parseFloat(doc.getElementById("contrastMax").value);
       let trials = 0;
       const maxTrials = 300;
 
       if (isNaN(contrastMin) || isNaN(contrastMax) ||contrastMin > 21 || contrastMax < 1 || contrastMin > contrastMax) {
-        alert("指定されたコントラスト範囲が無効です\n（1〜21で指定してください）");
+        win.alert("指定されたコントラスト範囲が無効です\n（1〜21で指定してください）");
         return;
       }
 
@@ -1837,22 +1844,22 @@ if (container && data) {
           applyColor("background-color", colorState.savedBg);
           applyColor("color", colorState.savedFg);
 
-          updateSwatch(getElementById("bgSwatch"), colorState.currentBg, colorState.currentBg);
-          updateSwatch(getElementById("fgSwatch"), colorState.currentFg, colorState.currentFg);
+          updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.currentBg);
+          updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.currentFg);
           updateColorHexDisplays();
           updateContrast();
           updateLockIcons();
           return;
         }
       }
-      alert("指定されたコントラスト範囲に合うランダム色の組み合わせが見つかりませんでした");
+      win.alert("指定されたコントラスト範囲に合うランダム色の組み合わせが見つかりませんでした");
     }
-    getElementById("randomColorBtn").onclick = changeColors;
+    doc.getElementById("randomColorBtn").onclick = changeColors;
 
     // Copyボタン
-    querySelectorAll(".copy-btn").forEach(function(button) {
+    doc.querySelectorAll(".copy-btn").forEach(function(button) {
       button.addEventListener("click", function() {
-        var targetInput = getElementById(button.getAttribute("data-target"));
+        var targetInput = doc.getElementById(button.getAttribute("data-target"));
         if (targetInput && targetInput.value !== "-") {
           copyToClipboard(button, targetInput.value);
         }
@@ -1860,7 +1867,7 @@ if (container && data) {
     });
 
     // Swapボタン
-    getElementById("swapColorsBtn").onclick = () => {
+    doc.getElementById("swapColorsBtn").onclick = () => {
 
       // ロック状態を無視してスワップ
       [colorState.currentFg, colorState.currentBg] = [colorState.currentBg, colorState.currentFg];
@@ -1868,11 +1875,11 @@ if (container && data) {
 
       applyColor("color", colorState.currentFg);
       applyColor("background-color", colorState.currentBg);
-      updateSwatch(getElementById("bgSwatch"), colorState.currentBg, colorState.savedBg);
-      updateSwatch(getElementById("fgSwatch"), colorState.currentFg, colorState.savedFg);
+      updateSwatch(doc.getElementById("bgSwatch"), colorState.currentBg, colorState.savedBg);
+      updateSwatch(doc.getElementById("fgSwatch"), colorState.currentFg, colorState.savedFg);
       updateColorHexDisplays();
-      __bgHSL = hexToHSL(colorState.currentBg);
-      __fgHSL = hexToHSL(colorState.currentFg);
+      win.__bgHSL = hexToHSL(colorState.currentBg);
+      win.__fgHSL = hexToHSL(colorState.currentFg);
       updateLockIcons();
     };
 
@@ -1883,7 +1890,7 @@ if (container && data) {
     // 開くボタン □ 作成関数
     function createPickrOpenButton() {
 
-      const pUIOpenBtn = createElement('div');
+      const pUIOpenBtn = doc.createElement('div');
 
       pUIOpenBtn.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24">
@@ -1904,7 +1911,7 @@ if (container && data) {
         pUIOpenBtn.remove();
       };
 
-      body.appendChild(pUIOpenBtn);
+      doc.body.appendChild(pUIOpenBtn);
       return pUIOpenBtn;
     }
 
@@ -1912,13 +1919,13 @@ if (container && data) {
     createPickrOpenButton();
 
     // Pickr の閉じるボタンの処理
-    getElementById('pickrClose').onclick = () => {
+    doc.getElementById('pickrClose').onclick = () => {
       container.style.display = 'none';
       style.disabled = true;
       createPickrOpenButton();
     };
   }).catch((err) => {
-    alert("Pickr の読み込みに失敗しました。CSP によってブロックされている可能性があります。");
+    win.alert("Pickr の読み込みに失敗しました。CSP によってブロックされている可能性があります。");
     console.error("Pickr load error:", err);
   });
 
@@ -2008,15 +2015,15 @@ if (container && data) {
     if (button.dataset.copying) return;
     try {
       button.dataset.copying = "true";
-      await navigator.clipboard.writeText(text);
+      await win.navigator.clipboard.writeText(text);
       button.textContent = labels.success;
-      setTimeout(() => {
+      win.setTimeout(() => {
         button.textContent = labels.default;
         delete button.dataset.copying;
       }, 1500);
     } catch (err) {
       console.error("コピーに失敗しました:", err);
-      alert("コピーに失敗しました: " + err);
+      win.alert("コピーに失敗しました: " + err);
       delete button.dataset.copying;
     }
   }
@@ -2025,7 +2032,7 @@ if (container && data) {
   // JSONで各値を保存/反映
   // ==============================
 
-  const onetapUIStyle = createElement('style');
+  const onetapUIStyle = doc.createElement('style');
   onetapUIStyle.textContent = `
     #onetapUI {
       position: fixed;
@@ -2101,9 +2108,9 @@ if (container && data) {
       user-select: none;
     }
   `;
-  head.appendChild(onetapUIStyle);
+  doc.head.appendChild(onetapUIStyle);
 
-  const onetapUI = createElement('div');
+  const onetapUI = doc.createElement('div');
   onetapUI.id = 'onetapUI';
   onetapUI.innerHTML = `
     <div class="title">Apply Style with One Tap</div>
@@ -2169,14 +2176,14 @@ if (container && data) {
   // ページネーション：ボタンセット行を動的に描画
   function updatePage(page) {
     currentPage = page;
-    const styleRows = getElementById('styleRows');
+    const styleRows = doc.getElementById('styleRows');
     styleRows.innerHTML = '';
     styleRows.style.position = 'relative'; // absolute配置の基準
 
     const start = (page - 1) * STYLES_PER_PAGE + 1;
     for (let i = 0; i < STYLES_PER_PAGE; i++) {
       const n = start + i;
-      const div = createElement('div');
+      const div = doc.createElement('div');
       div.className = 'button-set style-row';
       Object.assign(div.style, { display: 'flex', alignItems: 'center', gap: '4px', height: '22px' });
 
@@ -2187,7 +2194,7 @@ if (container && data) {
         continue;
       }
 
-      const span1 = createElement('span');
+      const span1 = doc.createElement('span');
       span1.className = 'label';
       span1.textContent = `${n}.`;
       span1.style.display = 'inline-block';
@@ -2195,18 +2202,18 @@ if (container && data) {
       span1.style.textAlign = 'center';
       updateLabelStyle(span1);
 
-      const saveBtn = createElement('button');
+      const saveBtn = doc.createElement('button');
       saveBtn.id = `saveBtn${n}`;
       saveBtn.className = 'button';
       saveBtn.textContent = 'SAVE';
       updateButtonStyle(saveBtn);
 
-      const arrow = createElement('span');
+      const arrow = doc.createElement('span');
       arrow.className = 'label';
       arrow.textContent = '⇒';
       updateLabelStyle(arrow);
 
-      const applyBtn = createElement('button');
+      const applyBtn = doc.createElement('button');
       applyBtn.id = `applyBtn${n}`;
       applyBtn.className = 'button';
       applyBtn.textContent = 'APPLY';
@@ -2271,7 +2278,7 @@ if (container && data) {
     // 最終ページのみにボタンを追加
     if (page === maxPage) {
       function createLastPageBtn(text) {
-        const btn = createElement('button');
+        const btn = doc.createElement('button');
         btn.className = 'button';
         btn.textContent = text;
         Object.assign(btn.style, {
@@ -2291,7 +2298,7 @@ if (container && data) {
         if (btn.dataset[flag]) return true;
         btn.dataset[flag] = 'true';
         btn.textContent = message;
-        setTimeout(() => {
+        win.setTimeout(() => {
           btn.textContent = original;
           delete btn.dataset[flag];
         }, 1500);
@@ -2346,7 +2353,7 @@ if (container && data) {
   }
 
   // 開くボタン ☆
-  const oUIOpenBtn = createElement('div');
+  const oUIOpenBtn = doc.createElement('div');
   oUIOpenBtn.innerHTML = `
     <svg width="14" height="14" viewBox="0 0 24 24">
       <polygon points="12,2 15,10 23,10 17,15 19,23 12,18 5,23 7,15 1,10 9,10" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -2358,7 +2365,7 @@ if (container && data) {
     left: '18px',
     zIndex: '10000',
   });
-  body.appendChild(oUIOpenBtn);
+  doc.body.appendChild(oUIOpenBtn);
 
   oUIOpenBtn.addEventListener('click', () => {
     onetapUI.style.display = 'block';
@@ -2372,23 +2379,23 @@ if (container && data) {
   });
 
   // UIをbodyに追加
-  body.appendChild(onetapUI);
+  doc.body.appendChild(onetapUI);
 
   // 初期ページを描画（Style1〜8）
   updatePage(1);
 
   // ◀▶ページナビのイベント
-  getElementById('prevPageBtn').addEventListener('click', () => {
+  doc.getElementById('prevPageBtn').addEventListener('click', () => {
     updatePage(currentPage > 1 ? currentPage - 1 : maxPage);
   });
-  getElementById('nextPageBtn').addEventListener('click', () => {
+  doc.getElementById('nextPageBtn').addEventListener('click', () => {
     updatePage(currentPage < maxPage ? currentPage + 1 : 1);
   });
 
   // MOVEボタンのイベント
   function setApplyButtonsDimmed(dimmed) {
     for (let i = 1; i <= 99; i++) {
-      const btn = getElementById(`applyBtn${i}`);
+      const btn = doc.getElementById(`applyBtn${i}`);
       if (!btn) continue;
       if (dimmed) {
         btn.style.border = '1px dotted';
@@ -2400,7 +2407,7 @@ if (container && data) {
 
   function highlightApplyBtn(name) {
     const num = name.replace('Style', '');
-    const btn = getElementById(`applyBtn${num}`);
+    const btn = doc.getElementById(`applyBtn${num}`);
     if (btn) {
       btn.style.border = 'none';
       btn.style.outline = `2px solid var(--current-fg)`;
@@ -2409,7 +2416,7 @@ if (container && data) {
 
   function syncMoveBtnStyle(name) {
     const num = name.replace('Style', '');
-    const applyBtn = getElementById(`applyBtn${num}`);
+    const applyBtn = doc.getElementById(`applyBtn${num}`);
     if (!applyBtn) return;
     moveBtn.style.color = applyBtn.style.color;
     moveBtn.style.backgroundColor = applyBtn.style.backgroundColor;
@@ -2418,7 +2425,7 @@ if (container && data) {
 
   function clearAllHighlights() {
     for (let i = 1; i <= 99; i++) {
-      const btn = getElementById(`applyBtn${i}`);
+      const btn = doc.getElementById(`applyBtn${i}`);
       if (!btn) continue;
       btn.style.outline = '';
     }
@@ -2445,7 +2452,7 @@ if (container && data) {
     moveBtn.style.outline = '2px dotted currentColor';
   }
 
-  const moveBtn = getElementById('moveBtn');
+  const moveBtn = doc.getElementById('moveBtn');
 
   moveBtn.addEventListener('click', () => {
     isMoveMode = !isMoveMode;
@@ -2469,7 +2476,7 @@ if (container && data) {
   function updateApplyBtnColor(name) {
     const num = name.replace('Style', '');
     const data = savedStyles[name];
-    const btn = getElementById(`applyBtn${num}`);
+    const btn = doc.getElementById(`applyBtn${num}`);
     if (!btn) return;
     if (!data) {
       btn.style.color = '';
@@ -2493,9 +2500,9 @@ if (container && data) {
 
   // SAVEボタン
   async function saveStyle(name) {
-    const target = getElementById('novelDisplay');
-    if (!target) return alert('対象要素が見つかりません');
-    const computed = getComputedStyle(target);
+    const target = doc.getElementById('novelDisplay');
+    if (!target) return win.alert('対象要素が見つかりません');
+    const computed = win.getComputedStyle(target);
     let { color, backgroundColor, fontSize, fontWeight, textShadow } = computed;
     const fontFamily = fontSelect.value;
 
@@ -2510,7 +2517,7 @@ if (container && data) {
     // スクロールUIの値を取得
     const scrollSettings = Object.fromEntries(
       Object.entries(SCROLL_FIELD_MAP).map(([id, { prop, key, parser }]) => {
-        const el = getElementById(id);
+        const el = doc.getElementById(id);
         if (!el) return [key, null];
         const raw = el[prop];
         return [key, parser ? parser(raw) : raw];
@@ -2537,7 +2544,7 @@ if (container && data) {
     // 編集済みデータで保存
     savedStyles[name] = confirmed;
 
-    alert(`☆ 保存しました!`);
+    win.alert(`☆ 保存しました!`);
     updateApplyBtnColor(name);
   }
 
@@ -2554,7 +2561,7 @@ if (container && data) {
 
     return new Promise((resolve) => {
       // オーバーレイ
-      const overlay = createElement('div');
+      const overlay = doc.createElement('div');
       overlay.style.cssText = `
         position: fixed;
         top: 0;
@@ -2569,7 +2576,7 @@ if (container && data) {
       `;
 
       // コンテンツボックス
-      const box = createElement('div');
+      const box = doc.createElement('div');
       box.style.cssText = `
         padding: 24px;
         border-radius: 8px;
@@ -2583,7 +2590,7 @@ if (container && data) {
       `;
 
       // タイトル
-      const title = createElement('h3');
+      const title = doc.createElement('h3');
       title.textContent = `☆ ${name} に保存しますか?`;
       title.id = 'title';
       title.style.cssText = `
@@ -2593,7 +2600,7 @@ if (container && data) {
       `;
 
       // 上段コンテナ
-      const topContainer = createElement('div');
+      const topContainer = doc.createElement('div');
       topContainer.style.cssText = `
         margin: 0 0 12px 0;
         display: flex;
@@ -2602,7 +2609,7 @@ if (container && data) {
       `;
 
       // チェックボックス
-      const prettyCheckbox = createElement('input');
+      const prettyCheckbox = doc.createElement('input');
       prettyCheckbox.type = 'checkbox';
       prettyCheckbox.id = 'prettyPrintCheckbox';
       prettyCheckbox.checked = false;
@@ -2611,7 +2618,7 @@ if (container && data) {
       `;
 
       // ラベル
-      const prettyLabel = createElement('label');
+      const prettyLabel = doc.createElement('label');
       prettyLabel.htmlFor = 'prettyPrintCheckbox';
       prettyLabel.textContent = 'プリティプリント';
       prettyLabel.id = 'prettyLabel';
@@ -2622,7 +2629,7 @@ if (container && data) {
       `;
 
       // 編集ボタン
-      const jsonEditBtn = createElement('button');
+      const jsonEditBtn = doc.createElement('button');
       jsonEditBtn.textContent = '編集';
       jsonEditBtn.id = 'jsonEditBtn';
       jsonEditBtn.style.cssText = `
@@ -2643,13 +2650,13 @@ if (container && data) {
         if (isEditing && !editing) {
           const validationResult = validateAndParseJSON(preview.textContent);
           if (validationResult.error) {
-            alert(validationResult.error);
+            win.alert(validationResult.error);
             return;
           }
           // Styleキーが含まれていたらはじく
           const keys = Object.keys(validationResult.data);
           if (keys.some(k => /^Style\d+$/.test(k))) {
-            alert('Styleキーは削除してください');
+            win.alert('Styleキーは削除してください');
             return;
           }
           // 保存内容を更新
@@ -2688,7 +2695,7 @@ if (container && data) {
       };
 
       // コピーボタン
-      const jsonCopyBtn = createElement('button');
+      const jsonCopyBtn = doc.createElement('button');
       jsonCopyBtn.textContent = 'コピー';
       jsonCopyBtn.id = 'jsonCopyBtn';
       jsonCopyBtn.style.cssText = `
@@ -2710,14 +2717,14 @@ if (container && data) {
       topContainer.appendChild(jsonCopyBtn);
 
       // プレビューコンテナ
-      const previewContainer = createElement('div');
+      const previewContainer = doc.createElement('div');
       previewContainer.style.cssText = `
         position: relative;
         margin: 0 0 20px 0;
       `;
 
       // プレビュー内容
-      const preview = createElement('pre');
+      const preview = doc.createElement('pre');
       preview.style.cssText = `
         padding: 12px;
         border: 1px solid currentColor;
@@ -2748,7 +2755,7 @@ if (container && data) {
       prettyCheckbox.onchange = () => updatePreviewText();
 
       // 下段コンテナ
-      const bottomContainer = createElement('div');
+      const bottomContainer = doc.createElement('div');
       bottomContainer.style.cssText = `
         display: flex;
         gap: 12px;
@@ -2758,16 +2765,16 @@ if (container && data) {
       // キャンセル・保存共通のクリーンアップ関数
       // 保存時に最新のcurrentDataを返す
       const cleanupAndResolve = (result) => {
-        if (overlay.parentNode) body.removeChild(overlay);
+        if (overlay.parentNode) doc.body.removeChild(overlay);
         __saveConfirmOpen = false;
         isSwitching = false;
         enableBodyScroll();
-        removeEventListener('keydown', handleKeydown);
+        doc.removeEventListener('keydown', handleKeydown);
         resolve(result ? currentData : false);
       };
 
       // キャンセルボタン
-      const cancelBtn = createElement('button');
+      const cancelBtn = doc.createElement('button');
       cancelBtn.textContent = 'キャンセル';
       cancelBtn.id = 'cancelBtn';
       cancelBtn.style.cssText = `
@@ -2782,7 +2789,7 @@ if (container && data) {
       cancelBtn.onclick = () => cleanupAndResolve(false);
 
       // 保存ボタン
-      const saveBtn = createElement('button');
+      const saveBtn = doc.createElement('button');
       saveBtn.textContent = '保存する';
       saveBtn.id = 'saveBtn';
       saveBtn.style.cssText = `
@@ -2802,7 +2809,7 @@ if (container && data) {
           saveBtn.click();
         }
       };
-      addEventListener('keydown', handleKeydown);
+      doc.addEventListener('keydown', handleKeydown);
 
       // 組み立て
       previewContainer.appendChild(preview);
@@ -2813,15 +2820,15 @@ if (container && data) {
       box.appendChild(previewContainer);
       box.appendChild(bottomContainer);
       overlay.appendChild(box);
-      body.appendChild(overlay);
+      doc.body.appendChild(overlay);
 
       // 現在のfontFamilyを要素に適用
       const overlayElements = [
-        getElementById('title'),
-        getElementById('prettyLabel'),
-        getElementById('jsonCopyBtn'),
-        getElementById('cancelBtn'),
-        getElementById('saveBtn')
+        doc.getElementById('title'),
+        doc.getElementById('prettyLabel'),
+        doc.getElementById('jsonCopyBtn'),
+        doc.getElementById('cancelBtn'),
+        doc.getElementById('saveBtn')
       ];
 
       if (currentFont && currentFont !== '游明朝') {
@@ -2850,14 +2857,14 @@ if (container && data) {
     const data = savedStyles[name];
 
     if (!data) {
-      return alert(`${name} は保存されていません`);
+      return win.alert(`${name} は保存されていません`);
     }
 
-    const proceed = confirm(`☆ ${name} を反映します！`);
+    const proceed = win.confirm(`☆ ${name} を反映します！`);
     if (!proceed) return;
 
     if (applyStyleData(data)) {
-      appConfig = data;
+      win.appConfig = data;
       createMenus();
       onetapUI.style.display = 'none';
     }
@@ -3111,8 +3118,8 @@ if (container && data) {
   }
 
   // jsonInputのSAVEボタン
-  getElementById('bulkSaveBtn').onclick = () => {
-    const bulkJsonInput = getElementById('bulkJsonInput');
+  doc.getElementById('bulkSaveBtn').onclick = () => {
+    const bulkJsonInput = doc.getElementById('bulkJsonInput');
     let jsonText = bulkJsonInput.value.trim();
 
     try {
@@ -3122,7 +3129,7 @@ if (container && data) {
 
     const result = parseInputToStyleMap(jsonText);
     if (result.error) {
-      alert(result.error);
+      win.alert(result.error);
       return;
     }
 
@@ -3133,7 +3140,7 @@ if (container && data) {
     const existingKeys = keys.filter(k => k in savedStyles);
     if (existingKeys.length > 0) {
       const msg = `${compressKeys(existingKeys)} はすでに存在します。\n上書きしますか?`;
-      if (!confirm(msg)) return;
+      if (!win.confirm(msg)) return;
     }
 
     // 保存実行
@@ -3141,7 +3148,7 @@ if (container && data) {
       savedStyles[k] = styleMap[k];
     }
 
-    alert(`${compressKeys(keys)} に保存しました!`);
+    win.alert(`${compressKeys(keys)} に保存しました!`);
     bulkJsonInput.value = '';
     keys.forEach(updateApplyBtnColor);
   };
@@ -3176,13 +3183,13 @@ if (container && data) {
   }
 
   // jsonInputのAPPLYボタン
-  getElementById('applyJsonBtn').onclick = () => {
-    const jsonInput = getElementById('jsonInput');
+  doc.getElementById('applyJsonBtn').onclick = () => {
+    const jsonInput = doc.getElementById('jsonInput');
     const jsonText = jsonInput.value.trim();
 
     const result = parseInputToStyleMap(jsonText);
     if (result.error) {
-      alert(result.error);
+      win.alert(result.error);
       return;
     }
 
@@ -3191,18 +3198,18 @@ if (container && data) {
 
     // ③相当（複数Styleキー）は適用不可
     if (keys.length > 1) {
-      alert('個別のJSONを入力してください');
+      win.alert('個別のJSONを入力してください');
       return;
     }
 
     // ①②相当（Styleキー1つ）→ 中身を適用
     const finalData = styleMap[keys[0]];
 
-    const proceed = confirm('☆ JSONデータを反映します!');
+    const proceed = win.confirm('☆ JSONデータを反映します!');
     if (!proceed) return;
 
     if (applyStyleData(finalData)) {
-      appConfig = finalData;
+      win.appConfig = finalData;
       createMenus();
       onetapUI.style.display = 'none';
       jsonInput.value = '';
@@ -3211,9 +3218,9 @@ if (container && data) {
 
   // スタイル適用関数
   function applyStyleData(data) {
-    const target = getElementById('novelDisplay');
+    const target = doc.getElementById('novelDisplay');
     if (!target) {
-      alert('対象要素が見つかりません');
+      win.alert('対象要素が見つかりません');
       return false;
     }
 
@@ -3222,8 +3229,8 @@ if (container && data) {
       const hex = data.color;
       colorState.currentFg = colorState.savedFg = hex;
       applyColor('color', hex);
-      __fgHSL = hexToHSL(hex);
-      const fgHex = getElementById('fgHex');
+      win.__fgHSL = hexToHSL(hex);
+      const fgHex = doc.getElementById('fgHex');
       if (fgHex) fgHex.value = hex;
     }
 
@@ -3232,8 +3239,8 @@ if (container && data) {
       const hex = data.backgroundColor;
       colorState.currentBg = colorState.savedBg = hex;
       applyColor('background-color', hex);
-      __bgHSL = hexToHSL(hex);
-      const bgHex = getElementById('bgHex');
+      win.__bgHSL = hexToHSL(hex);
+      const bgHex = doc.getElementById('bgHex');
       if (bgHex) bgHex.value = hex;
     }
 
@@ -3261,7 +3268,7 @@ if (container && data) {
   }
 
   // --- 保存済みのすべてのJSONを表示するボタンのイベント登録 ---
-  getElementById('viewAllJsonBtn').onclick = () => {
+  doc.getElementById('viewAllJsonBtn').onclick = () => {
 
     // 保存済みスタイルをキー順にソート
     const sortedStyles = getSortedStyles();
@@ -3301,7 +3308,7 @@ if (container && data) {
 
     const jsonBlob = new Blob([jsonHtml], { type: 'text/html' });
     const jsonUrl = URL.createObjectURL(jsonBlob);
-    const jsonWin = open(jsonUrl);
+    const jsonWin = win.open(jsonUrl);
 
     jsonWin.addEventListener('load', () => {
       try { URL.revokeObjectURL(jsonUrl); } catch (e) {};
@@ -3512,11 +3519,11 @@ if (container && data) {
   // テキスト選択で検索ショートカット
   // ==============================
 
-  const novelText = getElementById('novelDisplay');
+  const novelText = doc.getElementById('novelDisplay');
   let pendingSelection = null;
 
-  addEventListener('selectionchange', () => {
-    const sel = getSelection();
+  doc.addEventListener('selectionchange', () => {
+    const sel = win.getSelection();
 
     if (!sel.rangeCount) return;
 
@@ -3575,7 +3582,7 @@ if (container && data) {
 
   // メニュー設定を受け取る関数
   function getSearchConfigs() {
-    const cfg = appConfig;
+    const cfg = win.appConfig;
 
     if (!cfg || !Array.isArray(cfg.searchConfigs)) {
       return defaultConfigs;
@@ -3612,10 +3619,10 @@ if (container && data) {
     const configs = getSearchConfigs();
 
     configs.forEach(cfg => {
-      const div = createElement('div');
+      const div = doc.createElement('div');
       applyMenuStyle(div);
 
-      const btn = createElement('button');
+      const btn = doc.createElement('button');
       btn.textContent = cfg.label;
       applyBtnStyle(btn);
 
@@ -3627,12 +3634,12 @@ if (container && data) {
 
         const url = base + query;
 
-        open(url, '_blank');
+        win.open(url, '_blank');
         hideMenus();
       };
 
       div.appendChild(btn);
-      body.appendChild(div);
+      doc.body.appendChild(div);
 
       menus.push({ div, cfg });
     });
@@ -3642,7 +3649,7 @@ if (container && data) {
 
   // 表示制御
   function showMenus(text) {
-    const sel = getSelection();
+    const sel = win.getSelection();
     const range = sel.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
@@ -3662,9 +3669,9 @@ if (container && data) {
 
       // 横位置
       if (cfg.side === 'right') {
-        div.style.left = (centerX + offset + scrollX) + 'px';
+        div.style.left = (centerX + offset + win.scrollX) + 'px';
       } else {
-        div.style.left = (centerX - offset - width + scrollX) + 'px';
+        div.style.left = (centerX - offset - width + win.scrollX) + 'px';
       }
 
       // 縦位置
@@ -3678,7 +3685,7 @@ if (container && data) {
         top = rect.top;
       }
 
-      div.style.top = (top + cfg.offsetY + scrollY) + 'px';
+      div.style.top = (top + cfg.offsetY + win.scrollY) + 'px';
       div.dataset.text = text;
     });
   }
@@ -3703,14 +3710,14 @@ if (container && data) {
     });
   }
 
-  addEventListener('mouseup', () => {
+  doc.addEventListener('mouseup', () => {
     if (!pendingSelection) return;
 
     showMenus(pendingSelection);
     pendingSelection = null;
   });
 
-  addEventListener('mousedown', (e) => {
+  doc.addEventListener('mousedown', (e) => {
     if (!menus.some(({ div }) => div.contains(e.target))) {
       hideMenus();
     }
