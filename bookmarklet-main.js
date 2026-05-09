@@ -651,8 +651,10 @@
           <div id="novelDisplay"></div>
           <script>
           window.__NOVEL_DATA__ = ${safeJson};
+          window.createEqualsIcon = ${createEqualsIcon.toString()};
+          window.makeDraggable = ${makeDraggable.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@a8d4120/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@/novel-window.js"></script>
         </body>
         </html>
       `;
@@ -670,11 +672,7 @@
       }
 
       win.addEventListener('load', () => {
-        try { URL.revokeObjectURL(url); } catch (e) {}
-
-        win.createEqualsIcon = createEqualsIcon;
-        win.makeDraggable = makeDraggable;
-
+        URL.revokeObjectURL(url);
       }, { once: true });
     }
     openNovelWindow();
