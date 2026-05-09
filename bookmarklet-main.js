@@ -582,6 +582,9 @@
       prevEndVisiblePos = endVisiblePos;
     }
 
+    // 有効なページ数を計算
+    const validPageCount = pageCharCounts.filter(count => count > 0).length;
+
     // 新しいウィンドウを開く関数
     function openNovelWindow() {
 
@@ -597,39 +600,61 @@
         .replace(/&/g, '\\u0026');
 
       const html = `
-    <!DOCTYPE html>
-    <html lang="ja">
-    <head>
-    <meta charset="UTF-8">
-    <title>小説</title>
-
-    <style>
-    body {
-      margin: 0;
-      padding: 2em;
-    }
-
-    #novelDisplay {
-      writing-mode: vertical-rl;
-      font-size: 24px;
-    }
-    </style>
-
-    </head>
-
-    <body>
-
-    <div id="novelDisplay"></div>
-
-    <script>
-    window.__NOVEL_DATA__ = ${safeJson};
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@window-refactor/novel-window.js?v=${Date.now()}"></script>
-
-    </body>
-    </html>
-    `;
+        <!DOCTYPE html>
+        <html lang="ja" style="scrollbar-width: thin;">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+        <title>小説</title>
+        <style>
+        body {
+          display: flex;
+          justify-content: center;
+          font-family: '游明朝', 'Yu Mincho', 'YuMincho', 'Hiragino Mincho Pro', serif;
+          font-feature-settings: 'pkna';
+          text-shadow: 0 0 0px;
+          -moz-osx-font-smoothing: grayscale;
+          -webkit-font-smoothing: antialiased;
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden;
+        }
+        #novelDisplay {
+          writing-mode: vertical-rl;
+          white-space: nowrap;
+          letter-spacing: 0.27em;
+          line-height: 1.8;
+          font-size: 23px;
+          display: block;
+          padding: 2em;
+          content-visibility: auto;
+          contain-intrinsic-size: 1000px;
+          will-change: scroll-position;
+          transform: translateZ(0);
+        }
+        ruby rt {
+          font-size: 0.5em;
+          background: transparent !important;
+          user-select: none;
+        }
+        #yesButton,
+        #noButton,
+        #jsonCopyBtn,
+        #cancelBtn,
+        #saveBtn {
+          font-family: inherit;
+        }
+        </style>
+        </head>
+        <body>
+          <div id="novelDisplay"></div>
+          <script>
+          window.__NOVEL_DATA__ = ${safeJson};
+          </script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@window-refactor/novel-window.js?v=${Date.now()}"></script>
+        </body>
+        </html>
+      `;
 
       const blob = new Blob(
         [html],
@@ -637,7 +662,6 @@
       );
 
       const url = URL.createObjectURL(blob);
-
       const win = window.open(url, '_blank');
 
       if (!win) {
@@ -647,7 +671,6 @@
       win.addEventListener('load', () => {
         URL.revokeObjectURL(url);
       }, { once: true });
-
     }
     openNovelWindow();
   }

@@ -1,4 +1,4 @@
-console.log('novel-window loaded');
+console.log('novel-window loaded 1');
 
 const data = window.__NOVEL_DATA__;
 
@@ -9,31 +9,32 @@ const {
 } = data;
 
 const container = document.getElementById('novelDisplay');
+if (container && data) {
 
-function renderPart(pageIndex) {
-  container.innerHTML = '';
+  function renderPart(pageIndex) {
+    container.innerHTML = '';
 
-  const frag = document.createDocumentFragment();
+    const frag = document.createDocumentFragment();
 
-  const page = parts[pageIndex] || {
-    overlap: [],
-    main: []
-  };
+    const page = parts[pageIndex] || {
+      overlap: [],
+      main: []
+    };
 
-  for (const chunkHTML of page.overlap) {
-    const span = document.createElement('span');
-    span.style.opacity = '0.5';
-    span.innerHTML = chunkHTML;
-    frag.appendChild(span);
+    for (const chunkHTML of page.overlap) {
+      const span = document.createElement('span');
+      span.style.opacity = '0.5';
+      span.innerHTML = chunkHTML;
+      frag.appendChild(span);
+    }
+
+    for (const chunkHTML of page.main) {
+      const span = document.createElement('span');
+      span.innerHTML = chunkHTML;
+      frag.appendChild(span);
+    }
+
+    container.appendChild(frag);
   }
-
-  for (const chunkHTML of page.main) {
-    const span = document.createElement('span');
-    span.innerHTML = chunkHTML;
-    frag.appendChild(span);
-  }
-
-  container.appendChild(frag);
+  renderPart(0);
 }
-
-renderPart(0);
