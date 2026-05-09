@@ -1,6 +1,5 @@
 console.log('novel-window loaded');
 
-const { createEqualsIcon, makeDraggable } = window;
 const win = window;
 const doc = document;
 
@@ -12,64 +11,6 @@ const {
   pageCharCounts,
   validPageCount
 } = data;
-
-// // ドラッグボタン
-// function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
-//   return `
-//   <svg width="100%" height="100%" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
-//     <rect width="22" height="24" rx="4" fill="${bg}"/>
-//     <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
-//     <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
-//   </svg>`;
-// }
-
-// // ドラッグ関数
-// function makeDraggable(dragHandle, dragTarget, dragDoc) {
-//   let isDragging = false;
-//   let offsetX = 0;
-//   let offsetY = 0;
-
-//   dragHandle.addEventListener('mousedown', e => {
-//     isDragging = true;
-//     const rect = dragTarget.getBoundingClientRect();
-//     offsetX = e.clientX - rect.left;
-//     offsetY = e.clientY - rect.top;
-//     e.preventDefault();
-//   });
-
-//   dragDoc.addEventListener('mousemove', e => {
-//     if (!isDragging) return;
-//     dragTarget.style.left = e.clientX - offsetX + 'px';
-//     dragTarget.style.top  = e.clientY - offsetY + 'px';
-//     dragTarget.style.right = 'auto';
-//     dragTarget.style.bottom = 'auto';
-//   });
-
-//   dragDoc.addEventListener('mouseup', () => {
-//     isDragging = false;
-//   });
-
-//   dragHandle.addEventListener('touchstart', e => {
-//     if (e.touches.length !== 1) return;
-//     const touch = e.touches[0];
-//     const rect = dragTarget.getBoundingClientRect();
-//     offsetX = touch.clientX - rect.left;
-//     offsetY = touch.clientY - rect.top;
-//     isDragging = true;
-//     e.preventDefault();
-//   });
-
-//   dragDoc.addEventListener('touchmove', e => {
-//     if (!isDragging || e.touches.length !== 1) return;
-//     const touch = e.touches[0];
-//     dragTarget.style.left = touch.clientX - offsetX + 'px';
-//     dragTarget.style.top  = touch.clientY - offsetY + 'px';
-//   }, { passive: false });
-
-//   dragDoc.addEventListener('touchend', () => {
-//     isDragging = false;
-//   });
-// }
 
 const container = doc.getElementById('novelDisplay');
 if (container && data) {
