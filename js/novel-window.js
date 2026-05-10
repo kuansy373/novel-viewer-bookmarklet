@@ -18,9 +18,7 @@ if (container && data) {
   // レンダリング
   function renderPart(pageIndex) {
     container.innerHTML = '';
-
     const frag = document.createDocumentFragment();
-
     const page = parts[pageIndex] || {
       overlap: [],
       main: []
