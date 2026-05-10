@@ -472,14 +472,14 @@ if (container && data) {
   doc.body.appendChild(scrollUI);
 
   const SCROLL_FIELD_MAP = {
+    scrollRight:      { prop: 'checked', event: 'change',  key: 'right',       parser: null },
+    scrollLeft: { prop: 'checked', event: 'change', key: 'left', parser: null },
+    scrollS:          { prop: 'value',   event: 'input',   key: 'shadow',      parser: Number },
+    scrollO:          { prop: 'value',   event: 'input',   key: 'opacity',     parser: parseFloat },
     scrollB:          { prop: 'checked', event: 'change',  key: 'border',      parser: null },
     scrollC:          { prop: 'checked', event: 'change',  key: 'colorIn',     parser: null },
-    scrollS:          { prop: 'value',   event: 'input',   key: 'shadow',      parser: Number },
-    scrollRight:      { prop: 'checked', event: 'change',  key: 'right',       parser: null },
-    scrollLeft:       { prop: 'checked', event: 'change',  key: 'left',        parser: null },
     scrollX:          { prop: 'value',   event: 'input',   key: 'position',    parser: Number },
     scrollW:          { prop: 'value',   event: 'input',   key: 'width',       parser: Number },
-    scrollO:          { prop: 'value',   event: 'input',   key: 'opacity',     parser: parseFloat },
     scrollSpeedScale: { prop: 'value',   event: 'input',   key: 'speedScale',  parser: parseFloat },
     scrollHide:       { prop: 'checked', event: 'change',  key: 'hideBall',    parser: null },
   };
