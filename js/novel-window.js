@@ -1061,20 +1061,6 @@ if (container && data) {
       crossorigin: 'anonymous'
     })
   ]).then(() => {
-    // 既存イベントを破棄
-    if (win.__pickrAbortController) {
-      win.__pickrAbortController.abort();
-    }
-
-    // 新しい controller
-    const abortController = new AbortController();
-    win.__pickrAbortController = abortController;
-
-    // addEventListener 用 signal
-    const listenerOptions = {
-      signal: abortController.signal
-    };
-
     const style = doc.createElement('style');
     const PickrClass = win.Pickr;
     style.textContent = `
@@ -1619,7 +1605,7 @@ if (container && data) {
                   const rule = `.pcr-app { left: ${left}px !important; top: ${top}px !important; right: auto !important; bottom: auto !important; position: fixed !important; }`;
                   globalDragRuleIndex = sheet.insertRule(rule, sheet.cssRules.length);
                 }
-
+                // ドラッグイベント
                 dragBtn.addEventListener('mousedown', e => {
                   isDragging = true;
                   const rect = app.getBoundingClientRect();
@@ -1628,16 +1614,18 @@ if (container && data) {
                   applyDragCss(rect.left, rect.top);
                   e.preventDefault();
                   e.stopPropagation();
-                }, listenerOptions);
+                });
+
                 doc.addEventListener('mousemove', e => {
                   if (!isDragging) return;
                   applyDragCss(e.clientX - offsetX, e.clientY - offsetY);
                 });
+
                 doc.addEventListener('mouseup', () => {
                   if (isDragging) {
                     isDragging = false;
                   }
-                }, listenerOptions);
+                });
 
                 // タッチ対応
                 dragBtn.addEventListener('touchstart', e => {
@@ -1651,19 +1639,18 @@ if (container && data) {
                   e.preventDefault();
                   e.stopPropagation();
                 });
+
                 doc.addEventListener('touchmove', e => {
                   if (!isDragging || e.touches.length !== 1) return;
                   const touch = e.touches[0];
                   applyDragCss(touch.clientX - offsetX, touch.clientY - offsetY);
-                }, {
-                  passive: false,
-                  signal: abortController.signal
-                });
+                }, { passive: false });
+
                 doc.addEventListener('touchend', () => {
                   if (isDragging) {
                     isDragging = false;
                   }
-                }, listenerOptions);
+                });
               }
             }
 
