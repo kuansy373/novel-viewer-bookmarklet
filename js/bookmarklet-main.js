@@ -486,6 +486,7 @@
         const searchStart = endVisiblePos;
         const searchEnd = Math.min(
           fullText.length,
+          // 5%先の範囲で自然な区切り文字
           endVisiblePos + Math.floor(charsPerPage * 0.05)
         );
 
@@ -606,7 +607,7 @@
         <html lang="ja" style="scrollbar-width: thin;">
         <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
         <title>小説</title>
         <style>
         body {
@@ -655,7 +656,7 @@
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@503ca7c/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v2.0.0/js/novel-window.js"></script>
         </body>
         </html>
       `;
