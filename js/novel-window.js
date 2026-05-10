@@ -7,6 +7,7 @@ const data = win.__NOVEL_DATA__;
 
 const {
   totalVisibleChars,
+  numPages,
   parts,
   pageCharCounts,
   validPageCount
