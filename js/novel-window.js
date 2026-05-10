@@ -41,6 +41,13 @@ if (container && data) {
   }
   renderPart(0);
 
+  // ページが有効かチェックする関数
+  function isValidPage(pageIndex) {
+    return pageIndex >= 0 &&
+           pageIndex < parts.length &&
+           pageCharCounts[pageIndex] > 0;
+  }
+
   // ページ切り替えオーバーレイ作成関数
   function createOverlay() {
     const overlay = doc.createElement('div');
