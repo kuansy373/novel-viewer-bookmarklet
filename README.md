@@ -5,7 +5,7 @@
 - [最初の注意](#最初の注意)
 - [jsファイルの説明](#jsファイルの説明)
 - [対象サイト](#対象サイト)
-- [実行](#実行)
+- [実行（実行方法）](#実行)
 - [強み](#強み)
 - [弱み](#弱み)
 - [デフォルト設定 JSON](#デフォルト設定-json)
@@ -40,7 +40,7 @@
 ### 実行
 - ブックマークレットによる実行です。
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
-  - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)では簡単な説明をしています。ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
+  - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
 <pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v2.0.0/js/bookmarklet-main.js';document.body.appendChild(s);})();
 </code></pre>
