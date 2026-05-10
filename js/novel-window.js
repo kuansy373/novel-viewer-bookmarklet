@@ -2887,14 +2887,14 @@ if (container && data) {
     ]),
 
     scrollSettings: new Set([
-      'border',
-      'colorIn',
-      'shadow',
       'right',
       'left',
+      'shadow',
+      'opacity',
+      'border',
+      'colorIn',
       'position',
       'width',
-      'opacity',
       'speedScale',
       'hideBall'
     ]),
