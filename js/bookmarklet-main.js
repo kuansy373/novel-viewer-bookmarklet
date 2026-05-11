@@ -390,18 +390,15 @@
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
       const map = [];
+
       let htmlPos = 0;
       let visiblePos = 0;
       let rubyDepth = 0;
-
-      // rt / rp の中かどうか
-      const skipStack = [];
-      let skipVisible = false;
+      let skipDepth = 0;
 
       while (htmlPos < html.length) {
         const ch = html[htmlPos];
 
-        // タグ開始
         if (ch === '<') {
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
@@ -415,11 +412,9 @@
           // rt / rp は可視文字として数えない
           if (tag.name === 'rt' || tag.name === 'rp') {
             if (!tag.isClosing) {
-              skipStack.push(tag.name);
-              skipVisible = true;
+              skipDepth++;
             } else {
-              skipStack.pop();
-              skipVisible = skipStack.length > 0;
+              skipDepth = Math.max(0, skipDepth - 1);
             }
           }
 
@@ -427,8 +422,7 @@
           continue;
         }
 
-        // テキストノード文字
-        if (!skipVisible) {
+        if (skipDepth === 0) {
           map.push({ visiblePos, htmlPos, rubyDepth });
           visiblePos++;
         }
@@ -437,6 +431,7 @@
       }
 
       map.push({ visiblePos, htmlPos: html.length, rubyDepth });
+
       return map;
     }
 
