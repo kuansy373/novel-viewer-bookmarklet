@@ -1,7 +1,7 @@
 # WEB小説一行化ブックマークレット
 ## 目次
 - [できること](#できること)
-- [きっかけ](#きっかけ)
+- [作ったきっかけ](#作ったきっかけ)
 - [最初の注意](#最初の注意)
 - [jsファイルの説明](#jsファイルの説明)
 - [対象サイト](#対象サイト)
@@ -17,7 +17,7 @@
 - WEB小説を縦一行に表示し、スマホでも大きな文字で読むことができます。
 - 文字サイズや文字色の設定、自動スクロールができます。
 
-### きっかけ
+### 作ったきっかけ
 - 「一行を読み終え、次の行を読むときに、読むべき行を見失ってしまう」ことが多く、読書に集中できなかったことがきっかけです。
 - 「すべてを一行にしてしまえばいいのでは!?」と思い検索し、下記みもねる氏の記事を見つけました。（ブックマークレットの存在を知る）
 
@@ -42,7 +42,7 @@
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@383dcd3ea518e46da61d1a986e6c10cd844a36b8/js/bookmarklet-main.js';document.body.appendChild(s);})();
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@aaa212b755321c731ed3b06afd0917f856a86b33/js/bookmarklet-main.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
