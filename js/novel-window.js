@@ -1,4 +1,4 @@
-console.log('novel-window loaded');
+console.log('novel-window loaded: v2.0.0');
 
 const win = window;
 const doc = document;
