@@ -673,6 +673,7 @@
 
       if (!win) {
         alert('ポップアップがブロックされました');
+        return;
       }
 
       win.addEventListener('load', () => {
