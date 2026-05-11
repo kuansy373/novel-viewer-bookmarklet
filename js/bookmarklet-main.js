@@ -3,7 +3,7 @@
   // webページのDOM完成を待って実行
   function run() {
 
-    let text = '';
+    const textParts = [];
 
     function escapeHTML(str) {
       return str.replace(/[&<>"']/g, function (m) {
@@ -76,8 +76,10 @@
       '#novelBody'
     )
     .forEach(node => {
-      text += extractWithRubyTags(node);
+      textParts.push(extractWithRubyTags(node));
     });
+
+    let text = textParts.join('');
 
     // カクヨムの傍点
     text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
