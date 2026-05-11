@@ -42,7 +42,7 @@
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v2.0.0/js/bookmarklet-main.js';document.body.appendChild(s);})();
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@383dcd3ea518e46da61d1a986e6c10cd844a36b8/js/bookmarklet-main.js';document.body.appendChild(s);})();
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -149,9 +149,8 @@
 - v2.0.0: ブックマークレットを実行したページが再読み込みされても小説タブを操作可能にした。
 
 ### 注意点
-- ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。タグでバージョン管理しているため、最新リリースにするにはユーザー自身がタグを最新のものに書き換える必要があります（現在:v2.0.0）。
-  - ※タグと実際のコードの結びつきを確認したい場合は、「Releases」から該当タグが参照しているコミットハッシュを確認ください。また、私自身がユーザーに気づかれないままタグが参照するコミットハッシュを変更可能なので、コミットハッシュをそのまま指定するのがよいです。その場合に修正するのはブックマークレットコードの`@v2.0.0`と、bookmarklet-main.js ソースコード内の`@2.0.0`の2箇所で、どちらともを`@ecc283bc5ad7dec296a671fde7e13056a88d15bc`に置き換えてください。
-- v1.3.1を含むそれ以前のバージョンは、ブックマークレットを実行した際に新しいタブを開かず、元のページを作り変えるようになっているため、広告が読み込まれる前に実行してしまうとまれに宛先不明のメッセージがコンソールに大量に溜まることがあります。v1.4.1以降はDOMの完成後に処理が走るため、webページの読み込み完了を待たなくて大丈夫です。
+- ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。タグでバージョン管理していますが、ブックマークレットコードと、bookmarklet-main.js ソースコード内からのファイル参照にはコミットハッシュを使用しています。
+  - ※コミットハッシュとタグの結びつきを確認したい場合は、「Releases」から、該当コミットハッシュの表示があるタグを確認ください。（現在:v2.0.0）
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
 ### 不具合・要望

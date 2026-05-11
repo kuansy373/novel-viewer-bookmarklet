@@ -656,7 +656,7 @@
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@v2.0.0/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@383dcd3ea518e46da61d1a986e6c10cd844a36b8/js/novel-window.js"></script>
         </body>
         </html>
       `;
