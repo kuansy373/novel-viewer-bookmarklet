@@ -362,18 +362,32 @@ if (container && data) {
   // === スクロール処理 ===
   const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
+  let rafId = null;
   let lastTimestamp = null;
 
   function forceScroll(timestamp) {
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
     }
-    if (scrollSpeed !== 0) {
-      const elapsed = timestamp - lastTimestamp;
-      scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
-    }
+
+    const elapsed = timestamp - lastTimestamp;
+    scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
+
     lastTimestamp = timestamp;
-    win.requestAnimationFrame(forceScroll);
+
+    if (scrollSpeed === 0) {
+      rafId = null;
+      lastTimestamp = null;
+      return;
+    }
+
+    rafId = requestAnimationFrame(forceScroll);
+  }
+
+  function startScrollLoop() {
+    if (rafId === null && scrollSpeed !== 0) {
+      rafId = requestAnimationFrame(forceScroll);
+    }
   }
 
   // 両方のスライダーの値を同期
@@ -387,12 +401,11 @@ if (container && data) {
     if (scrollSliderLeft !== e.target) {
       scrollSliderLeft.value = val;
     }
+    startScrollLoop();
   }
   [scrollSliderRight, scrollSliderLeft].forEach((slider) => {
     slider.addEventListener("input", onSliderInput);
   });
-
-  win.requestAnimationFrame(forceScroll);
 
   // タブまたはウィンドウの非アクティブでスライダー値リセット
   doc.addEventListener("visibilitychange", () => {
