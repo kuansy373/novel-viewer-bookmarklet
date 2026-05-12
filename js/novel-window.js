@@ -347,7 +347,6 @@ if (container && data) {
       bottom: '-108vh',
       zIndex: '9999',
       width: '80px',
-      opacity: '1',
       [position]: '30px',
       ...additionalStyle,
     });
@@ -3285,14 +3284,24 @@ if (container && data) {
       <title>保存済みJSON</title>
       <style>
         body { font-family: sans-serif; padding: 16px; }
-        pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ccc; padding: 12px; border-radius: 4px; }
         .controls { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
         .controls-left { display: flex; align-items: center; }
         input[type="checkbox"] { cursor: pointer; }
         label { font-size: 15px; cursor: pointer; }
         button { margin-left: 8px; font-size: 15px; cursor: pointer; }
         .disabled { opacity: 0.5; cursor: not-allowed; }
-        #jsonDisplay[contenteditable="true"] { border: none; outline: 3px dashed #000000; border-radius: 0px; }
+        #jsonDisplay {
+          width: 100%;
+          height: 70vh;
+          box-sizing: border-box;
+          font-family: monospace;
+          white-space: pre;
+          border: 1px solid #ccc;
+          padding: 12px;
+          border-radius: 4px;
+          resize: vertical;
+        }
+        #jsonDisplay.editing {　border: none;　outline: 3px dashed #000000;　border-radius: 0px;　}
       </style>
     </head>
     <body>
@@ -3306,7 +3315,7 @@ if (container && data) {
         </div>
         <button id="allJsonEditBtn">編集</button>
       </div>
-      <pre id="jsonDisplay"></pre>
+      <textarea id="jsonDisplay" readonly></textarea>
     </body>
     </html>`;
 
@@ -3331,7 +3340,7 @@ if (container && data) {
 
       const updateJsonDisplay = () => {
         if (isAllEditing) return;
-        jsonDisplay.textContent = prettyCheckbox.checked
+        jsonDisplay.value = prettyCheckbox.checked
           ? JSON.stringify(currentJson, null, 2)
           : JSON.stringify(currentJson);
       };
@@ -3356,7 +3365,7 @@ if (container && data) {
 
       jsonWinCopyBtn.addEventListener('click', async () => {
         try {
-          await jsonWin.navigator.clipboard.writeText(jsonDisplay.textContent);
+          await jsonWin.navigator.clipboard.writeText(jsonDisplay.value);
           jsonWin.alert('コピーしました!');
         } catch (err) {
           jsonWin.alert('コピーに失敗しました: ' + err);
@@ -3366,7 +3375,8 @@ if (container && data) {
       allJsonEditBtn.addEventListener('click', () => {
         isAllEditing = !isAllEditing;
         allJsonEditBtn.textContent = isAllEditing ? '編集中…' : '編集';
-        jsonDisplay.contentEditable = isAllEditing.toString();
+        jsonDisplay.readOnly = !isAllEditing;
+        jsonDisplay.classList.toggle('editing', isAllEditing);
 
         [prettyCheckbox, jsonWinCopyBtn, compressJsonBtn].forEach(el => {
           el.disabled = isAllEditing;
@@ -3376,17 +3386,18 @@ if (container && data) {
 
         if (!isAllEditing) {
           try {
-            currentJson = JSON.parse(jsonDisplay.textContent);
+            currentJson = JSON.parse(jsonDisplay.value);
             // 編集終了時に短縮できるなら「短縮する」に切り替え
             const currentText = JSON.stringify(currentJson);
             const compressed = extractBase(currentJson);
             const compressedText = JSON.stringify(compressed);
             compressJsonBtn.textContent = compressedText.length < currentText.length ? '短縮する' : '展開する';
           } catch (e) {
-            jsonWin.alert('JSONの形式が正しくありません');
+            jsonWin.alert(`JSONの解析に失敗しました:\n${e.message}`);
             isAllEditing = true;
             allJsonEditBtn.textContent = '編集中…';
-            jsonDisplay.contentEditable = 'true';
+            jsonDisplay.readOnly = false;
+            jsonDisplay.classList.add('editing');
             [prettyCheckbox, jsonWinCopyBtn, compressJsonBtn].forEach(el => {
               el.disabled = true;
               el.classList.add('disabled');
