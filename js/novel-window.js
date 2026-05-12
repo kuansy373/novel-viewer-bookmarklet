@@ -672,9 +672,9 @@ if (container && data) {
     </svg>
   `;
   Object.assign(sUIOpenBtn.style, baseOpenBtnStyle, {
-    padding: '0px 5px 5px 0px',
-    top: '10px',
-    left: '18px',
+    padding: '5px 8px 5px 8px',
+    top: '5px',
+    left: '10px',
     zIndex: '10006',
   });
   doc.body.appendChild(sUIOpenBtn);
@@ -1012,9 +1012,9 @@ if (container && data) {
     </svg>
   `;
   Object.assign(fUIOpenBtn.style, baseOpenBtnStyle, {
-    padding: '0px 0px 5px 5px',
-    top: '10px',
-    right: '18px',
+    padding: '5px 8px 5px 8px',
+    top: '5px',
+    right: '10px',
     zIndex: '10006'
   });
   doc.body.appendChild(fUIOpenBtn);
@@ -1903,9 +1903,9 @@ if (container && data) {
       `;
 
       Object.assign(pUIOpenBtn.style, baseOpenBtnStyle, {
-        padding: '5px 0px 5px 5px',
+        padding: '5px 8px 5px 8px',
         top: '75px',
-        right: '18px',
+        right: '10px',
         zIndex: '20000'
       });
 
@@ -2364,9 +2364,9 @@ if (container && data) {
     </svg>
   `;
   Object.assign(oUIOpenBtn.style, baseOpenBtnStyle, {
-    padding: '5px 5px 5px 0px',
+    padding: '5px 8px 5px 8px',
     top: '75px',
-    left: '18px',
+    left: '10px',
     zIndex: '10000',
   });
   doc.body.appendChild(oUIOpenBtn);
