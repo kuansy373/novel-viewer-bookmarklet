@@ -2673,7 +2673,7 @@ if (container && data) {
         preview.readOnly = !editing;
         preview.style.border = editing ? 'none' : '1px solid';
         preview.style.outline = editing ? '3px dashed' : 'none';
-        preview.style.borderRadius = editing ? '0' : 'none';
+        preview.style.borderRadius = editing ? '0' : '4px';
 
         // ボタンの無効化対象
         const controls = [
@@ -2758,11 +2758,9 @@ if (container && data) {
         } else {
           preview.value = jsonTextCompressed;
           preview.style.whiteSpace = 'nowrap';
-          preview.style.minHeight = '';
-          preview.style.height = 'auto';
+          preview.style.minHeight = '45px';
+          preview.style.height = '45px';
           preview.style.overflowY = 'hidden';
-          // scrollHeightはauto後に一度レイアウトを確定させてから読む
-          preview.style.height = preview.scrollHeight + 'px';
         }
       };
 
