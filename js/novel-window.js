@@ -2585,7 +2585,7 @@ if (container && data) {
         border-radius: 8px;
         max-width: 500px;
         min-width: 300px;
-        max-height: 50vh;
+        max-height: 70vh;
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
@@ -2670,9 +2670,10 @@ if (container && data) {
         isEditing = editing;
 
         // プレビュー編集切替
-        preview.contentEditable = editing ? 'true' : 'false';
+        preview.readOnly = !editing;
         preview.style.border = editing ? 'none' : '1px solid';
         preview.style.outline = editing ? '3px dashed' : 'none';
+        preview.style.borderRadius = editing ? '0' : 'none';
 
         // ボタンの無効化対象
         const controls = [
@@ -2723,14 +2724,15 @@ if (container && data) {
       const previewContainer = doc.createElement('div');
       previewContainer.style.cssText = `
         position: relative;
-        margin: 0 0 20px 0;
+        margin: 0 0 15px 0;
       `;
 
       // プレビュー内容
       const preview = doc.createElement('textarea');
+      preview.readOnly = true;
       preview.style.cssText = `
         width: 100%;
-        min-height: 240px;
+        min-height: 230px;
         padding: 12px;
         border: 1px solid currentColor;
         border-radius: 4px;
@@ -2740,7 +2742,8 @@ if (container && data) {
         resize: none;
         box-sizing: border-box;
         font-family: monospace;
-        white-space: pre;
+        white-space: nowrap;
+        scrollbar-width: thin;
       `;
 
       // 編集後のcurrentDataからプレビュー内容を再生成する関数
@@ -2750,9 +2753,16 @@ if (container && data) {
         if (prettyCheckbox.checked) {
           preview.value = jsonTextFormatted;
           preview.style.whiteSpace = 'pre-wrap';
+          preview.style.minHeight = '230px';
+          preview.style.overflowY = 'auto';
         } else {
           preview.value = jsonTextCompressed;
           preview.style.whiteSpace = 'nowrap';
+          preview.style.minHeight = '';
+          preview.style.height = 'auto';
+          preview.style.overflowY = 'hidden';
+          // scrollHeightはauto後に一度レイアウトを確定させてから読む
+          preview.style.height = preview.scrollHeight + 'px';
         }
       };
 
