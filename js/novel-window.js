@@ -2597,7 +2597,7 @@ if (container && data) {
       title.textContent = `☆ ${name} に保存しますか?`;
       title.id = 'title';
       title.style.cssText = `
-        margin: 0 0 16px 0;
+        margin: 0 0 5px;
         font-size: 16px;
         font-weight: bold;
       `;
@@ -2736,9 +2736,9 @@ if (container && data) {
         padding: 12px;
         border: 1px solid currentColor;
         border-radius: 4px;
+        outline: none;
         overflow: auto;
         font-size: 12px;
-        margin: 0;
         resize: none;
         box-sizing: border-box;
         font-family: monospace;
@@ -2759,7 +2759,6 @@ if (container && data) {
           preview.value = jsonTextCompressed;
           preview.style.whiteSpace = 'nowrap';
           preview.style.minHeight = '45px';
-          preview.style.height = '45px';
           preview.style.overflowY = 'hidden';
         }
       };
@@ -3308,6 +3307,7 @@ if (container && data) {
           box-sizing: border-box;
           font-family: monospace;
           border: 1px solid #ccc;
+          border-radius: 4px;
           padding: 12px;
           resize: none;
         }
