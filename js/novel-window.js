@@ -2651,7 +2651,7 @@ if (container && data) {
 
       const setEditingMode = (editing) => {
         if (isEditing && !editing) {
-          const validationResult = validateAndParseJSON(preview.textContent);
+          const validationResult = validateAndParseJSON(preview.value);
           if (validationResult.error) {
             win.alert(validationResult.error);
             return;
@@ -2711,7 +2711,7 @@ if (container && data) {
       `;
 
       jsonCopyBtn.addEventListener("click", () => {
-        copyToClipboard(jsonCopyBtn, preview.textContent, { default: "コピー", success: "コピー完了!" });
+        copyToClipboard(jsonCopyBtn, preview.value, { default: "コピー", success: "コピー完了!" });
       });
 
       topContainer.appendChild(prettyCheckbox);
@@ -2727,16 +2727,20 @@ if (container && data) {
       `;
 
       // プレビュー内容
-      const preview = doc.createElement('pre');
+      const preview = doc.createElement('textarea');
       preview.style.cssText = `
+        width: 100%;
+        min-height: 240px;
         padding: 12px;
         border: 1px solid currentColor;
         border-radius: 4px;
-        overflow-x: auto;
+        overflow: auto;
         font-size: 12px;
         margin: 0;
-        white-space: nowrap;
-        scrollbar-width: thin;
+        resize: none;
+        box-sizing: border-box;
+        font-family: monospace;
+        white-space: pre;
       `;
 
       // 編集後のcurrentDataからプレビュー内容を再生成する関数
@@ -2744,10 +2748,10 @@ if (container && data) {
         const jsonTextFormatted = JSON.stringify(currentData, null, 2);
         const jsonTextCompressed = JSON.stringify(currentData);
         if (prettyCheckbox.checked) {
-          preview.textContent = jsonTextFormatted;
+          preview.value = jsonTextFormatted;
           preview.style.whiteSpace = 'pre-wrap';
         } else {
-          preview.textContent = jsonTextCompressed;
+          preview.value = jsonTextCompressed;
           preview.style.whiteSpace = 'nowrap';
         }
       };
