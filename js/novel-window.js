@@ -3295,14 +3295,18 @@ if (container && data) {
           height: 75vh;
           box-sizing: border-box;
           font-family: monospace;
-          white-space: pre;
           border: 1px solid #ccc;
           padding: 12px;
-          border-radius: 4px;
-          resize: vertical;
+          resize: none;
         }
-        #jsonDisplay.editing { border: none; outline: 3px dashed #000000; border-radius: 0; }
-        #jsonDisplay:focus { outline: none; }
+        #jsonDisplay:focus:not(.editing) {
+          outline: none;
+        }
+        #jsonDisplay.editing {
+          border: none;
+          outline: 3px dashed #000;
+          border-radius: 0;
+        }
       </style>
     </head>
     <body>
