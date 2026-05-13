@@ -3292,7 +3292,7 @@ if (container && data) {
         .disabled { opacity: 0.5; cursor: not-allowed; }
         #jsonDisplay {
           width: 100%;
-          height: 70vh;
+          height: 75vh;
           box-sizing: border-box;
           font-family: monospace;
           white-space: pre;
@@ -3301,7 +3301,8 @@ if (container && data) {
           border-radius: 4px;
           resize: vertical;
         }
-        #jsonDisplay.editing {　border: none;　outline: 3px dashed #000000;　border-radius: 0px;　}
+        #jsonDisplay.editing { border: none; outline: 3px dashed #000000; border-radius: 0; }
+        #jsonDisplay:focus { outline: none; }
       </style>
     </head>
     <body>
