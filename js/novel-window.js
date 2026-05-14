@@ -485,7 +485,7 @@ if (container && data) {
 
   const SCROLL_FIELD_MAP = {
     scrollRight:      { prop: 'checked', event: 'change',  key: 'right',       parser: null },
-    scrollLeft: { prop: 'checked', event: 'change', key: 'left', parser: null },
+    scrollLeft:       { prop: 'checked', event: 'change',  key: 'left',        parser: null },
     scrollS:          { prop: 'value',   event: 'input',   key: 'shadow',      parser: Number },
     scrollO:          { prop: 'value',   event: 'input',   key: 'opacity',     parser: parseFloat },
     scrollB:          { prop: 'checked', event: 'change',  key: 'border',      parser: null },
@@ -2732,7 +2732,6 @@ if (container && data) {
       preview.readOnly = true;
       preview.style.cssText = `
         width: 100%;
-        min-height: 230px;
         padding: 12px;
         border: 1px solid currentColor;
         border-radius: 4px;
@@ -2753,7 +2752,7 @@ if (container && data) {
         if (prettyCheckbox.checked) {
           preview.value = jsonTextFormatted;
           preview.style.whiteSpace = 'pre-wrap';
-          preview.style.minHeight = '230px';
+          preview.style.minHeight = '250px';
           preview.style.overflowY = 'auto';
         } else {
           preview.value = jsonTextCompressed;
@@ -2994,6 +2993,15 @@ if (container && data) {
     return validateObject(obj, 'root');
   }
 
+  // JSON文字列を正規化
+  function normalizeJSONString(text) {
+    return text
+      .replace(/\u00A0/g, ' ')              // NBSP → 半角スペース
+      .replace(/[\u200B-\u200D\uFEFF]/g, '') // ゼロ幅文字除去
+      .replace(/\r\n/g, '\n')              // 改行コード統一
+      .replace(/\r/g, '\n');
+  }
+
   // JSONの検証ロジックを共通化
   function validateAndParseJSON(jsonText, allowEmpty = false) {
     if (!jsonText) {
@@ -3002,6 +3010,8 @@ if (container && data) {
       }
       return { error: 'JSONデータを入力してください' };
     }
+
+    jsonText = normalizeJSONString(jsonText);
 
     let parsedData;
     try {
@@ -3310,6 +3320,7 @@ if (container && data) {
           border-radius: 4px;
           padding: 12px;
           resize: none;
+          white-space: pre-wrap;
         }
         #jsonDisplay:focus:not(.editing) {
           outline: none;
@@ -3402,15 +3413,18 @@ if (container && data) {
         prettyLabel.classList.toggle('disabled', isAllEditing);
 
         if (!isAllEditing) {
-          try {
-            currentJson = JSON.parse(jsonDisplay.value);
-            // 編集終了時に短縮できるなら「短縮する」に切り替え
-            const currentText = JSON.stringify(currentJson);
-            const compressed = extractBase(currentJson);
-            const compressedText = JSON.stringify(compressed);
-            compressJsonBtn.textContent = compressedText.length < currentText.length ? '短縮する' : '展開する';
-          } catch (e) {
-            jsonWin.alert(`JSONの解析に失敗しました:\n${e.message}`);
+          const expandedText = (() => {
+            try {
+              const raw = JSON.parse(jsonDisplay.value);
+              return JSON.stringify(expandBase(raw));
+            } catch {
+              return jsonDisplay.value; // パース失敗時はそのまま渡してエラーを出させる
+            }
+          })();
+
+          const result = validateAndParseJSON(expandedText);
+          if (result.error) {
+            jsonWin.alert(result.error);
             isAllEditing = true;
             allJsonEditBtn.textContent = '編集中…';
             jsonDisplay.readOnly = false;
@@ -3420,6 +3434,12 @@ if (container && data) {
               el.classList.add('disabled');
             });
             prettyLabel.classList.add('disabled');
+          } else {
+            currentJson = result.data;
+            const currentText = JSON.stringify(currentJson);
+            const compressed = extractBase(currentJson);
+            const compressedText = JSON.stringify(compressed);
+            compressJsonBtn.textContent = compressedText.length < currentText.length ? '短縮する' : '展開する';
           }
         }
       });
