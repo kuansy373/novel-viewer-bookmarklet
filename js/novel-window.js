@@ -3380,6 +3380,10 @@ if (container && data) {
       };
 
       compressJsonBtn.addEventListener('click', () => {
+        if (Object.keys(currentJson).length === 0) {
+          jsonWin.alert('保存スタイルがありません');
+          return;
+        }
         if (compressJsonBtn.textContent === '展開する') {
           if (!jsonWin.confirm('"_base"を各スタイルに展開しますか?')) return;
           currentJson = expandBase(currentJson);
@@ -3392,6 +3396,10 @@ if (container && data) {
       });
 
       jsonWinCopyBtn.addEventListener('click', async () => {
+        if (Object.keys(currentJson).length === 0) {
+          jsonWin.alert('保存スタイルがありません');
+          return;
+        }
         try {
           await jsonWin.navigator.clipboard.writeText(jsonDisplay.value);
           jsonWin.alert('コピーしました!');
@@ -3436,8 +3444,9 @@ if (container && data) {
             prettyLabel.classList.add('disabled');
           } else {
             currentJson = result.data;
-            const currentText = JSON.stringify(currentJson);
-            const compressed = extractBase(currentJson);
+            const raw = JSON.parse(jsonDisplay.value);
+            const currentText = JSON.stringify(raw);
+            const compressed = extractBase(raw);
             const compressedText = JSON.stringify(compressed);
             compressJsonBtn.textContent = compressedText.length < currentText.length ? '短縮する' : '展開する';
           }
