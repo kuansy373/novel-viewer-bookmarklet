@@ -3,8 +3,6 @@
   // webページのDOM完成を待って実行
   function run() {
 
-    const textParts = [];
-
     function escapeHTML(str) {
       return str.replace(/[&<>"']/g, function (m) {
         return ({
@@ -54,6 +52,8 @@
       traverse(node);
       return result;
     }
+
+    const textParts = [];
 
     document.querySelectorAll(
       // 青空文庫
@@ -653,7 +653,7 @@
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@80d5faf310d00e61031d59407145f1a2599647e5/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@fb3a612b873975337c9b4cc60abb2d1b60728550/js/novel-window.js"></script>
         </body>
         </html>
       `;
