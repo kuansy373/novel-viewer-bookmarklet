@@ -16,7 +16,7 @@ const {
 const container = doc.getElementById('novelDisplay');
 if (container && data) {
 
-  // レンダリング
+  // レンダリング関数
   function renderPart(pageIndex) {
     container.innerHTML = '';
     const frag = document.createDocumentFragment();
@@ -40,7 +40,6 @@ if (container && data) {
 
     container.appendChild(frag);
   }
-  renderPart(0);
 
   // ページが有効かチェックする関数
   function isValidPage(pageIndex) {
@@ -245,7 +244,7 @@ if (container && data) {
 
   // 初回表示
   let currentIndex = 0;
-  win.renderPart(currentIndex);
+  renderPart(currentIndex);
 
   // ページ切り替え可能フラグ
   let promptShownForward = false;
@@ -272,7 +271,7 @@ if (container && data) {
       showOverlay(nextPage, numPages, (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
-        win.renderPart(currentIndex);
+        renderPart(currentIndex);
         win.scrollTo(0, 0);
         win.setTimeout(() => {
           isSwitching = false;
@@ -296,7 +295,7 @@ if (container && data) {
       showOverlay(targetPageForPrompt, numPages , (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
-        win.renderPart(currentIndex);
+        renderPart(currentIndex);
         win.requestAnimationFrame(() => {
           if (currentIndex === parts.length - 1) {
             win.scrollTo(0, 0);
