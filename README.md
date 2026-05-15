@@ -149,7 +149,8 @@
 - v2.0.0: ブックマークレットを実行したページが再読み込みされても小説タブを操作可能にした。
 
 ### 注意点
-- ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードから直接参照のされているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
+- ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。
+  - タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードから直接参照されているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
   - ※コミットハッシュとバージョン(タグ)の結びつきを確認したい場合は、「Releases」から、該当コミットハッシュの表示があるバージョンを確認ください。（現在: 読み込まれる bookmarklet-main.js が`@17bc2c2`、 novel-window.js が`@aaa212b`、タグが`v2.0.1`です）
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
