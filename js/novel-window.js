@@ -320,6 +320,7 @@ if (container && data) {
     if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
     if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
     if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
+    lastTimestamp = null;
   }
 
   function disableBodyScroll() {
@@ -361,24 +362,34 @@ if (container && data) {
   // === スクロール処理 ===
   const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
-  let rafId = null;
-  let lastTimestamp = null;
+  let lastTimestamp = null;　// 前フレームの時刻
+  let rafId = null;         // アニメーションループの管理ID
+  let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
+      preciseScroll = scroller.scrollTop;
     }
-
-    const elapsed = timestamp - lastTimestamp;
-    scroller.scrollTop += (scrollSpeed * elapsed) / 1000;
-
-    lastTimestamp = timestamp;
 
     if (scrollSpeed === 0) {
       rafId = null;
       lastTimestamp = null;
       return;
     }
+
+    // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
+    const elapsed = Math.min(timestamp - lastTimestamp, 32);
+
+    // ユーザーが手動スクロールした場合に基準を現在位置に更新（保険。無くても問題なかった）
+    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+      preciseScroll = scroller.scrollTop;
+    }
+
+    preciseScroll += (scrollSpeed * elapsed) / 1000;
+    scroller.scrollTop = preciseScroll;
+
+    lastTimestamp = timestamp;
 
     rafId = requestAnimationFrame(forceScroll);
   }
@@ -409,9 +420,7 @@ if (container && data) {
   // タブまたはウィンドウの非アクティブでスライダー値リセット
   doc.addEventListener("visibilitychange", () => {
     if (doc.hidden) {
-      resetScrollSliders(); // 離れたときに値リセット
-    } else {
-      lastTimestamp = null; // 復帰したときにタイムスタンプリセット
+      resetScrollSliders();
     }
   });
 
