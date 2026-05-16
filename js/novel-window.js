@@ -2644,6 +2644,7 @@ if (container && data) {
       jsonEditBtn.textContent = '編集';
       jsonEditBtn.id = 'jsonEditBtn';
       jsonEditBtn.style.cssText = `
+        align-self: stretch;
         padding: 6px 12px;
         margin-left: auto;
         color: unset;
@@ -2711,6 +2712,7 @@ if (container && data) {
       jsonCopyBtn.textContent = 'コピー';
       jsonCopyBtn.id = 'jsonCopyBtn';
       jsonCopyBtn.style.cssText = `
+        align-self: stretch;
         padding: 6px 12px;
         color: unset;
         border: 1px solid currentColor;
