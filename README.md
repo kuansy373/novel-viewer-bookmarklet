@@ -42,7 +42,7 @@
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@17bc2c21f91c96adb354943d51654e3b947f8415/js/bookmarklet-main.js';document.body.appendChild(s);})();
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@e996a6016b72b93736a27b0f1b798a57860c67b7/js/bookmarklet-main.js';document.body.appendChild(s)})()
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -151,7 +151,7 @@
 ### 注意点
 - ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。
   - タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードから直接参照されているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
-  - ※コミットハッシュとバージョン(タグ)の結びつきを確認したい場合は、「Releases」から、該当コミットハッシュの表示があるバージョンを確認ください。（現在: 読み込まれる bookmarklet-main.js が`@17bc2c2`、 novel-window.js が`@aaa212b`、タグが`v2.0.1`です）
+  - ※ 現在、読み込まれる bookmarklet-main.js が `@e996a60`、 novel-window.js が `@d683f70`、タグが `v2.0.2` です。
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
 ### 不具合・要望
