@@ -3,100 +3,6 @@
   // webページのDOM完成を待って実行
   function run() {
 
-    function escapeHTML(str) {
-      return str.replace(/[&<>"']/g, function (m) {
-        return ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        })[m];
-      });
-    }
-
-    const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
-    const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
-
-    function extractWithRubyTags(node) {
-
-      const result = [];
-
-      function traverse(el) {
-        for (const child of el.childNodes) {
-
-          if (child.nodeType === Node.TEXT_NODE) {
-            result.push(escapeHTML(child.textContent));
-
-          } else if (child.nodeType === Node.ELEMENT_NODE) {
-            const tagName = child.tagName.toLowerCase();
-
-            if (ALLOWED_TAGS.has(tagName)) {
-              let attrs = '';
-              for (const attr of child.attributes) {
-                if (/^on/i.test(attr.name)) continue;
-                if (!ALLOWED_ATTRS.has(attr.name)) continue;
-                attrs += ` ${attr.name}="${escapeHTML(attr.value)}"`;
-              }
-
-              result.push(`<${tagName}${attrs}>`);
-              traverse(child);
-              result.push(`</${tagName}>`);
-            } else if (tagName === 'br') {
-              result.push('\n');
-            } else {
-              traverse(child);
-            }
-          }
-        }
-      }
-
-      traverse(node);
-      return result.join('');
-    }
-
-    const textParts = [];
-
-    document.querySelectorAll(
-      // 青空文庫
-      'body > h1, ' +
-      'body > h2, ' +
-      'body > h3, ' +
-      '.metadata, ' +
-      '.main_text, ' +
-      // 小説家になろう
-      '.p-novel__title, ' +
-      '.p-novel__text, ' +
-      // カクヨム
-      '.widget-episodeTitle, ' +
-      '.widget-episodeBody p, ' +
-      // アルファポリス
-      '.novel-title, ' +
-      '.novel-body p, ' +
-      '.chapter-title, ' +
-      '.episode-title, ' +
-      '#novelBody'
-    )
-    .forEach(node => {
-      textParts.push(extractWithRubyTags(node));
-    });
-
-    let text = textParts.join('');
-    textParts.length = 0;
-
-    // カクヨムの傍点
-    text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
-      const chars = content.replace(/<\/?span>/gi, '');
-      return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
-    });
-
-    // 改行の処理
-    text = text.trim()
-      .replace(/(\r\n|\r)+/g, '\n')
-      .replace(/\n{2,}/g, '\n')
-      .replace(/\n/g, '　')
-      .replace(/　{2,}/g, '　');
-
     // テキスト情報パネル
     const panelStyles = {
       panel: `
@@ -298,6 +204,100 @@
         isDragging = false;
       });
     }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, function (m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
+
+    const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
+    const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
+
+    function extractWithRubyTags(node) {
+
+      const result = [];
+
+      function traverse(el) {
+        for (const child of el.childNodes) {
+
+          if (child.nodeType === Node.TEXT_NODE) {
+            result.push(escapeHTML(child.textContent));
+
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            const tagName = child.tagName.toLowerCase();
+
+            if (ALLOWED_TAGS.has(tagName)) {
+              let attrs = '';
+              for (const attr of child.attributes) {
+                if (/^on/i.test(attr.name)) continue;
+                if (!ALLOWED_ATTRS.has(attr.name)) continue;
+                attrs += ` ${attr.name}="${escapeHTML(attr.value)}"`;
+              }
+
+              result.push(`<${tagName}${attrs}>`);
+              traverse(child);
+              result.push(`</${tagName}>`);
+            } else if (tagName === 'br') {
+              result.push('\n');
+            } else {
+              traverse(child);
+            }
+          }
+        }
+      }
+
+      traverse(node);
+      return result.join('');
+    }
+
+    const textParts = [];
+
+    document.querySelectorAll(
+      // 青空文庫
+      'body > h1, ' +
+      'body > h2, ' +
+      'body > h3, ' +
+      '.metadata, ' +
+      '.main_text, ' +
+      // 小説家になろう
+      '.p-novel__title, ' +
+      '.p-novel__text, ' +
+      // カクヨム
+      '.widget-episodeTitle, ' +
+      '.widget-episodeBody p, ' +
+      // アルファポリス
+      '.novel-title, ' +
+      '.novel-body p, ' +
+      '.chapter-title, ' +
+      '.episode-title, ' +
+      '#novelBody'
+    )
+    .forEach(node => {
+      textParts.push(extractWithRubyTags(node));
+    });
+
+    let text = textParts.join('');
+    textParts.length = 0;
+
+    // カクヨムの傍点
+    text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
+      const chars = content.replace(/<\/?span>/gi, '');
+      return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
+    });
+
+    // 改行の処理
+    text = text.trim()
+      .replace(/(\r\n|\r)+/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+      .replace(/\n/g, '　')
+      .replace(/　{2,}/g, '　');
 
     // HTMLタグ解析関数
     function parseTag(html, start) {
