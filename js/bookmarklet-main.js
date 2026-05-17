@@ -15,33 +15,35 @@
       });
     }
 
+    const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
+    const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
+
     function extractWithRubyTags(node) {
 
-      let result = '';
-      const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
-      const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
+      const result = [];
 
       function traverse(el) {
         for (const child of el.childNodes) {
 
           if (child.nodeType === Node.TEXT_NODE) {
-            result += escapeHTML(child.textContent);
+            result.push(escapeHTML(child.textContent));
 
           } else if (child.nodeType === Node.ELEMENT_NODE) {
             const tagName = child.tagName.toLowerCase();
 
             if (ALLOWED_TAGS.has(tagName)) {
-              const attrs = Array.from(child.attributes)
-                .filter(attr => !/^on/i.test(attr.name))
-                .filter(attr => ALLOWED_ATTRS.has(attr.name))
-                .map(attr => ` ${attr.name}="${escapeHTML(attr.value)}"`)
-                .join('');
+              let attrs = '';
+              for (const attr of child.attributes) {
+                if (/^on/i.test(attr.name)) continue;
+                if (!ALLOWED_ATTRS.has(attr.name)) continue;
+                attrs += ` ${attr.name}="${escapeHTML(attr.value)}"`;
+              }
 
-              result += `<${tagName}${attrs}>`;
+              result.push(`<${tagName}${attrs}>`);
               traverse(child);
-              result += `</${tagName}>`;
+              result.push(`</${tagName}>`);
             } else if (tagName === 'br') {
-              result += '\n';
+              result.push('\n');
             } else {
               traverse(child);
             }
@@ -50,7 +52,7 @@
       }
 
       traverse(node);
-      return result;
+      return result.join('');
     }
 
     const textParts = [];
@@ -80,6 +82,7 @@
     });
 
     let text = textParts.join('');
+    textParts.length = 0;
 
     // カクヨムの傍点
     text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
