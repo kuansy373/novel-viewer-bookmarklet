@@ -20,18 +20,20 @@ if (container && data) {
   function renderPart(pageIndex) {
     container.innerHTML = '';
     const frag = document.createDocumentFragment();
-    const page = parts[pageIndex] || {
-      overlap: [],
-      main: []
-    };
+    const page = parts[pageIndex] || { tail: '', main: [] };
 
-    for (const chunkHTML of page.overlap) {
-      const span = document.createElement('span');
-      span.style.opacity = '0.5';
-      span.innerHTML = chunkHTML;
-      frag.appendChild(span);
+    // 前ページのtailを半透明で追加（ページ1以降のみ）
+    if (pageIndex > 0) {
+      const prevTail = (parts[pageIndex - 1] || {}).tail || '';
+      if (prevTail) {
+        const span = document.createElement('span');
+        span.style.opacity = '0.5';
+        span.innerHTML = prevTail;
+        frag.appendChild(span);
+      }
     }
 
+    // 自分のメイン本文
     for (const chunkHTML of page.main) {
       const span = document.createElement('span');
       span.innerHTML = chunkHTML;
