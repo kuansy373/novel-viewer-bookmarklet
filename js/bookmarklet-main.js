@@ -81,6 +81,15 @@
       `
     };
 
+    function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
+      return `
+      <svg width="100%" height="100%" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="22" height="24" rx="4" fill="${bg}"/>
+        <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
+        <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
+      </svg>`;
+    }
+
     function createPanelHTML(totalChars, numPages, charsPerPage) {
       return `
         <div id="contentContainer" style="${panelStyles.contentContainer}">
@@ -132,31 +141,6 @@
     textInfoPanel.style.cssText = panelStyles.panel;
     document.body.appendChild(textInfoPanel);
 
-    // 小説タブを開く
-    const popupRetry = textInfoPanel.querySelector('#popupRetry');
-
-    if (popupRetry) {
-      popupRetry.addEventListener('click', () => openNovelWindow());
-
-      ['mouseenter', 'mouseleave'].forEach(evtType => {
-        popupRetry.addEventListener(evtType, () => {
-          popupRetry.style.color = evtType === 'mouseenter' ? '#000' : '#444';
-          popupRetry.style.background = evtType === 'mouseenter' ? '#faf6ef' : '#fffbf2';
-          popupRetry.style.textDecoration = evtType === 'mouseenter' ? 'underline' : 'none';
-        });
-      });
-    }
-
-    // ドラッグボタン
-    function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
-      return `
-      <svg width="100%" height="100%" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
-        <rect width="22" height="24" rx="4" fill="${bg}"/>
-        <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
-        <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
-      </svg>`;
-    }
-
     // ドラッグ関数
     function makeDraggable(dragHandle, dragTarget, dragDoc) {
       let isDragging = false;
@@ -204,6 +188,8 @@
         isDragging = false;
       });
     }
+
+    /* ここからテキスト処理 */
 
     function escapeHTML(str) {
       return str.replace(/[&<>"']/g, function (m) {
@@ -441,6 +427,21 @@
     // パネル作成
     textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
     const partsList = textInfoPanel.querySelector('#partsList');
+
+    // 小説タブを開く
+    const popupRetry = textInfoPanel.querySelector('#popupRetry');
+
+    if (popupRetry) {
+      popupRetry.addEventListener('click', () => openNovelWindow());
+
+      ['mouseenter', 'mouseleave'].forEach(evtType => {
+        popupRetry.addEventListener(evtType, () => {
+          popupRetry.style.color = evtType === 'mouseenter' ? '#000' : '#444';
+          popupRetry.style.background = evtType === 'mouseenter' ? '#faf6ef' : '#fffbf2';
+          popupRetry.style.textDecoration = evtType === 'mouseenter' ? 'underline' : 'none';
+        });
+      });
+    }
 
     // ドラッグ関数呼び出し
     makeDraggable(
