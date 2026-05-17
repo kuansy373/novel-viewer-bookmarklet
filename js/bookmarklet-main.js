@@ -389,33 +389,35 @@
 
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
-      const map = [];
+
+      const capacity = html.length + 1;
+
+      const htmlPosMap = new Uint32Array(capacity);
+      const rubyDepthMap = new Uint8Array(capacity);
+
+      let visiblePos = 0;
 
       let htmlPos = 0;
-      let visiblePos = 0;
       let rubyDepth = 0;
       let skipDepth = 0;
 
       while (htmlPos < html.length) {
+
         const ch = html[htmlPos];
 
         if (ch === '<') {
+
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
 
-          // ruby 深さ管理
           if (tag.name === 'ruby') {
             rubyDepth += tag.isClosing ? -1 : 1;
-            rubyDepth = Math.max(0, rubyDepth);
+            if (rubyDepth < 0) rubyDepth = 0;
           }
 
-          // rt / rp は可視文字として数えない
           if (tag.name === 'rt' || tag.name === 'rp') {
-            if (!tag.isClosing) {
-              skipDepth++;
-            } else {
-              skipDepth = Math.max(0, skipDepth - 1);
-            }
+            if (!tag.isClosing) skipDepth++;
+            else if (skipDepth > 0) skipDepth--;
           }
 
           htmlPos = tag.end + 1;
@@ -423,37 +425,43 @@
         }
 
         if (skipDepth === 0) {
-          map.push({ visiblePos, htmlPos, rubyDepth });
+          htmlPosMap[visiblePos] = htmlPos;
+          rubyDepthMap[visiblePos] = rubyDepth;
           visiblePos++;
         }
 
         htmlPos++;
       }
 
-      map.push({ visiblePos, htmlPos: html.length, rubyDepth });
+      htmlPosMap[visiblePos] = html.length;
+      rubyDepthMap[visiblePos] = rubyDepth;
 
-      return map;
+      return {
+        htmlPosMap,
+        rubyDepthMap,
+        visibleLength: visiblePos
+      };
     }
 
     // 可視文字位置からHTML位置を取得
-    function getHtmlPos(map, targetVisiblePos) {
-      // map は visiblePos 昇順である想定
-      let lo = 0, hi = map.length - 1;
-      while (lo < hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        if (map[mid].visiblePos < targetVisiblePos) lo = mid + 1;
-        else hi = mid;
-      }
-      return map[lo] ? map[lo].htmlPos : (map.length ? map[map.length - 1].htmlPos : 0);
+    function getHtmlPos(posMap, visiblePos) {
+      return posMap.htmlPosMap[visiblePos];
     }
 
     const fullHTML = text;
 
     // タグ内を避ける関数
     function avoidInsideRuby(posMap, visiblePos) {
-      while (visiblePos > 0 && posMap[visiblePos]?.rubyDepth > 0) {
+
+      const rubyDepthMap = posMap.rubyDepthMap;
+
+      while (
+        visiblePos > 0 &&
+        rubyDepthMap[visiblePos] > 0
+      ) {
         visiblePos--;
       }
+
       return visiblePos;
     }
 
