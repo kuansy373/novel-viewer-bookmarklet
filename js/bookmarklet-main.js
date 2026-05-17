@@ -450,39 +450,17 @@
       document
     );
 
-    // タグ内を避ける関数
-    function avoidInsideRuby(posMap, visiblePos) {
-
-      const rubyDepthMap = posMap.rubyDepthMap;
-
-      while (
-        visiblePos > 0 &&
-        rubyDepthMap[visiblePos] > 0
-      ) {
-        visiblePos--;
-      }
-
-      return visiblePos;
-    }
-
     // 各ページを作成する関数
     function createPagePart({
       pageIndex,
       numPages,
       prevEndVisiblePos,
-      overlap,
       charsPerPage,
       fullText,
       fullHTML,
       posMap
     }) {
-      let startVisiblePos = prevEndVisiblePos;
-
-      if (pageIndex > 0) {
-        const rawOverlapStart = Math.max(0, prevEndVisiblePos - overlap);
-        startVisiblePos = avoidInsideRuby(posMap, rawOverlapStart);
-      }
-
+      const startVisiblePos = prevEndVisiblePos;
       let endVisiblePos = startVisiblePos + charsPerPage;
 
       if (pageIndex === numPages - 1) {
@@ -518,39 +496,18 @@
 
       const partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
 
-      let part;
-
-      if (pageIndex > 0 && overlap > 0) {
-        const overlapEndHtmlPos = getHtmlPos(
-          posMap,
-          startVisiblePos + overlap
-        );
-
-        const overlapLengthInHTML = overlapEndHtmlPos - startHtmlPos;
-
-        const overlapPart = partHTML.slice(0, overlapLengthInHTML);
-        const mainPart = partHTML.slice(overlapLengthInHTML);
-
-        part = {
-          overlap: [overlapPart],
-          main: chunkHTMLSafe(mainPart, 50)
-        };
-      } else {
-        part = {
-          overlap: [],
-          main: chunkHTMLSafe(partHTML, 50)
-        };
-      }
-
-      const actualStartPos =
-        pageIndex > 0 ? Math.max(0, prevEndVisiblePos - overlap) : 0;
-
-      const actualLen = endVisiblePos - actualStartPos;
+      // 末尾10文字のHTMLだけ別途保持（半透明で次ページに追加）
+      const tailVisibleStart = Math.max(startVisiblePos, endVisiblePos - 10);
+      const tailHtmlStart = getHtmlPos(posMap, tailVisibleStart);
+      const tailHTML = fullHTML.slice(tailHtmlStart, endHtmlPos);
 
       return {
-        part,
+        part: {
+          tail: tailHTML,
+          main: chunkHTMLSafe(partHTML, 50)
+        },
         endVisiblePos,
-        actualLen
+        actualLen: endVisiblePos - startVisiblePos
       };
     }
 
@@ -558,7 +515,6 @@
     const parts = [];
 
     let prevEndVisiblePos = 0;  // 前ページの終わり位置を保持
-    const overlap = 10;         // 重複させたい文字数
     const pageCharCounts = [];  // 各ページの実際の文字数を保存する配列
 
     for (let i = 0; i < numPages; i++) {
@@ -566,7 +522,6 @@
         pageIndex: i,
         numPages,
         prevEndVisiblePos,
-        overlap,
         charsPerPage,
         fullText,
         fullHTML,
@@ -658,7 +613,7 @@
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@d683f709c273a404addff13c75c1902e34cb6495/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@2bcfae3c388b48b5c08152088de9a9fbb18ff285/js/novel-window.js"></script>
         </body>
         </html>
       `;
