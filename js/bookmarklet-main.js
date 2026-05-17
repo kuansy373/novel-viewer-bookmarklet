@@ -226,31 +226,6 @@
     textInfoPanel.style.cssText = panelStyles.panel;
     document.body.appendChild(textInfoPanel);
 
-    // 可視文字長を測る
-    const measurer = document.createElement('div');
-    measurer.style.cssText = 'position:absolute; visibility:hidden; pointer-events:none;';
-    document.body.appendChild(measurer);
-
-    measurer.innerHTML = text;
-    measurer.querySelectorAll('rt, rp').forEach(el => el.remove());
-    const fullText = measurer.textContent;
-    const totalVisibleChars = fullText.length;
-    console.log('総文字数:', totalVisibleChars);
-    measurer.remove();
-
-    // 1ページあたりの上限文字数
-    const MAX_PER_PAGE = 10000;
-
-    // 必要なページ数を計算
-    const numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
-    const charsPerPage = Math.ceil(totalVisibleChars / numPages);
-    console.log('ページ数:', numPages);
-    console.log('1ページあたりの目標文字数:', charsPerPage);
-
-    // パネル作成
-    textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
-    const partsList = textInfoPanel.querySelector('#partsList');
-
     // 小説タブを開く
     const popupRetry = textInfoPanel.querySelector('#popupRetry');
 
@@ -324,13 +299,6 @@
       });
     }
 
-    // ドラッグ関数呼び出し
-    makeDraggable(
-      textInfoPanel.querySelector('#dragHandle'),
-      textInfoPanel,
-      document
-    );
-
     // HTMLタグ解析関数
     function parseTag(html, start) {
       const end = html.indexOf('>', start + 1);
@@ -397,6 +365,7 @@
 
       const htmlPosMap = new Uint32Array(capacity);
       const rubyDepthMap = new Uint8Array(capacity);
+      const visibleChars = [];
 
       let visiblePos = 0;
 
@@ -430,6 +399,7 @@
         if (skipDepth === 0) {
           htmlPosMap[visiblePos] = htmlPos;
           rubyDepthMap[visiblePos] = rubyDepth;
+          visibleChars.push(ch);
           visiblePos++;
         }
 
@@ -442,7 +412,8 @@
       return {
         htmlPosMap,
         rubyDepthMap,
-        visibleLength: visiblePos
+        visibleLength: visiblePos,
+        visibleText: visibleChars.join('')
       };
     }
 
@@ -452,6 +423,31 @@
     }
 
     const fullHTML = text;
+
+    const posMap = buildPositionMap(fullHTML);
+    const totalVisibleChars = posMap.visibleLength;
+    const fullText = posMap.visibleText;
+    console.log('総文字数:', totalVisibleChars);
+
+    // 1ページあたりの上限文字数
+    const MAX_PER_PAGE = 10000;
+
+    // 必要なページ数を計算
+    const numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
+    const charsPerPage = Math.ceil(totalVisibleChars / numPages);
+    console.log('ページ数:', numPages);
+    console.log('1ページあたりの目標文字数:', charsPerPage);
+
+    // パネル作成
+    textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
+    const partsList = textInfoPanel.querySelector('#partsList');
+
+    // ドラッグ関数呼び出し
+    makeDraggable(
+      textInfoPanel.querySelector('#dragHandle'),
+      textInfoPanel,
+      document
+    );
 
     // タグ内を避ける関数
     function avoidInsideRuby(posMap, visiblePos) {
@@ -556,9 +552,6 @@
         actualLen
       };
     }
-
-    // 位置マップ作成
-    const posMap = buildPositionMap(fullHTML);
 
     // 均等分割でパート作成
     const parts = [];
