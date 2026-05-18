@@ -1653,70 +1653,7 @@ if (container && data) {
                 dragBtn.className = 'pcr-drag-handle';
                 saveBtn.insertAdjacentElement('afterend', dragBtn);
 
-                // ドラッグ処理
-                let isDragging = false, offsetX = 0, offsetY = 0;
-
-                // グローバルなドラッグ用CSSルールを使う
-                function applyDragCss(left, top) {
-                  if (!globalDragStyle) {
-                    globalDragStyle = doc.createElement('style');
-                    globalDragStyle.setAttribute('data-pcr-drag', '1');
-                    doc.head.appendChild(globalDragStyle);
-                  }
-                  const sheet = globalDragStyle.sheet;
-                  if (globalDragRuleIndex !== null) {
-                    sheet.deleteRule(globalDragRuleIndex);
-                    globalDragRuleIndex = null;
-                  }
-                  const rule = `.pcr-app { left: ${left}px !important; top: ${top}px !important; right: auto !important; bottom: auto !important; position: fixed !important; }`;
-                  globalDragRuleIndex = sheet.insertRule(rule, sheet.cssRules.length);
-                }
-                // ドラッグイベント
-                dragBtn.addEventListener('mousedown', e => {
-                  isDragging = true;
-                  const rect = app.getBoundingClientRect();
-                  offsetX = e.clientX - rect.left;
-                  offsetY = e.clientY - rect.top;
-                  applyDragCss(rect.left, rect.top);
-                  e.preventDefault();
-                  e.stopPropagation();
-                });
-
-                doc.addEventListener('mousemove', e => {
-                  if (!isDragging) return;
-                  applyDragCss(e.clientX - offsetX, e.clientY - offsetY);
-                });
-
-                doc.addEventListener('mouseup', () => {
-                  if (isDragging) {
-                    isDragging = false;
-                  }
-                });
-
-                // タッチ対応
-                dragBtn.addEventListener('touchstart', e => {
-                  if (e.touches.length !== 1) return;
-                  isDragging = true;
-                  const touch = e.touches[0];
-                  const rect = app.getBoundingClientRect();
-                  offsetX = touch.clientX - rect.left;
-                  offsetY = touch.clientY - rect.top;
-                  applyDragCss(rect.left, rect.top);
-                  e.preventDefault();
-                  e.stopPropagation();
-                });
-
-                doc.addEventListener('touchmove', e => {
-                  if (!isDragging || e.touches.length !== 1) return;
-                  const touch = e.touches[0];
-                  applyDragCss(touch.clientX - offsetX, touch.clientY - offsetY);
-                }, { passive: false });
-
-                doc.addEventListener('touchend', () => {
-                  if (isDragging) {
-                    isDragging = false;
-                  }
-                });
+                makeDraggable(dragBtn, app, doc);
               }
             }
 
