@@ -3,6 +3,8 @@ console.log('novel-window loaded: v2.0.2');
 const win = window;
 const doc = document;
 
+const date = win.__NOVEL_DATA__;
+
 const {
   totalVisibleChars,
   numPages,
@@ -10,7 +12,7 @@ const {
   fullHTML,
   pageCharCounts,
   validPageCount
-} = win.__NOVEL_DATA__;
+} = data;
 
 const container = doc.getElementById('novelDisplay');
 if (container && data) {
