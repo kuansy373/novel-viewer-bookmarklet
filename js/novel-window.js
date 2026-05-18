@@ -1637,11 +1637,11 @@ if (container && data) {
         },
       });
 
-      let savedLeft = null, savedTop = null;
-
       pickr.on('init', () => {
         win.setTimeout(() => {
           doc.querySelectorAll('.pcr-app').forEach(app => {
+            let savedLeft = null;
+            let savedTop = null;
             // pcr-appドラッグボタン追加
             if (!app.querySelector('.pcr-drag-handle')) {
               const saveBtn = app.querySelector('.pcr-save');
@@ -1657,6 +1657,18 @@ if (container && data) {
                 });
               }
             }
+
+            pickr.on('show', (color) => {
+              const hex = color.toHEXA().toString();
+              setCurrent(hex);
+              applyColor(prop, hex);
+              updateSwatch(swatch, hex, getSaved());
+              updateContrast();
+              if (savedLeft && savedTop) {
+                  app.style.setProperty('left', savedLeft, 'important');
+                  app.style.setProperty('top',  savedTop,  'important');
+                }
+            });
 
             // Copyボタン追加
             if (!app.querySelector('.pcr-copy')) {
@@ -1676,18 +1688,6 @@ if (container && data) {
             }
           });
         }, 0);
-      });
-
-      pickr.on('show', (color) => {
-        const hex = color.toHEXA().toString();
-        setCurrent(hex);
-        applyColor(prop, hex);
-        updateSwatch(swatch, hex, getSaved());
-        updateContrast();
-        if (savedLeft && savedTop) {
-            app.style.setProperty('left', savedLeft, 'important');
-            app.style.setProperty('top',  savedTop,  'important');
-          }
       });
 
       pickr.on('change', (color) => {
