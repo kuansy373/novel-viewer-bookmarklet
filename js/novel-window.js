@@ -1602,10 +1602,6 @@ if (container && data) {
         colorState.currentBg
       ));
 
-    // pcr-appドラッグ用グローバル変数を追加
-    let globalDragStyle = null;
-    let globalDragRuleIndex = null;
-
     const initPickr = (id, prop) => {
       const swatch = doc.getElementById(id + 'Swatch');
       const isFg = id === 'fg';
@@ -1653,7 +1649,11 @@ if (container && data) {
                 dragBtn.className = 'pcr-drag-handle';
                 saveBtn.insertAdjacentElement('afterend', dragBtn);
 
-                makeDraggable(dragBtn, app, doc);
+                let savedLeft = null, savedTop = null;
+                makeDraggable(dragBtn, app, doc, (left, top) => {
+                  savedLeft = left;
+                  savedTop  = top;
+                });
               }
             }
 
@@ -1683,6 +1683,10 @@ if (container && data) {
         applyColor(prop, hex);
         updateSwatch(swatch, hex, getSaved());
         updateContrast();
+        if (savedLeft && savedTop) {
+            app.style.setProperty('left', savedLeft, 'important');
+            app.style.setProperty('top',  savedTop,  'important');
+          }
       });
 
       pickr.on('change', (color) => {
