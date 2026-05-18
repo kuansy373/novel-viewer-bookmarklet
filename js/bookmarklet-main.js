@@ -119,7 +119,6 @@
             <strong>各ページの文字数</strong>
           </div>
             <div id="partsList" style="${panelStyles.partsList}"></div>
-          </div>
         </div>
         <div id="popupRetry" style="${panelStyles.popupRetry}">
           小説タブを開く
@@ -307,13 +306,11 @@
       const capacity = html.length + 1;
 
       const htmlPosMap = new Uint32Array(capacity);
-      const rubyDepthMap = new Uint8Array(capacity);
       const visibleChars = [];
 
       let visiblePos = 0;
 
       let htmlPos = 0;
-      let rubyDepth = 0;
       let skipDepth = 0;
 
       while (htmlPos < html.length) {
@@ -324,11 +321,6 @@
 
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
-
-          if (tag.name === 'ruby') {
-            rubyDepth += tag.isClosing ? -1 : 1;
-            if (rubyDepth < 0) rubyDepth = 0;
-          }
 
           if (tag.name === 'rt' || tag.name === 'rp') {
             if (!tag.isClosing) skipDepth++;
@@ -341,7 +333,6 @@
 
         if (skipDepth === 0) {
           htmlPosMap[visiblePos] = htmlPos;
-          rubyDepthMap[visiblePos] = rubyDepth;
           visibleChars.push(ch);
           visiblePos++;
         }
@@ -350,11 +341,9 @@
       }
 
       htmlPosMap[visiblePos] = html.length;
-      rubyDepthMap[visiblePos] = rubyDepth;
 
       return {
         htmlPosMap,
-        rubyDepthMap,
         visibleLength: visiblePos,
         visibleText: visibleChars.join('')
       };
