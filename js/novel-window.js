@@ -389,10 +389,8 @@ if (container && data) {
       appearance: 'none',
       border: 'none',
       position: 'fixed',
-      paddingTop: '96vh',
-      paddingBottom: '2vh',
-      height: '2vh',
-      margin: '0',
+      height: '210vh',
+      bottom: '-108vh',
       zIndex: '9999',
       width: '80px',
       [position]: '30px',
@@ -428,10 +426,10 @@ if (container && data) {
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
-    // ユーザーが手動スクロールした場合に基準を現在位置に更新（保険。無くても問題なかった）
-    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
-      preciseScroll = scroller.scrollTop;
-    }
+    // // ユーザーが手動スクロールした場合に基準を現在位置に更新（保険。無くても問題なかった）
+    // if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+    //   preciseScroll = scroller.scrollTop;
+    // }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
     scroller.scrollTop = preciseScroll;
@@ -688,11 +686,10 @@ if (container && data) {
 
   // Slider ball
   doc.getElementById('scrollHide').addEventListener('change', e => {
-    const styles = e.target.checked
-      ? { paddingTop: '96vh', paddingBottom: '2vh', height: '2vh', }
-      : { paddingTop: '101vh', paddingBottom: '0vh', height: '1vh', };
+    const [height, bottom] = e.target.checked ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
     applyToSliders(el => {
-      Object.assign(el.style, styles);
+      el.style.height = height;
+      el.style.bottom = bottom;
     });
   });
 
