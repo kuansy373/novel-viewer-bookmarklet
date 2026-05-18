@@ -28,7 +28,7 @@
 
 ### jsファイルの説明
 - bookmarklet-main.js と novel-window.js の2つがあります。
-  - bookmarklet-main.js は、ブックマークレット実行時に直接読み込まれるものです。本文を抽出、整形し、テキスト情報パネルを作成したあと、小説タブのHTMLを生成して、生成されたHTMLが novel-window.js を `<script src>` で読み込みます。
+  - bookmarklet-main.js は、ブックマークレット実行時に直接読み込まれるものです。本文を抽出、整形し、テキスト情報パネルを作成したあと、小説タブを開きます（このとき novel-window.js を `<script src>` で読み込みます）。
   - novel-window.js は、小説タブ側で動作するスクリプトです。小説タブのUI生成や動作を担います。
 
 ### 対象サイト
@@ -151,7 +151,7 @@
 ### 注意点
 - ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。
   - タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードから直接参照されているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
-  - ※ 現在、読み込まれる bookmarklet-main.js が `@e996a60`、 novel-window.js が `@d683f70`、タグが `v2.0.2` です。
+  - ※ 現在、このREADMEからコピーした「javascript:」で読み込まれるのは、 bookmarklet-main.js が `@e996a60`、 novel-window.js が `@d683f70`、タグは `v2.0.2` です。
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
 ### 不具合・要望
