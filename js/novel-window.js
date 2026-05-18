@@ -3,38 +3,79 @@ console.log('novel-window loaded: v2.0.2');
 const win = window;
 const doc = document;
 
-const data = win.__NOVEL_DATA__;
-
 const {
   totalVisibleChars,
   numPages,
-  parts,
+  pageRanges,
+  fullHTML,
   pageCharCounts,
   validPageCount
-} = data;
+} = win.__NOVEL_DATA__;
 
 const container = doc.getElementById('novelDisplay');
 if (container && data) {
 
-  // レンダリング関数
-  function renderPart(pageIndex) {
-    container.innerHTML = '';
-    const frag = document.createDocumentFragment();
-    const page = parts[pageIndex] || { tail: '', main: [] };
+  // 長文の負荷軽減のため50文字毎にspan分割する関数
+  // タグ内<>とエンティティ内&;は避ける
+  function chunkHTMLSafe(html, chunkSize) {
+    const chunks = [];
+    const len = html.length;
+    let i = 0, last = 0, count = 0, rubyDepth = 0;
 
-    // 前ページのtailを半透明で追加（ページ1以降のみ）
-    if (pageIndex > 0) {
-      const prevTail = (parts[pageIndex - 1] || {}).tail || '';
-      if (prevTail) {
-        const span = document.createElement('span');
-        span.style.opacity = '0.5';
-        span.innerHTML = prevTail;
-        frag.appendChild(span);
+    while (i < len) {
+      const ch = html[i];
+
+      if (ch === '<') {
+        const tag = parseTag(html, i);
+        if (!tag) {
+          i = len;
+          break;
+        }
+        if (tag.name === 'ruby') {
+          rubyDepth += tag.isClosing ? -1 : 1;
+          rubyDepth = Math.max(0, rubyDepth);
+        }
+        i = tag.end + 1;
+        continue;
+      }
+
+      if (ch === '&') {
+        const semi = html.indexOf(';', i + 1);
+        i = semi !== -1 ? semi + 1 : len;
+      } else {
+        i++;
+      }
+
+      count++;
+      if (count >= chunkSize && rubyDepth === 0) {
+        chunks.push(html.slice(last, i));
+        last = i;
+        count = 0;
       }
     }
 
-    // 自分のメイン本文
-    for (const chunkHTML of page.main) {
+    if (last < len) chunks.push(html.slice(last));
+    return chunks;
+  }
+
+  function renderPart(pageIndex) {
+    container.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    const range = pageRanges[pageIndex];
+
+    // 前ページのtailを半透明で追加
+    if (pageIndex > 0) {
+      const prevRange = pageRanges[pageIndex - 1];
+      const tailHTML = fullHTML.slice(prevRange.tailHtmlStart, prevRange.endHtmlPos);
+      const span = document.createElement('span');
+      span.style.opacity = '0.5';
+      span.innerHTML = tailHTML;
+      frag.appendChild(span);
+    }
+
+    // メイン本文をchunk分割してspan生成
+    const mainHTML = fullHTML.slice(range.startHtmlPos, range.endHtmlPos);
+    for (const chunkHTML of chunkHTMLSafe(mainHTML, 50)) {
       const span = document.createElement('span');
       span.innerHTML = chunkHTML;
       frag.appendChild(span);
