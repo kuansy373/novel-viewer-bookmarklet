@@ -90,7 +90,7 @@ if (container && data) {
   // ページが有効かチェックする関数
   function isValidPage(pageIndex) {
     return pageIndex >= 0 &&
-           pageIndex < parts.length &&
+           pageIndex < pageRanges.length &&
            pageCharCounts[pageIndex] > 0;
   }
 
@@ -309,7 +309,7 @@ if (container && data) {
     if (
       totalVisibleChars > 10000 &&
       scrollBottom >= bodyHeight - 5 &&
-      currentIndex < parts.length - 1 &&
+      currentIndex < pageRanges.length - 1 &&
       promptShownForward &&
       isValidPage(currentIndex + 1)
     ) {
@@ -343,7 +343,7 @@ if (container && data) {
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
         win.requestAnimationFrame(() => {
-          if (currentIndex === parts.length - 1) {
+          if (currentIndex === pageRanges.length - 1) {
             win.scrollTo(0, 0);
           } else {
             win.scrollTo(0, 1e9);
