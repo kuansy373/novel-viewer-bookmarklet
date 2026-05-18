@@ -301,49 +301,6 @@
       };
     }
 
-    // 長文の負荷軽減のため50文字毎にspan分割する関数
-    // タグ内<>とエンティティ内&;は避ける
-    function chunkHTMLSafe(html, chunkSize) {
-      const chunks = [];
-      const len = html.length;
-      let i = 0, last = 0, count = 0, rubyDepth = 0;
-
-      while (i < len) {
-        const ch = html[i];
-
-        if (ch === '<') {
-          const tag = parseTag(html, i);
-          if (!tag) {
-            i = len;
-            break;
-          }
-          if (tag.name === 'ruby') {
-            rubyDepth += tag.isClosing ? -1 : 1;
-            rubyDepth = Math.max(0, rubyDepth);
-          }
-          i = tag.end + 1;
-          continue;
-        }
-
-        if (ch === '&') {
-          const semi = html.indexOf(';', i + 1);
-          i = semi !== -1 ? semi + 1 : len;
-        } else {
-          i++;
-        }
-
-        count++;
-        if (count >= chunkSize && rubyDepth === 0) {
-          chunks.push(html.slice(last, i));
-          last = i;
-          count = 0;
-        }
-      }
-
-      if (last < len) chunks.push(html.slice(last));
-      return chunks;
-    }
-
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
 
@@ -494,31 +451,28 @@
           ? fullHTML.length
           : getHtmlPos(posMap, endVisiblePos);
 
-      const partHTML = fullHTML.slice(startHtmlPos, endHtmlPos);
 
       // 末尾10文字のHTMLだけ別途保持（半透明で次ページに追加）
       const tailVisibleStart = Math.max(startVisiblePos, endVisiblePos - 10);
       const tailHtmlStart = getHtmlPos(posMap, tailVisibleStart);
-      const tailHTML = fullHTML.slice(tailHtmlStart, endHtmlPos);
 
       return {
-        part: {
-          tail: tailHTML,
-          main: chunkHTMLSafe(partHTML, 50)
-        },
+        startHtmlPos,
+        endHtmlPos,
+        tailHtmlStart,
         endVisiblePos,
         actualLen: endVisiblePos - startVisiblePos
       };
     }
 
     // 均等分割でパート作成
-    const parts = [];
+    const pageRanges = [];
 
     let prevEndVisiblePos = 0;  // 前ページの終わり位置を保持
     const pageCharCounts = [];  // 各ページの実際の文字数を保存する配列
 
     for (let i = 0; i < numPages; i++) {
-      const { part, endVisiblePos, actualLen } = createPagePart({
+      const { startHtmlPos, endHtmlPos, tailHtmlStart, endVisiblePos, actualLen } = createPagePart({
         pageIndex: i,
         numPages,
         prevEndVisiblePos,
@@ -528,16 +482,15 @@
         posMap
       });
 
-      parts.push(part);
+      pageRanges.push({ startHtmlPos, endHtmlPos, tailHtmlStart });
       pageCharCounts.push(actualLen);
       console.log(`ページ${i + 1}: ${actualLen}文字`);
+      prevEndVisiblePos = endVisiblePos;
 
       const partInfo = document.createElement('div');
       partInfo.style.cssText = panelStyles.partInfo;
       partInfo.innerHTML = createPartInfoHTML(i + 1, actualLen);
       partsList.appendChild(partInfo);
-
-      prevEndVisiblePos = endVisiblePos;
     }
 
     // 有効なページ数を計算
@@ -549,7 +502,8 @@
       const data = {
         totalVisibleChars,
         numPages,
-        parts,
+        pageRanges,
+        fullHTML,
         pageCharCounts,
         validPageCount
       };
@@ -612,8 +566,9 @@
           window.__NOVEL_DATA__ = ${safeJson};
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
+          window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@2bcfae3c388b48b5c08152088de9a9fbb18ff285/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@edbb382a0abfdddbb74ac9c9a703a0c6c935c193/js/novel-window.js"></script>
         </body>
         </html>
       `;
