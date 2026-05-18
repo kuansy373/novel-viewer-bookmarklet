@@ -118,7 +118,7 @@
           <div style="${panelStyles.divider}">
             <strong>各ページの文字数</strong>
           </div>
-            <div id="partsList" style="${panelStyles.partsList}"></div>
+          <div id="partsList" style="${panelStyles.partsList}"></div>
         </div>
         <div id="popupRetry" style="${panelStyles.popupRetry}">
           小説タブを開く
@@ -557,7 +557,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@edbb382a0abfdddbb74ac9c9a703a0c6c935c193/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@66f8b0e5dc78add371335239c829013abdd15695/js/novel-window.js"></script>
         </body>
         </html>
       `;
