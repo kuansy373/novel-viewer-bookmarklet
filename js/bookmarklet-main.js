@@ -141,51 +141,76 @@
     document.body.appendChild(textInfoPanel);
 
     // ドラッグ関数
-    function makeDraggable(dragHandle, dragTarget, dragDoc) {
+    function makeDraggable(dragHandle, dragTarget, dragDoc, onDragEnd) {
       let isDragging = false;
       let offsetX = 0;
       let offsetY = 0;
 
+      const onMouseMove = e => {
+        if (!isDragging) return;
+        dragTarget.style.setProperty('left',   e.clientX - offsetX + 'px', 'important');
+        dragTarget.style.setProperty('top',    e.clientY - offsetY + 'px', 'important');
+        dragTarget.style.setProperty('right',  'auto', 'important');
+        dragTarget.style.setProperty('bottom', 'auto', 'important');
+      };
+
+      const onMouseUp = () => {
+        isDragging = false;
+        if (onDragEnd) onDragEnd(
+          dragTarget.style.getPropertyValue('left'),
+          dragTarget.style.getPropertyValue('top')
+        );
+        dragDoc.removeEventListener('mousemove', onMouseMove);
+        dragDoc.removeEventListener('mouseup', onMouseUp);
+      };
+
+      const onTouchMove = e => {
+        if (!isDragging || e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        dragTarget.style.setProperty('left', touch.clientX - offsetX + 'px', 'important');
+        dragTarget.style.setProperty('top',  touch.clientY - offsetY + 'px', 'important');
+        e.preventDefault();
+      };
+
+      const onTouchEnd = () => {
+        isDragging = false;
+        if (onDragEnd) onDragEnd(
+          dragTarget.style.getPropertyValue('left'),
+          dragTarget.style.getPropertyValue('top')
+        );
+        dragDoc.removeEventListener('touchmove', onTouchMove);
+        dragDoc.removeEventListener('touchend', onTouchEnd);
+      };
+
       dragHandle.addEventListener('mousedown', e => {
         isDragging = true;
+
         const rect = dragTarget.getBoundingClientRect();
         offsetX = e.clientX - rect.left;
         offsetY = e.clientY - rect.top;
+
+        dragDoc.addEventListener('mousemove', onMouseMove);
+        dragDoc.addEventListener('mouseup', onMouseUp);
+
         e.preventDefault();
-      });
-
-      dragDoc.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        dragTarget.style.left = e.clientX - offsetX + 'px';
-        dragTarget.style.top  = e.clientY - offsetY + 'px';
-        dragTarget.style.right = 'auto';
-        dragTarget.style.bottom = 'auto';
-      });
-
-      dragDoc.addEventListener('mouseup', () => {
-        isDragging = false;
       });
 
       dragHandle.addEventListener('touchstart', e => {
         if (e.touches.length !== 1) return;
+
         const touch = e.touches[0];
         const rect = dragTarget.getBoundingClientRect();
+
         offsetX = touch.clientX - rect.left;
         offsetY = touch.clientY - rect.top;
+
         isDragging = true;
+
+        dragDoc.addEventListener('touchmove', onTouchMove, { passive: false });
+        dragDoc.addEventListener('touchend', onTouchEnd);
+
         e.preventDefault();
-      });
-
-      dragDoc.addEventListener('touchmove', e => {
-        if (!isDragging || e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        dragTarget.style.left = touch.clientX - offsetX + 'px';
-        dragTarget.style.top  = touch.clientY - offsetY + 'px';
       }, { passive: false });
-
-      dragDoc.addEventListener('touchend', () => {
-        isDragging = false;
-      });
     }
 
     /* ここからテキスト処理 */
@@ -557,7 +582,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@e0d87e0b36a31f1cd2a3f41a0422350d3ed366c2/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@5228aa52f2ed4ae202133d3c3e94e252e559fd81/js/novel-window.js"></script>
         </body>
         </html>
       `;
