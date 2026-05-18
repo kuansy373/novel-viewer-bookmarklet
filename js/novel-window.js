@@ -1637,6 +1637,8 @@ if (container && data) {
         },
       });
 
+      let savedLeft = null, savedTop = null;
+
       pickr.on('init', () => {
         win.setTimeout(() => {
           doc.querySelectorAll('.pcr-app').forEach(app => {
@@ -1649,7 +1651,6 @@ if (container && data) {
                 dragBtn.className = 'pcr-drag-handle';
                 saveBtn.insertAdjacentElement('afterend', dragBtn);
 
-                let savedLeft = null, savedTop = null;
                 makeDraggable(dragBtn, app, doc, (left, top) => {
                   savedLeft = left;
                   savedTop  = top;
