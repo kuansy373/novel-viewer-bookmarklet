@@ -689,8 +689,8 @@ if (container && data) {
   // Slider ball
   doc.getElementById('scrollHide').addEventListener('change', e => {
     const styles = e.target.checked
-      ? { paddingTop: '101vh', paddingBottom: '0vh', height: '1vh', }
-      : { paddingTop: '96vh', paddingBottom: '2vh', height: '2vh', };
+      ? { paddingTop: '96vh', paddingBottom: '2vh', height: '2vh', }
+      : { paddingTop: '101vh', paddingBottom: '0vh', height: '1vh', };
     applyToSliders(el => {
       Object.assign(el.style, styles);
     });
