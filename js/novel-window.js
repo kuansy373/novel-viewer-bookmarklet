@@ -426,10 +426,10 @@ if (container && data) {
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
-    // // ユーザーが手動スクロールした場合に基準を現在位置に更新（保険。無くても問題なかった）
-    // if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
-    //   preciseScroll = scroller.scrollTop;
-    // }
+    // ユーザーが手動スクロールした場合に基準を現在位置に更新
+    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+      preciseScroll = scroller.scrollTop;
+    }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
     scroller.scrollTop = preciseScroll;
