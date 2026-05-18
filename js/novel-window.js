@@ -1602,6 +1602,10 @@ if (container && data) {
         colorState.currentBg
       ));
 
+    let savedPickrLeft = null;
+    let savedPickrTop = null;
+
+    // pickrの初期化関数
     const initPickr = (id, prop) => {
       const swatch = doc.getElementById(id + 'Swatch');
       const isFg = id === 'fg';
@@ -1636,9 +1640,6 @@ if (container && data) {
           },
         },
       });
-
-      let savedPickrLeft = null;
-      let savedPickrTop  = null;
 
       pickr.on('init', () => {
         win.setTimeout(() => {
