@@ -1659,22 +1659,6 @@ if (container && data) {
               }
             }
 
-            pickr.on('show', (color) => {
-              const hex = color.toHEXA().toString();
-              setCurrent(hex);
-              applyColor(prop, hex);
-              updateSwatch(swatch, hex, getSaved());
-              updateContrast();
-              if (savedPickrLeft && savedPickrTop) {
-                doc.querySelectorAll('.pcr-app').forEach(a => {
-                  a.style.setProperty('left',   savedPickrLeft, 'important');
-                  a.style.setProperty('top',    savedPickrTop,  'important');
-                  a.style.setProperty('right',  'auto', 'important');
-                  a.style.setProperty('bottom', 'auto', 'important');
-                });
-              }
-            });
-
             // Copyボタン追加
             if (!app.querySelector('.pcr-copy')) {
               const resultInput = app.querySelector('.pcr-result');
@@ -1693,6 +1677,23 @@ if (container && data) {
             }
           });
         }, 0);
+      });
+
+      // pcr-app　イベント登録
+      pickr.on('show', (color) => {
+        const hex = color.toHEXA().toString();
+        setCurrent(hex);
+        applyColor(prop, hex);
+        updateSwatch(swatch, hex, getSaved());
+        updateContrast();
+        if (savedPickrLeft && savedPickrTop) {
+          doc.querySelectorAll('.pcr-app').forEach(a => {
+            a.style.setProperty('left',   savedPickrLeft, 'important');
+            a.style.setProperty('top',    savedPickrTop,  'important');
+            a.style.setProperty('right',  'auto', 'important');
+            a.style.setProperty('bottom', 'auto', 'important');
+          });
+        }
       });
 
       pickr.on('change', (color) => {
