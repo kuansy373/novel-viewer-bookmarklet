@@ -60,6 +60,7 @@ if (container && data) {
     return chunks;
   }
 
+  // レンダリング関数
   function renderPart(pageIndex) {
     container.innerHTML = '';
     const frag = document.createDocumentFragment();
@@ -388,8 +389,10 @@ if (container && data) {
       appearance: 'none',
       border: 'none',
       position: 'fixed',
-      height: '210vh',
-      bottom: '-108vh',
+      paddingTop: '96vh',
+      paddingBottom: '2vh',
+      height: '2vh',
+      margin: '0',
       zIndex: '9999',
       width: '80px',
       [position]: '30px',
@@ -406,7 +409,7 @@ if (container && data) {
   // === スクロール処理 ===
   const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
-  let lastTimestamp = null;　// 前フレームの時刻
+  let lastTimestamp = null; // 前フレームの時刻
   let rafId = null;         // アニメーションループの管理ID
   let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
@@ -685,10 +688,11 @@ if (container && data) {
 
   // Slider ball
   doc.getElementById('scrollHide').addEventListener('change', e => {
-    const [height, bottom] = e.target.checked ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
+    const styles = e.target.checked
+      ? { paddingTop: '101vh', paddingBottom: '0vh', height: '1vh', }
+      : { paddingTop: '96vh', paddingBottom: '2vh', height: '2vh', };
     applyToSliders(el => {
-      el.style.height = height;
-      el.style.bottom = bottom;
+      Object.assign(el.style, styles);
     });
   });
 
