@@ -1637,11 +1637,12 @@ if (container && data) {
         },
       });
 
+      let savedPickrLeft = null;
+      let savedPickrTop  = null;
+
       pickr.on('init', () => {
         win.setTimeout(() => {
           doc.querySelectorAll('.pcr-app').forEach(app => {
-            let savedLeft = null;
-            let savedTop = null;
             // pcr-appドラッグボタン追加
             if (!app.querySelector('.pcr-drag-handle')) {
               const saveBtn = app.querySelector('.pcr-save');
@@ -1652,8 +1653,8 @@ if (container && data) {
                 saveBtn.insertAdjacentElement('afterend', dragBtn);
 
                 makeDraggable(dragBtn, app, doc, (left, top) => {
-                  savedLeft = left;
-                  savedTop  = top;
+                  savedPickrLeft = left;
+                  savedPickrTop  = top;
                 });
               }
             }
@@ -1664,10 +1665,14 @@ if (container && data) {
               applyColor(prop, hex);
               updateSwatch(swatch, hex, getSaved());
               updateContrast();
-              if (savedLeft && savedTop) {
-                  app.style.setProperty('left', savedLeft, 'important');
-                  app.style.setProperty('top',  savedTop,  'important');
-                }
+              if (savedPickrLeft && savedPickrTop) {
+                doc.querySelectorAll('.pcr-app').forEach(a => {
+                  a.style.setProperty('left',   savedPickrLeft, 'important');
+                  a.style.setProperty('top',    savedPickrTop,  'important');
+                  a.style.setProperty('right',  'auto', 'important');
+                  a.style.setProperty('bottom', 'auto', 'important');
+                });
+              }
             });
 
             // Copyボタン追加
