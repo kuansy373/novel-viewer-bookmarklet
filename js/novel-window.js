@@ -1100,6 +1100,7 @@ if (container && data) {
   let colorState;
   let updateContrast;
   let updateColorHexDisplays;
+  let pickr;
 
   // 読み込み制御関数
   const load = (tag, attrs) => new Promise((resolve, reject) => {
@@ -1639,7 +1640,7 @@ if (container && data) {
       const getSaved = () =>
         isFg ? colorState.savedFg : colorState.savedBg;
 
-      const pickr = PickrClass.create({
+      pickr = PickrClass.create({
         el: `#${id}Swatch`,
         theme: 'classic',
         default: getSaved(),
