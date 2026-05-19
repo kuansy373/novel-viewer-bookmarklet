@@ -709,7 +709,6 @@ if (container && data) {
         style.id = 'slider-thumb-hide';
         style.textContent = `
           input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
             opacity: 0;
           }
         `;
