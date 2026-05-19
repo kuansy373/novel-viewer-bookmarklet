@@ -1105,7 +1105,6 @@ if (container && data) {
   const pickrOverride = doc.createElement('style');
   pickrOverride.textContent = `
     .pcr-app {
-      display: none !important;       /* visibility: hidden の代わり */
       visibility: visible !important; /* hidden の打ち消し */
     }
     .pcr-app.visible {
@@ -1695,6 +1694,7 @@ if (container && data) {
                 });
               }
             }
+            app.style.display = 'none';  // visibility: hidden の代わり
           });
         }, 0);
       });
