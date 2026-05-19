@@ -404,8 +404,6 @@ if (container && data) {
       border: 'none',
       position: 'fixed',
       height: '100vh',
-      borderTop: 'none',
-      borderBottom: 'none',
       margin: '0',
       zIndex: '9999',
       width: '80px',
@@ -646,7 +644,8 @@ if (container && data) {
       const isColorIn = doc.getElementById('scrollC').checked;
 
       applyToSliders(sl => {
-        sl.style.border = isBorder ? '1px solid currentColor' : 'none';
+        sl.style.borderRight = isBorder ? '1px solid currentColor' : 'none';
+        sl.style.borderLeft = isBorder ? '1px solid currentColor' : 'none';
         sl.style.setProperty(
           "background",
           isColorIn ? "currentColor" : "transparent",
@@ -703,7 +702,7 @@ if (container && data) {
   // Slider ball
   doc.getElementById('scrollHide').addEventListener('change', e => {
     const existingStyle = doc.getElementById('slider-thumb-hide');
-  
+
     if (!e.target.checked) {
       if (!existingStyle) {
         const style = doc.createElement('style');
