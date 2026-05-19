@@ -378,8 +378,22 @@ if (container && data) {
     doc.documentElement.style.overflow = '';
   }
 
+  //
+  function injectSliderStyles() {
+    if (doc.getElementById('custom-slider-styles')) return;
+    const style = doc.createElement('style');
+    style.id = 'custom-slider-styles';
+    style.textContent = `
+      input[type="range"]::-webkit-slider-thumb {
+        margin-top: 90vh;
+      }
+    `;
+    doc.head.appendChild(style);
+  }
+
   // スライダー作成関数
   function createSlider(position, additionalStyle = {}) {
+    injectSliderStyles();
     const slider = doc.createElement('input');
     slider.type = 'range';
     slider.min = 0;
@@ -389,8 +403,10 @@ if (container && data) {
       appearance: 'none',
       border: 'none',
       position: 'fixed',
-      height: '210vh',
-      bottom: '-108vh',
+      height: '100vh',
+      borderTop: 'none',
+      borderBottom: 'none',
+      margin: '0',
       zIndex: '9999',
       width: '80px',
       [position]: '30px',
@@ -686,11 +702,25 @@ if (container && data) {
 
   // Slider ball
   doc.getElementById('scrollHide').addEventListener('change', e => {
-    const [height, bottom] = e.target.checked ? ['200vh', '-98vh'] : ['210vh', '-108vh'];
-    applyToSliders(el => {
-      el.style.height = height;
-      el.style.bottom = bottom;
-    });
+    const existingStyle = doc.getElementById('slider-thumb-hide');
+  
+    if (!e.target.checked) {
+      if (!existingStyle) {
+        const style = doc.createElement('style');
+        style.id = 'slider-thumb-hide';
+        style.textContent = `
+          input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            opacity: 0;
+          }
+        `;
+        doc.head.appendChild(style);
+      }
+    } else {
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    }
   });
 
   // 初期設定
@@ -1149,7 +1179,7 @@ if (container && data) {
         right: 10px;
         z-index: 20000;
         color: unset;
-        background: unset;
+        background: transparent;
         padding: 7px;
         padding-bottom: 0;
         border: 1px solid;
@@ -1542,7 +1572,6 @@ if (container && data) {
     // ドラッグ関数呼び出し
     const dragHandle = doc.getElementById('dragHandle');
     const dragTarget  = doc.getElementById('pickrContainer');
-
     makeDraggable(dragHandle, dragTarget, doc);
 
     // bodyの色を取得しrgbをHex変換する関数
