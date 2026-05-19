@@ -1655,9 +1655,6 @@ if (container && data) {
         },
       });
 
-      // パッチを元に戻す
-      EventTarget.prototype.addEventListener = _originalAddEventListener;
-
       pickr.on('init', () => {
         win.setTimeout(() => {
           doc.querySelectorAll('.pcr-app').forEach(app => {
@@ -1779,6 +1776,8 @@ if (container && data) {
         show: () => {},
         destroyAndRemove: () => {},
       }
+    } finally {
+      EventTarget.prototype.addEventListener = _originalAddEventListener;
     }
     // イベントハンドラ・UI操作
     updateColorHexDisplays();
