@@ -475,8 +475,8 @@ if (container && data) {
   // Slider Settings
   // ==============================
 
-  const SS_ContainerStyle = doc.createElement('style');
-  SS_ContainerStyle.textContent = `
+  const ssContainerStyle = doc.createElement('style');
+  ssContainerStyle.textContent = `
     #scrollUI {
       position: fixed;
       top: 10px;
@@ -518,7 +518,7 @@ if (container && data) {
       color: unset;
     }
   `;
-  doc.head.appendChild(SS_ContainerStyle);
+  doc.head.appendChild(ssContainerStyle);
 
   const scrollUI = doc.createElement('div');
   scrollUI.id = 'scrollUI';
@@ -1101,6 +1101,19 @@ if (container && data) {
   let updateContrast;
   let updateColorHexDisplays;
 
+  // pcr-appに上書きスタイル（GPUレイヤー削減目的）
+  const pickrOverride = doc.createElement('style');
+  pickrOverride.textContent = `
+    .pcr-app {
+      display: none !important;       /* visibility: hidden の代わり */
+      visibility: visible !important; /* hidden の打ち消し */
+    }
+    .pcr-app.visible {
+      display: block !important;
+    }
+  `;
+  doc.head.appendChild(pickrOverride);
+
   // 読み込み制御関数
   const load = (tag, attrs) => new Promise((resolve, reject) => {
     const el = doc.createElement(tag);
@@ -1356,8 +1369,8 @@ if (container && data) {
         z-index: 20001 !important;
         background: unset !important;
         border: 1px solid !important;
-        display: none !important;       /* visibility: hidden の代わり */
-        visibility: visible !important; /* hidden の打ち消し */
+        display: none !important;
+        visibility: visible !important;
       }
 
       .pcr-app.visible {
