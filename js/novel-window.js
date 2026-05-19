@@ -3801,16 +3801,14 @@ if (container && data) {
   });
 
   doc.addEventListener('mousedown', (e) => {
-
     if (!menus.some(({ div }) => div.contains(e.target))) {
       hideMenus();
     }
-
     // pickrの外側クリックでpcr-appを閉じる（スクロール中は無視）
-    if (scrollSpeed === 0 && pickr.isOpen() && !e.composedPath().some(el =>
+    if (pickr && scrollSpeed === 0 && pickr.isOpen() && !e.composedPath().some(el =>
       el === doc.querySelector('.pcr-app') || el === doc.querySelector('.pickr')
     )) {
       pickr.hide();
     }
-  }, { capture: true });
+  });
 }
