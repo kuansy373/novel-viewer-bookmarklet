@@ -51,12 +51,12 @@
         border-radius: 4px;
         background: #F4F4F4;
         font-size: 14px;
-        padding: 1px 3px;
+        padding: 1px 2px;
         margin-top: -4px;
         cursor: move;
         color: #8578c1;
-        width: 19px;
-        height: 23px;
+        width: 22px;
+        height: 24px;
       `,
       valueSpan: `
         float: right;
@@ -83,7 +83,7 @@
 
     function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
       return `
-      <svg width="100%" height="100%" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
+      <svg width="22" height="24" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
         <rect width="22" height="24" rx="4" fill="${bg}"/>
         <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
         <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
@@ -582,7 +582,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@2ed95a50928b10f2be6705bd09615d754e72f314/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@d53363f25edf8f145732cda5f458a8a2f2b3fdc4/js/novel-window.js"></script>
         </body>
         </html>
       `;
