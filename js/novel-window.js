@@ -432,18 +432,6 @@ if (container && data) {
     }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
-
-    // ページ下端に着いた時
-    const maxScroll = scroller.scrollHeight - scroller.clientHeight;
-
-    if (preciseScroll >= maxScroll) {
-      preciseScroll = maxScroll;
-      scroller.scrollTop = maxScroll;
-      scrollSpeed = 0;
-      resetScrollSliders();
-      return;
-    }
-
     scroller.scrollTop = preciseScroll;
 
     lastTimestamp = timestamp;
@@ -1368,6 +1356,12 @@ if (container && data) {
         z-index: 20001 !important;
         background: unset !important;
         border: 1px solid !important;
+        display: none !important;       /* visibility: hidden の代わり */
+        visibility: visible !important; /* hidden の打ち消し */
+      }
+
+      .pcr-app.visible {
+        display: block !important;
       }
 
       .pcr-selection {
