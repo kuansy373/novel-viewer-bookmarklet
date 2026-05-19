@@ -409,10 +409,12 @@ if (container && data) {
   let scrollSpeed = 0;
   let lastTimestamp = null; // 前フレームの時刻
   let rafId = null;         // アニメーションループの管理ID
+  let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
+      preciseScroll = scroller.scrollTop;
     }
 
     if (scrollSpeed === 0) {
@@ -424,8 +426,25 @@ if (container && data) {
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
-    const delta = Math.ceil((scrollSpeed * elapsed) / 1000);
-    scroller.scrollTop += delta;
+    // ユーザーが手動スクロールした場合に基準を現在位置に更新
+    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+      preciseScroll = scroller.scrollTop;
+    }
+
+    preciseScroll += (scrollSpeed * elapsed) / 1000;
+
+    // ページ下端に着いた時
+    const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+
+    if (preciseScroll >= maxScroll) {
+      preciseScroll = maxScroll;
+      scroller.scrollTop = maxScroll;
+      scrollSpeed = 0;
+      resetScrollSliders();
+      return;
+    }
+
+    scroller.scrollTop = preciseScroll;
 
     lastTimestamp = timestamp;
 
@@ -1673,7 +1692,7 @@ if (container && data) {
         }, 0);
       });
 
-      // pcr-app　イベント登録
+      // pcr-app イベント登録
       pickr.on('show', (color) => {
         const hex = color.toHEXA().toString();
         setCurrent(hex);
