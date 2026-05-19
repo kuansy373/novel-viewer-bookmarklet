@@ -1127,6 +1127,19 @@ if (container && data) {
       crossorigin: 'anonymous'
     })
   ]).then(() => {
+    // インスタンス生成前にパッチ
+    const _originalAddEventListener = EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+      if (
+        this === doc &&
+        (type === 'mousedown' || type === 'touchstart') &&
+        options?.capture === true &&
+        listener.toString().includes('isOpen')
+      ) {
+        return; // pickrの外側クリック検知リスナーをスキップ
+      }
+      return _originalAddEventListener.call(this, type, listener, options);
+    };
     const style = doc.createElement('style');
     const PickrClass = win.Pickr;
     style.textContent = `
@@ -1640,6 +1653,9 @@ if (container && data) {
           },
         },
       });
+
+      // パッチを元に戻す
+      EventTarget.prototype.addEventListener = _originalAddEventListener;
 
       pickr.on('init', () => {
         win.setTimeout(() => {
@@ -3784,8 +3800,16 @@ if (container && data) {
   });
 
   doc.addEventListener('mousedown', (e) => {
+
     if (!menus.some(({ div }) => div.contains(e.target))) {
       hideMenus();
     }
-  });
+
+    // pickrの外側クリックでpcr-appを閉じる（スクロール中は無視）
+    if (scrollSpeed === 0 && pickr.isOpen() && !e.composedPath().some(el =>
+      el === doc.querySelector('.pcr-app') || el === doc.querySelector('.pickr')
+    )) {
+      pickr.hide();
+    }
+  }, { capture: true });
 }
