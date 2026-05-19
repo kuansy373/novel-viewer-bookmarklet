@@ -547,7 +547,7 @@ if (container && data) {
     <label><span>Position :  <input id="scrollX" class="settingInputbox" type="number" value="30"> px</span></label>
     <label><span>Width :  <input id="scrollW" class="settingInputbox" type="number" value="80"> px</span></label>
     <label><span>Speed scale :  <input id="scrollSpeedScale" class="settingInputbox" type="number" min="0" max="20" step="1" value="10"> (0~20)</span></label>
-    <label><span><input id="scrollHide" class="settingCheckbox" type="checkbox"> Slider ball</span></label>
+    <label><span><input id="scrollHide" class="settingCheckbox" type="checkbox"> Show thumb</span></label>
   `;
   doc.body.appendChild(scrollUI);
 
@@ -561,7 +561,7 @@ if (container && data) {
     scrollX:          { prop: 'value',   event: 'input',   key: 'position',    parser: Number },
     scrollW:          { prop: 'value',   event: 'input',   key: 'width',       parser: Number },
     scrollSpeedScale: { prop: 'value',   event: 'input',   key: 'speedScale',  parser: parseFloat },
-    scrollHide:       { prop: 'checked', event: 'change',  key: 'hideBall',    parser: null },
+    scrollHide:       { prop: 'checked', event: 'change',  key: 'showThumb',    parser: null },
   };
 
   function applyScrollSettings(settings) {
@@ -732,7 +732,7 @@ if (container && data) {
     position:   30,
     width:      80,
     speedScale: 10,
-    hideBall:   true
+    showThumb:   true
   });
 
   // 開くボタン共通スタイル
@@ -2956,7 +2956,7 @@ if (container && data) {
       'position',
       'width',
       'speedScale',
-      'hideBall'
+      'showThumb'
     ]),
 
     searchConfigs: new Set([
