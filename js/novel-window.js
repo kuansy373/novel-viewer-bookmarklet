@@ -409,12 +409,10 @@ if (container && data) {
   let scrollSpeed = 0;
   let lastTimestamp = null; // 前フレームの時刻
   let rafId = null;         // アニメーションループの管理ID
-  let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
-      preciseScroll = scroller.scrollTop;
     }
 
     if (scrollSpeed === 0) {
@@ -426,13 +424,8 @@ if (container && data) {
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
-    // ユーザーが手動スクロールした場合に基準を現在位置に更新
-    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
-      preciseScroll = scroller.scrollTop;
-    }
-
-    preciseScroll += (scrollSpeed * elapsed) / 1000;
-    scroller.scrollTop = preciseScroll;
+    const delta = Math.ceil((scrollSpeed * elapsed) / 1000);
+    scroller.scrollTop += delta;
 
     lastTimestamp = timestamp;
 
@@ -1100,7 +1093,6 @@ if (container && data) {
   let colorState;
   let updateContrast;
   let updateColorHexDisplays;
-  let pickr;
 
   // 読み込み制御関数
   const load = (tag, attrs) => new Promise((resolve, reject) => {
@@ -1128,19 +1120,6 @@ if (container && data) {
       crossorigin: 'anonymous'
     })
   ]).then(() => {
-    // インスタンス生成前にパッチ
-    const _originalAddEventListener = EventTarget.prototype.addEventListener;
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
-      if (
-        this === doc &&
-        (type === 'mousedown' || type === 'touchstart') &&
-        options?.capture === true &&
-        listener.toString().includes('isOpen')
-      ) {
-        return; // pickrの外側クリック検知リスナーをスキップ
-      }
-      return _originalAddEventListener.call(this, type, listener, options);
-    };
     const style = doc.createElement('style');
     const PickrClass = win.Pickr;
     style.textContent = `
@@ -1640,7 +1619,7 @@ if (container && data) {
       const getSaved = () =>
         isFg ? colorState.savedFg : colorState.savedBg;
 
-      pickr = PickrClass.create({
+      const pickr = PickrClass.create({
         el: `#${id}Swatch`,
         theme: 'classic',
         default: getSaved(),
@@ -1776,8 +1755,6 @@ if (container && data) {
         show: () => {},
         destroyAndRemove: () => {},
       }
-    } finally {
-      EventTarget.prototype.addEventListener = _originalAddEventListener;
     }
     // イベントハンドラ・UI操作
     updateColorHexDisplays();
@@ -3802,12 +3779,6 @@ if (container && data) {
   doc.addEventListener('mousedown', (e) => {
     if (!menus.some(({ div }) => div.contains(e.target))) {
       hideMenus();
-    }
-    // pickrの外側クリックでpcr-appを閉じる（スクロール中は無視）
-    if (pickr && scrollSpeed === 0 && pickr.isOpen() && !e.composedPath().some(el =>
-      el === doc.querySelector('.pcr-app') || el === doc.querySelector('.pickr')
-    )) {
-      pickr.hide();
     }
   });
 }
