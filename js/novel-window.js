@@ -378,12 +378,19 @@ if (container && data) {
     doc.documentElement.style.overflow = '';
   }
 
-  // thumb位置調整
+  // 長押しアクション無効化とスライダーthumb位置調整
   function injectSliderStyles() {
     if (doc.getElementById('custom-slider-styles')) return;
     const style = doc.createElement('style');
     style.id = 'custom-slider-styles';
     style.textContent = `
+      input.scroll-slider,
+      input.scroll-slider::-webkit-slider-thumb {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+      }
       input.scroll-slider::-webkit-slider-thumb {
         margin-top: 90vh;
       }
@@ -402,7 +409,6 @@ if (container && data) {
     slider.value = 0;
     Object.assign(slider.style, {
       appearance: 'none',
-      userSelect: 'none',
       border: 'none',
       position: 'fixed',
       height: '100vh',
@@ -412,6 +418,10 @@ if (container && data) {
       [position]: '30px',
       ...additionalStyle,
     });
+    slider.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+    slider.draggable = false;
     doc.body.appendChild(slider);
     return slider;
   }
