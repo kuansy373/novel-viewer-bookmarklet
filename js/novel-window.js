@@ -402,6 +402,7 @@ if (container && data) {
     slider.value = 0;
     Object.assign(slider.style, {
       appearance: 'none',
+      userSelect: 'none',
       border: 'none',
       position: 'fixed',
       height: '100vh',
@@ -1135,11 +1136,11 @@ if (container && data) {
   pickrOverride.textContent = `
     .pcr-app {
       visibility: visible !important; /* hidden の打ち消し */
-      box-shadow: none important;
+      box-shadow: none !important;
+      transition: none !important;
     }
     .pcr-app.visible {
       display: block !important;
-      transition: none !important;
     }
   `;
   doc.head.appendChild(pickrOverride);
@@ -1401,6 +1402,8 @@ if (container && data) {
         border: 1px solid !important;
         display: none !important;
         visibility: visible !important;
+        box-shadow: none !important;
+        transition: none !important;
       }
 
       .pcr-app.visible {
@@ -1724,6 +1727,7 @@ if (container && data) {
                 });
               }
             }
+            app.style.display = 'none !important';  // visibility: hidden の代わり
           });
         }, 0);
       });
