@@ -1696,7 +1696,7 @@ if (container && data) {
       });
 
       pickr.on('init', () => {
-        // pickrの自動再配置 を無効化
+        // pickrの自動再配置を無効化
         if (pickr._rePositioningPicker) {
           pickr._rePositioningPicker = () => {};
         }
@@ -1741,10 +1741,6 @@ if (container && data) {
 
       // pcr-app イベント登録
       pickr.on('show', (color) => {
-        if (isLoadingColor) {
-          isLoadingColor = false;
-          return; // 二重発火をスキップ
-        }
         const hex = color.toHEXA().toString();
         setCurrent(hex);
         applyColor(prop, hex);
@@ -1861,26 +1857,20 @@ if (container && data) {
     doc.getElementById('color-toggle-fg-lock').addEventListener('change', updateLockIcons);
     updateLockIcons();
 
-    let isLoadingColor = false;
-
     doc.getElementById('bgHexLoad').onclick = () => {
       const val = doc.getElementById('bgHex').value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-        isLoadingColor = true;
-        bgPickr.setColor(val);
-        console.log('_color:', bgPickr._color);
-        console.log('_lastColor:', bgPickr._lastColor);
-      }
       bgPickr.show();
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        bgPickr.setColor(val, true)
+      }
       updateLockIcons();
     };
     doc.getElementById('fgHexLoad').onclick = () => {
       const val = doc.getElementById('fgHex').value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-        isLoadingColor = true;
-        fgPickr.setColor(val);
-      }
       fgPickr.show();
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        fgPickr.setColor(val, true)
+      }
       updateLockIcons();
     };
 
