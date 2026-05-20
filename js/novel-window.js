@@ -1693,6 +1693,10 @@ if (container && data) {
       });
 
       pickr.on('init', () => {
+        // _rePositioningPicker を無効化
+        if (pickr._rePositioningPicker) {
+          pickr._rePositioningPicker = () => {};
+        }
         win.setTimeout(() => {
           doc.querySelectorAll('.pcr-app').forEach(app => {
             // pcr-appドラッグボタン追加
@@ -1740,14 +1744,12 @@ if (container && data) {
         updateSwatch(swatch, hex, getSaved());
         updateContrast();
         if (savedPickrLeft && savedPickrTop) {
-          win.setTimeout(() => {
-            doc.querySelectorAll('.pcr-app').forEach(a => {
-              a.style.setProperty('left',   savedPickrLeft, 'important');
-              a.style.setProperty('top',    savedPickrTop,  'important');
-              a.style.setProperty('right',  'auto', 'important');
-              a.style.setProperty('bottom', 'auto', 'important');
-            });
-          }, 0);
+          doc.querySelectorAll('.pcr-app').forEach(a => {
+            a.style.setProperty('left',   savedPickrLeft, 'important');
+            a.style.setProperty('top',    savedPickrTop,  'important');
+            a.style.setProperty('right',  'auto', 'important');
+            a.style.setProperty('bottom', 'auto', 'important');
+          });
         }
       });
 
