@@ -1140,6 +1140,7 @@ if (container && data) {
       transition: none !important;
       top: 150px !important;
       right: 10px !important;
+      left: auto !important;
     }
     .pcr-app.visible {
       display: block !important;
