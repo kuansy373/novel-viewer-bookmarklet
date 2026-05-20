@@ -1727,7 +1727,7 @@ if (container && data) {
                 });
               }
             }
-            app.style.display = 'none !important';  // visibility: hidden の代わり
+            app.style.display = 'none';  // visibility: hidden の代わり
           });
         }, 0);
       });
