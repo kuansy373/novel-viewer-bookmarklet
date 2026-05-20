@@ -1740,12 +1740,14 @@ if (container && data) {
         updateSwatch(swatch, hex, getSaved());
         updateContrast();
         if (savedPickrLeft && savedPickrTop) {
-          doc.querySelectorAll('.pcr-app').forEach(a => {
-            a.style.setProperty('left',   savedPickrLeft, 'important');
-            a.style.setProperty('top',    savedPickrTop,  'important');
-            a.style.setProperty('right',  'auto', 'important');
-            a.style.setProperty('bottom', 'auto', 'important');
-          });
+          win.setTimeout(() => {
+            doc.querySelectorAll('.pcr-app').forEach(a => {
+              a.style.setProperty('left',   savedPickrLeft, 'important');
+              a.style.setProperty('top',    savedPickrTop,  'important');
+              a.style.setProperty('right',  'auto', 'important');
+              a.style.setProperty('bottom', 'auto', 'important');
+            });
+          }, 0);
         }
       });
 
