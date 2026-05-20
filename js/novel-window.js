@@ -1138,6 +1138,8 @@ if (container && data) {
       visibility: visible !important; /* hidden の打ち消し */
       box-shadow: none !important;
       transition: none !important;
+      top: 150px !important;
+      right: 10px !important;
     }
     .pcr-app.visible {
       display: block !important;
