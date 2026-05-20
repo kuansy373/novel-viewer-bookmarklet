@@ -1868,6 +1868,8 @@ if (container && data) {
       if (/^#[0-9a-fA-F]{6}$/.test(val)) {
         isLoadingColor = true;
         bgPickr.setColor(val);
+        console.log('_color:', bgPickr._color);
+        console.log('_lastColor:', bgPickr._lastColor);
       }
       bgPickr.show();
       updateLockIcons();
