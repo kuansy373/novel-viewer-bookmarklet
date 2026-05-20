@@ -378,13 +378,13 @@ if (container && data) {
     doc.documentElement.style.overflow = '';
   }
 
-  //
+  // thumb位置調整
   function injectSliderStyles() {
     if (doc.getElementById('custom-slider-styles')) return;
     const style = doc.createElement('style');
     style.id = 'custom-slider-styles';
     style.textContent = `
-      input[type="range"]::-webkit-slider-thumb {
+      input.scroll-slider::-webkit-slider-thumb {
         margin-top: 90vh;
       }
     `;
@@ -396,6 +396,7 @@ if (container && data) {
     injectSliderStyles();
     const slider = doc.createElement('input');
     slider.type = 'range';
+    slider.className = 'scroll-slider';
     slider.min = 0;
     slider.max = 25;
     slider.value = 0;
@@ -708,7 +709,7 @@ if (container && data) {
         const style = doc.createElement('style');
         style.id = 'slider-thumb-hide';
         style.textContent = `
-          input[type="range"]::-webkit-slider-thumb {
+          input.scroll-slider::-webkit-slider-thumb {
             opacity: 0;
           }
         `;
@@ -1134,9 +1135,11 @@ if (container && data) {
   pickrOverride.textContent = `
     .pcr-app {
       visibility: visible !important; /* hidden の打ち消し */
+      box-shadow: none important;
     }
     .pcr-app.visible {
       display: block !important;
+      transition: none !important;
     }
   `;
   doc.head.appendChild(pickrOverride);
@@ -1676,12 +1679,12 @@ if (container && data) {
         theme: 'classic',
         default: getSaved(),
         components: {
-          preview: !0,
-          opacity: !1,
-          hue: !0,
+          preview: true,
+          opacity: false,
+          hue: true,
           interaction: {
-            input: !0,
-            save: !0,
+            input: true,
+            save: true,
           },
         },
       });
@@ -1721,7 +1724,6 @@ if (container && data) {
                 });
               }
             }
-            app.style.display = 'none';  // visibility: hidden の代わり
           });
         }, 0);
       });
@@ -1847,7 +1849,7 @@ if (container && data) {
     doc.getElementById('bgHexLoad').onclick = () => {
       const val = doc.getElementById('bgHex').value.trim();
       if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-        bgPickr.setColor(val, !0)
+        bgPickr.setColor(val, true)
       }
       bgPickr.show();
       updateLockIcons();
@@ -1855,7 +1857,7 @@ if (container && data) {
     doc.getElementById('fgHexLoad').onclick = () => {
       const val = doc.getElementById('fgHex').value.trim();
       if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-        fgPickr.setColor(val, !0)
+        fgPickr.setColor(val, true)
       }
       fgPickr.show();
       updateLockIcons();
@@ -2946,18 +2948,9 @@ if (container && data) {
       'searchConfigs'
     ]),
 
-    scrollSettings: new Set([
-      'right',
-      'left',
-      'shadow',
-      'opacity',
-      'border',
-      'colorIn',
-      'position',
-      'width',
-      'speedScale',
-      'showThumb'
-    ]),
+    scrollSettings: new Set(
+      Object.values(SCROLL_FIELD_MAP).map(v => v.key)
+    ),
 
     searchConfigs: new Set([
       'label',
