@@ -304,10 +304,15 @@ if (container && data) {
     const scrollTop = win.scrollY;
     const bodyHeight = doc.body.offsetHeight;
 
-    // 次ページが無い場合、最下部でスクロールリセット
+    // 次ページが無い場合、最下部でスクロールリセットし、操作無効化
     const isLastPage = currentIndex >= pageRanges.length - 1;
     if (isLastPage && scrollBottom >= bodyHeight - 5) {
       resetScrollSliders();
+      scrollSliderRight.disabled = true;
+      scrollSliderLeft.disabled = true;
+    } else {
+      scrollSliderRight.disabled = false;
+      scrollSliderLeft.disabled = false;
     }
 
     // 下方向・最下部で次ページ
@@ -422,8 +427,8 @@ if (container && data) {
       [position]: '30px',
       ...additionalStyle,
     });
-    ['contextmenu', 'touchend'].forEach(event => {
-      slider.addEventListener(event, (e) => e.preventDefault());
+    slider.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
     });
     slider.draggable = false;
     doc.body.appendChild(slider);
