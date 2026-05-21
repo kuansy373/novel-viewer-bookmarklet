@@ -172,6 +172,7 @@ if (container && data) {
       btn.textContent = text;
       btn.id = id;
       btn.style.cssText = `
+        width: 110px;
         padding: 10px 30px;
         font-size: 16px;
         background: rgba(120, 120, 120, 0.3);
@@ -355,6 +356,8 @@ if (container && data) {
             win.scrollTo(0, 0);
           } else {
             win.scrollTo(0, 1e9);
+            scrollSliderRight.disabled = true;
+            scrollSliderLeft.disabled = true;
           }
           win.setTimeout(() => {
             isSwitching = false;
