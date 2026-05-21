@@ -211,7 +211,6 @@ if (container && data) {
     overlayElements.pageInput.value = defaultPage;
     adjustInputWidth(overlayElements.pageInput);
     overlayElements.pageInput.max = maxPage;
-    resetScrollSliders();
     disableBodyScroll();
     overlayElements.overlay.style.display = 'flex';
 
@@ -304,9 +303,8 @@ if (container && data) {
     const scrollTop = win.scrollY;
     const bodyHeight = doc.body.offsetHeight;
 
-    // 次ページが無い場合、最下部でスクロールリセットし、操作無効化
-    const isLastPage = currentIndex >= pageRanges.length - 1;
-    if (isLastPage && scrollBottom >= bodyHeight - 5) {
+    // 最下部でスクロールスライダーリセットし、操作無効化
+    if (scrollBottom >= bodyHeight - 5) {
       resetScrollSliders();
       scrollSliderRight.disabled = true;
       scrollSliderLeft.disabled = true;
@@ -346,7 +344,8 @@ if (container && data) {
       scrollTop <= 5 &&
       promptShownBackward
     ) {
-      const targetPageForPrompt = currentIndex === 0 ? validPageCount  : currentIndex;
+      const targetPageForPrompt = currentIndex === 0 ? validPageCount : currentIndex;
+      resetScrollSliders();
       showOverlay(targetPageForPrompt, numPages , (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
