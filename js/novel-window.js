@@ -422,8 +422,8 @@ if (container && data) {
       [position]: '30px',
       ...additionalStyle,
     });
-    slider.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
+    ['contextmenu', 'touchend'].forEach(event => {
+      slider.addEventListener(event, (e) => e.preventDefault());
     });
     slider.draggable = false;
     doc.body.appendChild(slider);
