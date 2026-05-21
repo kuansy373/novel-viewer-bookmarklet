@@ -380,11 +380,22 @@ if (container && data) {
     }
   }
 
+  let isResizing = false;
+  let resizeTimer = null;
+
   win.visualViewport?.addEventListener('resize', () => {
     updateSliderDisabled();
     updateSliderThumbPosition();
+
+    isResizing = true;
     preciseScroll = scroller.scrollTop;
     lastTimestamp = null;
+
+    clearTimeout(resizeTimer);
+    resizeTimer = win.setTimeout(() => {
+      isResizing = false;
+      preciseScroll = scroller.scrollTop;
+    }, 100);
   });
 
   function resetScrollSliders() {
@@ -483,6 +494,11 @@ if (container && data) {
   let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
+    if (isResizing) {
+      rafId = requestAnimationFrame(forceScroll);
+      return;
+    }
+
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
       preciseScroll = scroller.scrollTop;
