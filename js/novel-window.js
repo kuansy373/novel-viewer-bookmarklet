@@ -300,19 +300,9 @@ if (container && data) {
   win.addEventListener('scroll', () => {
     if (isSwitching) return;
 
-    const scrollBottom = win.scrollY + win.innerHeight;
+    const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
     const scrollTop = win.scrollY;
     const bodyHeight = doc.body.offsetHeight;
-
-    // 最下部でスクロールスライダーリセットし、操作無効化
-    if (scrollBottom >= bodyHeight - 5) {
-      resetScrollSliders();
-      scrollSliderRight.disabled = true;
-      scrollSliderLeft.disabled = true;
-    } else {
-      scrollSliderRight.disabled = false;
-      scrollSliderLeft.disabled = false;
-    }
 
     // 下方向・最下部で次ページ
     if (
@@ -336,7 +326,7 @@ if (container && data) {
         promptShownForward = false;
         promptShownBackward = false;
       });
-    } else if (scrollBottom < bodyHeight - win.innerHeight / 4) {
+    } else if (scrollBottom < bodyHeight - (win.visualViewport?.height ?? win.innerHeight) / 4) {
       // 最上部から（25%）離れたらフラグON
       promptShownForward = true;
     }
@@ -371,6 +361,21 @@ if (container && data) {
     } else if (scrollTop > (currentIndex === 0 ? win.innerHeight / 1.5625 : win.innerHeight / 4)) {
       // 最上部から（1ページ目:64%、それ以外:25%）離れたらフラグON
       promptShownBackward = true;
+    }
+  });
+
+  // 最下部でスクロールスライダーリセットし、操作無効化
+  win.visualViewport?.addEventListener('resize', () => {
+    const scrollBottom = win.scrollY + win.visualViewport.height;
+    const bodyHeight = doc.body.offsetHeight;
+
+    if (scrollBottom >= bodyHeight - 5) {
+      resetScrollSliders();
+      scrollSliderRight.disabled = true;
+      scrollSliderLeft.disabled = true;
+    } else {
+      scrollSliderRight.disabled = false;
+      scrollSliderLeft.disabled = false;
     }
   });
 
