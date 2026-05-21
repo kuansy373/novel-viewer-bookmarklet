@@ -305,6 +305,12 @@ if (container && data) {
     const scrollTop = win.scrollY;
     const bodyHeight = doc.body.offsetHeight;
 
+    // 次ページが無い場合、最下部でスクロールリセット
+    const isLastPage = currentIndex >= pageRanges.length - 1;
+    if (isLastPage && scrollBottom >= bodyHeight - 5) {
+      resetScrollSliders();
+    }
+
     // 下方向・最下部で次ページ
     if (
       totalVisibleChars > 10000 &&
