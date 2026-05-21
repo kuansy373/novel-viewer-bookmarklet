@@ -299,6 +299,7 @@ if (container && data) {
 
   win.addEventListener('scroll', () => {
     if (isSwitching) return;
+    updateSliderDisabled();
 
     const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
     const scrollTop = win.scrollY;
@@ -365,8 +366,8 @@ if (container && data) {
   });
 
   // 最下部でスクロールスライダーリセットし、操作無効化
-  win.visualViewport?.addEventListener('resize', () => {
-    const scrollBottom = win.scrollY + win.visualViewport.height;
+  function updateSliderDisabled() {
+    const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
     const bodyHeight = doc.body.offsetHeight;
 
     if (scrollBottom >= bodyHeight - 5) {
@@ -377,7 +378,9 @@ if (container && data) {
       scrollSliderRight.disabled = false;
       scrollSliderLeft.disabled = false;
     }
-  });
+  }
+
+  win.visualViewport?.addEventListener('resize', updateSliderDisabled);
 
   function resetScrollSliders() {
     if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
