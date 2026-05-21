@@ -383,6 +383,8 @@ if (container && data) {
   win.visualViewport?.addEventListener('resize', () => {
     updateSliderDisabled();
     updateSliderThumbPosition();
+    preciseScroll = scroller.scrollTop;
+    lastTimestamp = null;
   });
 
   function resetScrollSliders() {
