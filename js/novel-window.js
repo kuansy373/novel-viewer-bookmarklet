@@ -380,7 +380,10 @@ if (container && data) {
     }
   }
 
-  win.visualViewport?.addEventListener('resize', updateSliderDisabled);
+  win.visualViewport?.addEventListener('resize', () => {
+    updateSliderDisabled();
+    updateSliderThumbPosition();
+  });
 
   function resetScrollSliders() {
     if (typeof scrollSliderRight !== 'undefined') scrollSliderRight.value = 0;
@@ -399,7 +402,7 @@ if (container && data) {
     doc.documentElement.style.overflow = '';
   }
 
-  // 長押しアクション無効化とスライダーthumb位置調整
+  // 長押しアクション無効化スタイル指定
   function injectSliderStyles() {
     if (doc.getElementById('custom-slider-styles')) return;
     const style = doc.createElement('style');
@@ -412,11 +415,26 @@ if (container && data) {
         -webkit-tap-highlight-color: transparent;
         touch-action: none;
       }
-      input.scroll-slider::-webkit-slider-thumb {
-        margin-top: 90vh;
-      }
     `;
     doc.head.appendChild(style);
+  }
+
+  // スライダーthumb位置制御
+  function updateSliderThumbPosition() {
+    const height = win.visualViewport?.height ?? win.innerHeight;
+    const marginTop = height * 0.9;
+
+    let thumbStyle = doc.getElementById('slider-thumb-position');
+    if (!thumbStyle) {
+      thumbStyle = doc.createElement('style');
+      thumbStyle.id = 'slider-thumb-position';
+      doc.head.appendChild(thumbStyle);
+    }
+    thumbStyle.textContent = `
+      input.scroll-slider::-webkit-slider-thumb {
+        margin-top: ${marginTop}px;
+      }
+    `;
   }
 
   // スライダー作成関数
@@ -450,6 +468,7 @@ if (container && data) {
   // 左右スライダー作成
   const scrollSliderRight = createSlider('right');
   const scrollSliderLeft = createSlider('left', { direction: 'rtl' });
+  updateSliderThumbPosition();
 
   // === スクロール処理 ===
   const scroller = doc.scrollingElement || doc.documentElement;
