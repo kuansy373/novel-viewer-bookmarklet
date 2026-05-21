@@ -499,9 +499,11 @@ if (container && data) {
       return;
     }
 
+    const currentScrollTop = scroller.scrollTop;
+
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
-      preciseScroll = scroller.scrollTop;
+      preciseScroll = currentScrollTop;
     }
 
     if (scrollSpeed === 0) {
@@ -514,15 +516,14 @@ if (container && data) {
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
     // ユーザーが手動スクロールした場合に基準を現在位置に更新
-    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
-      preciseScroll = scroller.scrollTop;
+    if (Math.abs(currentScrollTop - preciseScroll) > 2) {
+      preciseScroll = currentScrollTop;
     }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
     scroller.scrollTop = preciseScroll;
 
     lastTimestamp = timestamp;
-
     rafId = requestAnimationFrame(forceScroll);
   }
 
