@@ -211,6 +211,7 @@ if (container && data) {
     overlayElements.pageInput.value = defaultPage;
     adjustInputWidth(overlayElements.pageInput);
     overlayElements.pageInput.max = maxPage;
+    resetScrollSliders();
     disableBodyScroll();
     overlayElements.overlay.style.display = 'flex';
 
@@ -252,7 +253,6 @@ if (container && data) {
       enableBodyScroll();
       cleanup();
       onYes(targetPage);
-      resetScrollSliders();
     };
 
     // いいえ
@@ -260,7 +260,6 @@ if (container && data) {
       overlayElements.overlay.style.display = 'none';
       enableBodyScroll();
       cleanup();
-      resetScrollSliders();
       isSwitching = false;
       promptShownForward = false;
       promptShownBackward = false;
@@ -343,7 +342,6 @@ if (container && data) {
       promptShownBackward
     ) {
       const targetPageForPrompt = currentIndex === 0 ? validPageCount  : currentIndex;
-      resetScrollSliders();
       showOverlay(targetPageForPrompt, numPages , (targetPage) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
