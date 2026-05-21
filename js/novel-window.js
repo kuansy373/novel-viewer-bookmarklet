@@ -328,6 +328,8 @@ if (container && data) {
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
         win.scrollTo(0, 0);
+        scrollSliderRight.disabled = false;
+        scrollSliderLeft.disabled = false;
         win.setTimeout(() => {
           isSwitching = false;
         }, 50);
