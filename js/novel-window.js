@@ -424,6 +424,9 @@ if (container && data) {
     const height = win.visualViewport?.height ?? win.innerHeight;
     const marginTop = height * 0.9;
 
+    scrollSliderRight.style.height = `${height}px`;
+    scrollSliderLeft.style.height = `${height}px`;
+
     let thumbStyle = doc.getElementById('slider-thumb-position');
     if (!thumbStyle) {
       thumbStyle = doc.createElement('style');
