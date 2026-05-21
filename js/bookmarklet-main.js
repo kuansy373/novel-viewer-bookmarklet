@@ -582,7 +582,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@82e03b97e5bac12f17fcedff1c83c15abc3e15e6/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@3722395e5a7e4cbb4f5cfba72e3550f614c3dc6d/js/novel-window.js"></script>
         </body>
         </html>
       `;
