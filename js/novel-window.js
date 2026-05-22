@@ -383,8 +383,6 @@ if (container && data) {
   win.visualViewport?.addEventListener('resize', () => {
     updateSliderDisabled();
     updateSliderThumbPosition();
-    preciseScroll = scroller.scrollTop;
-    lastTimestamp = null;
   });
 
   function resetScrollSliders() {
@@ -486,8 +484,6 @@ if (container && data) {
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
       preciseScroll = scroller.scrollTop;
-      rafId = requestAnimationFrame(forceScroll);
-      return;
     }
 
     if (scrollSpeed === 0) {
@@ -518,17 +514,22 @@ if (container && data) {
     }
   }
 
-  // 両方のスライダーの値を同期
   function onSliderInput(e) {
     const val = +e.target.value;
     scrollSpeed = val * speedScale;
 
-    if (scrollSliderRight !== e.target) {
-      scrollSliderRight.value = val;
+    // 自動スクロール中はボタンを非表示
+    const display = val === 0 ? 'block' : 'none';
+    sUIOpenBtn.style.display = display;
+    fUIOpenBtn.style.display = display;
+    oUIOpenBtn.style.display = display;
+    // pUIOpenBtn はすでに remove() されている場合があるので存在チェック
+    if (pUIOpenBtn && doc.body.contains(pUIOpenBtn)) {
+      pUIOpenBtn.style.display = display;
     }
-    if (scrollSliderLeft !== e.target) {
-      scrollSliderLeft.value = val;
-    }
+
+    if (scrollSliderRight !== e.target) scrollSliderRight.value = val;
+    if (scrollSliderLeft !== e.target) scrollSliderLeft.value = val;
     startScrollLoop();
   }
   [scrollSliderRight, scrollSliderLeft].forEach((slider) => {
@@ -1187,6 +1188,7 @@ if (container && data) {
   let colorState;
   let updateContrast;
   let updateColorHexDisplays;
+  let pUIOpenBtn = createPickrOpenButton();
 
   // pcr-appに上書きスタイル（GPUレイヤー削減目的）
   const pickrOverride = doc.createElement('style');
