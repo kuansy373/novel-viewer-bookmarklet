@@ -557,8 +557,6 @@
           padding: 2em;
           content-visibility: auto;
           contain-intrinsic-size: 1000px;
-          will-change: scroll-position;
-          transform: translateZ(0);
         }
         ruby rt {
           font-size: 0.5em;
@@ -582,7 +580,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@0c00f1911790d59c5de6a72dc3fea74e5a9fb81b/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@e38744dfb545696431e95791e8ee73bb9d6c9839/js/novel-window.js"></script>
         </body>
         </html>
       `;
