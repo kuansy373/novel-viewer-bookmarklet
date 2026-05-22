@@ -380,22 +380,11 @@ if (container && data) {
     }
   }
 
-  let isResizing = false;
-  let resizeTimer = null;
-
   win.visualViewport?.addEventListener('resize', () => {
     updateSliderDisabled();
     updateSliderThumbPosition();
-
-    isResizing = true;
     preciseScroll = scroller.scrollTop;
     lastTimestamp = null;
-
-    clearTimeout(resizeTimer);
-    resizeTimer = win.setTimeout(() => {
-      isResizing = false;
-      preciseScroll = scroller.scrollTop;
-    }, 100);
   });
 
   function resetScrollSliders() {
@@ -494,16 +483,11 @@ if (container && data) {
   let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
-    if (isResizing) {
-      rafId = requestAnimationFrame(forceScroll);
-      return;
-    }
-
-    const currentScrollTop = scroller.scrollTop;
-
     if (lastTimestamp === null) {
       lastTimestamp = timestamp;
-      preciseScroll = currentScrollTop;
+      preciseScroll = scroller.scrollTop;
+      rafId = requestAnimationFrame(forceScroll);
+      return;
     }
 
     if (scrollSpeed === 0) {
@@ -516,14 +500,15 @@ if (container && data) {
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
     // ユーザーが手動スクロールした場合に基準を現在位置に更新
-    if (Math.abs(currentScrollTop - preciseScroll) > 2) {
-      preciseScroll = currentScrollTop;
+    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+      preciseScroll = scroller.scrollTop;
     }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
     scroller.scrollTop = preciseScroll;
 
     lastTimestamp = timestamp;
+
     rafId = requestAnimationFrame(forceScroll);
   }
 
