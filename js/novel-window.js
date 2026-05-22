@@ -1188,7 +1188,7 @@ if (container && data) {
   let colorState;
   let updateContrast;
   let updateColorHexDisplays;
-  let pUIOpenBtn = createPickrOpenButton();
+  let pUIOpenBtn = null;
 
   // pcr-appに上書きスタイル（GPUレイヤー削減目的）
   const pickrOverride = doc.createElement('style');
@@ -2013,30 +2013,31 @@ if (container && data) {
 
     // 開くボタン □ 作成関数
     function createPickrOpenButton() {
+      const btn = doc.createElement('div');
 
-      const pUIOpenBtn = doc.createElement('div');
-
-      pUIOpenBtn.innerHTML = `
+      btn.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24">
           <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
         </svg>
       `;
 
-      Object.assign(pUIOpenBtn.style, baseOpenBtnStyle, {
+      Object.assign(btn.style, baseOpenBtnStyle, {
         padding: '5px 8px 5px 8px',
         top: '75px',
         right: '10px',
         zIndex: '20000'
       });
 
-      pUIOpenBtn.onclick = () => {
+      btn.onclick = () => {
         container.style.display = 'block';
         style.disabled = false;
-        pUIOpenBtn.remove();
+        btn.remove();
+        pUIOpenBtn = null;
       };
 
-      doc.body.appendChild(pUIOpenBtn);
-      return pUIOpenBtn;
+      doc.body.appendChild(btn);
+      pUIOpenBtn = btn;
+      return btn;
     }
 
     // 最初の □ ボタンを作成
