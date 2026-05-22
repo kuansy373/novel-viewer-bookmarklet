@@ -390,6 +390,7 @@ if (container && data) {
     if (typeof scrollSliderLeft !== 'undefined') scrollSliderLeft.value = 0;
     if (typeof scrollSpeed !== 'undefined') scrollSpeed = 0;
     lastTimestamp = null;
+    setOpenBtnsVisibility(true);
   }
 
   function disableBodyScroll() {
@@ -402,7 +403,7 @@ if (container && data) {
     doc.documentElement.style.overflow = '';
   }
 
-  // 長押しアクション無効化スタイル指定
+  // 長押しアクション無効化スタイル
   function injectSliderStyles() {
     if (doc.getElementById('custom-slider-styles')) return;
     const style = doc.createElement('style');
@@ -517,16 +518,7 @@ if (container && data) {
   function onSliderInput(e) {
     const val = +e.target.value;
     scrollSpeed = val * speedScale;
-
-    // 自動スクロール中はボタンを非表示
-    const display = val === 0 ? 'block' : 'none';
-    sUIOpenBtn.style.display = display;
-    fUIOpenBtn.style.display = display;
-    oUIOpenBtn.style.display = display;
-    // pUIOpenBtn はすでに remove() されている場合があるので存在チェック
-    if (pUIOpenBtn && doc.body.contains(pUIOpenBtn)) {
-      pUIOpenBtn.style.display = display;
-    }
+    setOpenBtnsVisibility(val === 0);
 
     if (scrollSliderRight !== e.target) scrollSliderRight.value = val;
     if (scrollSliderLeft !== e.target) scrollSliderLeft.value = val;
@@ -544,6 +536,17 @@ if (container && data) {
   });
 
   win.addEventListener("blur", resetScrollSliders);
+
+  // 各種UIOpenBtnを表示/非表示する
+  function setOpenBtnsVisibility(visible) {
+    const display = visible ? 'block' : 'none';
+    sUIOpenBtn.style.display = display;
+    fUIOpenBtn.style.display = display;
+    oUIOpenBtn.style.display = display;
+    if (pUIOpenBtn && doc.body.contains(pUIOpenBtn)) {
+      pUIOpenBtn.style.display = display;
+    }
+  }
 
   // ==============================
   // Slider Settings
