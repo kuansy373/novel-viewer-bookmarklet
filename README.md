@@ -42,7 +42,7 @@
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@4401763a12330cd63007b93b8de733692d860012/js/bookmarklet-main.js';document.body.appendChild(s)})()
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@627ebf17d151a535c694c2f6a1c114a58cc2cd8f/js/bookmarklet-main.js';document.body.appendChild(s)})()
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -87,7 +87,7 @@
     "position": 30,
     "width": 80,
     "speedScale": 10,
-    "hideBall": true
+    "showThumb": true
   },
   "searchConfigs": [
     {
@@ -151,7 +151,7 @@
 ### 注意点
 - ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。
   - タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードから直接参照されているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
-  - ※ 現在、このREADMEからコピーした「javascript:」で読み込まれるのは、 bookmarklet-main.js が `@4401763`、 novel-window.js が `@e0d87e0`、タグは `v2.0.3` です。
+  - ※ 現在、このREADMEからコピーした「javascript:」で読み込まれるのは、 bookmarklet-main.js が `@627ebf1`、 novel-window.js が `@8058ef4`、タグは `v2.0.4` です。
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
 ### 不具合・要望
