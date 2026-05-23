@@ -327,50 +327,36 @@
 
     // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
     function buildPositionMap(html) {
-
       const capacity = html.length + 1;
-
       const htmlPosMap = new Uint32Array(capacity);
-      const visibleChars = [];
 
       let visiblePos = 0;
-
       let htmlPos = 0;
       let skipDepth = 0;
 
       while (htmlPos < html.length) {
-
         const ch = html[htmlPos];
-
         if (ch === '<') {
-
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
-
           if (tag.name === 'rt' || tag.name === 'rp') {
             if (!tag.isClosing) skipDepth++;
             else if (skipDepth > 0) skipDepth--;
           }
-
           htmlPos = tag.end + 1;
           continue;
         }
-
         if (skipDepth === 0) {
           htmlPosMap[visiblePos] = htmlPos;
-          visibleChars.push(ch);
           visiblePos++;
         }
-
         htmlPos++;
       }
 
       htmlPosMap[visiblePos] = html.length;
-
       return {
         htmlPosMap,
         visibleLength: visiblePos,
-        visibleText: visibleChars.join('')
       };
     }
 
@@ -383,7 +369,6 @@
 
     const posMap = buildPositionMap(fullHTML);
     const totalVisibleChars = posMap.visibleLength;
-    const fullText = posMap.visibleText;
     console.log('総文字数:', totalVisibleChars);
 
     // 1ページあたりの上限文字数
@@ -421,13 +406,25 @@
       document
     );
 
+    // 区切り文字探索
+    function findDelimiterVisiblePos(html, posMap, searchStart, searchEnd, fallback) {
+      const delimiters = new Set(['　', '。', '」', '…']);
+      const { htmlPosMap, visibleLength } = posMap;
+
+      for (let v = searchStart; v < Math.min(searchEnd, visibleLength); v++) {
+        const h = htmlPosMap[v];
+        const ch = html[h];
+        if (delimiters.has(ch)) return v + 1;
+      }
+      return fallback;
+    }
+
     // 各ページを作成する関数
     function createPagePart({
       pageIndex,
       numPages,
       prevEndVisiblePos,
       charsPerPage,
-      fullText,
       fullHTML,
       posMap
     }) {
@@ -435,28 +432,15 @@
       let endVisiblePos = startVisiblePos + charsPerPage;
 
       if (pageIndex === numPages - 1) {
-        endVisiblePos = fullText.length;
+        endVisiblePos = posMap.visibleLength;
       } else {
-        const searchStart = endVisiblePos;
-        const searchEnd = Math.min(
-          fullText.length,
-          // 5%先の範囲で自然な区切り文字
-          endVisiblePos + Math.floor(charsPerPage * 0.05)
+        endVisiblePos = findDelimiterVisiblePos(
+          fullHTML,
+          posMap,
+          endVisiblePos,
+          endVisiblePos + Math.floor(charsPerPage * 0.05),
+          endVisiblePos
         );
-
-        let bestPos = endVisiblePos;
-        const delimiters = ['　', '。', '」', '…'];
-
-        outer:
-        for (const d of delimiters) {
-          for (let j = searchStart; j < searchEnd; j++) {
-            if (fullText[j] === d) {
-              bestPos = j + 1;
-              break outer;
-            }
-          }
-        }
-        endVisiblePos = bestPos;
       }
 
       const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
@@ -464,7 +448,6 @@
         pageIndex === numPages - 1
           ? fullHTML.length
           : getHtmlPos(posMap, endVisiblePos);
-
 
       // 末尾10文字のHTMLだけ別途保持（半透明で次ページに追加）
       const tailVisibleStart = Math.max(startVisiblePos, endVisiblePos - 10);
@@ -491,7 +474,6 @@
         numPages,
         prevEndVisiblePos,
         charsPerPage,
-        fullText,
         fullHTML,
         posMap
       });
@@ -574,7 +556,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@f87d173d5824db059cada6711b44a02a2a8a7337/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@647382ac5a66960bd1efa74edef0beb5155d2fba/js/novel-window.js"></script>
         </body>
         </html>
       `;
