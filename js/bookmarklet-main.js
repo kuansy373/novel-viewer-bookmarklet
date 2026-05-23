@@ -522,11 +522,6 @@
         validPageCount
       };
 
-      const safeJson = JSON.stringify(data)
-        .replace(/</g, '\\u003c')
-        .replace(/>/g, '\\u003e')
-        .replace(/&/g, '\\u0026');
-
       const html = `
         <!DOCTYPE html>
         <html lang="ja" style="scrollbar-width: thin;">
@@ -575,12 +570,11 @@
         <body>
           <div id="novelDisplay"></div>
           <script>
-          window.__NOVEL_DATA__ = ${safeJson};
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@8058ef40abd1ea5b2d35f34e9df21a1b3213c36e/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@f87d173d5824db059cada6711b44a02a2a8a7337/js/novel-window.js"></script>
         </body>
         </html>
       `;
@@ -599,7 +593,13 @@
       }
 
       win.addEventListener('load', () => {
+        win.postMessage({
+          type: 'NOVEL_DATA',
+          payload: data
+        }, '*');
+
         URL.revokeObjectURL(url);
+
       }, { once: true });
     }
     openNovelWindow();

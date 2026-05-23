@@ -3,19 +3,30 @@ console.log('novel-window loaded: v2.0.4');
 const win = window;
 const doc = document;
 
-const data = win.__NOVEL_DATA__;
-
-const {
-  totalVisibleChars,
-  numPages,
-  pageRanges,
-  fullHTML,
-  pageCharCounts,
-  validPageCount
-} = data;
-
 const container = doc.getElementById('novelDisplay');
-if (container && data) {
+
+win.addEventListener('message', (event) => {
+
+  const msg = event.data;
+
+  if (!msg || msg.type !== 'NOVEL_DATA') {
+    return;
+  }
+
+  const data = msg.payload;
+
+  const {
+    totalVisibleChars,
+    numPages,
+    pageRanges,
+    fullHTML,
+    pageCharCounts,
+    validPageCount
+  } = data;
+
+  if (!container) {
+    return;
+  }
 
   // 長文の負荷軽減のため50文字毎にspan分割する関数
   // タグ内<>とエンティティ内&;は避ける
@@ -3901,4 +3912,4 @@ if (container && data) {
       hideMenus();
     }
   });
-}
+});
