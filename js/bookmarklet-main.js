@@ -228,7 +228,6 @@
     }
 
     const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
-    const ALLOWED_ATTRS = new Set(['class', 'id', 'lang', 'title', 'dir']);
 
     function extractWithRubyTags(node) {
 
@@ -243,19 +242,20 @@
           } else if (child.nodeType === Node.ELEMENT_NODE) {
             const tagName = child.tagName.toLowerCase();
 
-            if (ALLOWED_TAGS.has(tagName)) {
-              let attrs = '';
-              for (const attr of child.attributes) {
-                if (/^on/i.test(attr.name)) continue;
-                if (!ALLOWED_ATTRS.has(attr.name)) continue;
-                attrs += ` ${attr.name}="${escapeHTML(attr.value)}"`;
-              }
+            // カクヨムの傍点
+            if (tagName === 'em' && child.classList.contains('emphasisDots')) {
+              const chars = escapeHTML(child.textContent);
+              const dots = '・'.repeat(chars.length);
+              result.push(`<ruby><rb>${chars}</rb><rp>（</rp><rt>${dots}</rt><rp>）</rp></ruby>`);
 
-              result.push(`<${tagName}${attrs}>`);
+            } else if (ALLOWED_TAGS.has(tagName)) {
+              result.push(`<${tagName}>`);
               traverse(child);
               result.push(`</${tagName}>`);
+
             } else if (tagName === 'br') {
               result.push('\n');
+
             } else {
               traverse(child);
             }
@@ -295,12 +295,6 @@
 
     let text = textParts.join('');
     textParts.length = 0;
-
-    // カクヨムの傍点
-    text = text.replace(/<em class="emphasisDots">([\s\S]*?)<\/em>/gi, (_, content) => {
-      const chars = content.replace(/<\/?span>/gi, '');
-      return `<ruby><rb>${chars}</rb><rp>（</rp><rt>・・・</rt><rp>）</rp></ruby>`;
-    });
 
     // 改行の処理
     text = text.trim()
@@ -406,15 +400,16 @@
       document
     );
 
+    const DELIMITERS = new Set(['　', '。', '」', '…']);
+
     // 区切り文字探索
     function findDelimiterVisiblePos(html, posMap, searchStart, searchEnd, fallback) {
-      const delimiters = new Set(['　', '。', '」', '…']);
       const { htmlPosMap, visibleLength } = posMap;
 
       for (let v = searchStart; v < Math.min(searchEnd, visibleLength); v++) {
         const h = htmlPosMap[v];
         const ch = html[h];
-        if (delimiters.has(ch)) return v + 1;
+        if (DELIMITERS.has(ch)) return v + 1;
       }
       return fallback;
     }
