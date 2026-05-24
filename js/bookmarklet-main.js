@@ -227,7 +227,7 @@
       });
     }
 
-    const ALLOWED_TAGS = new Set(['ruby', 'rb', 'rp', 'rt', 'em']);
+    const ALLOWED_TAGS = new Set(['ruby', 'rt', 'em']);
 
     function extractWithRubyTags(node) {
 
@@ -244,14 +244,17 @@
 
             // カクヨムの傍点
             if (tagName === 'em' && child.classList.contains('emphasisDots')) {
-              const chars = escapeHTML(child.textContent);
-              const dots = '・'.repeat(chars.length);
-              result.push(`<ruby><rb>${chars}</rb><rp>（</rp><rt>${dots}</rt><rp>）</rp></ruby>`);
+              const raw = child.textContent;
+              const dots = '・'.repeat([...raw].length);
+              const chars = escapeHTML(raw);
+              result.push(`<ruby>${chars}<rt>${dots}</rt></ruby>`);
 
             } else if (ALLOWED_TAGS.has(tagName)) {
               result.push(`<${tagName}>`);
               traverse(child);
               result.push(`</${tagName}>`);
+
+            } else if (tagName === 'rp') {
 
             } else if (tagName === 'br') {
               result.push('\n');
@@ -333,7 +336,7 @@
         if (ch === '<') {
           const tag = parseTag(html, htmlPos);
           if (!tag) break;
-          if (tag.name === 'rt' || tag.name === 'rp') {
+          if (tag.name === 'rt') {
             if (!tag.isClosing) skipDepth++;
             else if (skipDepth > 0) skipDepth--;
           }
