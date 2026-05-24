@@ -352,7 +352,7 @@
 
       htmlPosMap[visiblePos] = html.length;
       return {
-        htmlPosMap,
+        htmlPosMap: htmlPosMap.slice(0, visiblePos + 1),
         visibleLength: visiblePos,
       };
     }
