@@ -306,13 +306,6 @@ win.addEventListener('message', (event) => {
     cachedBodyHeight = doc.documentElement.scrollHeight;
   }
 
-  // スクロールフラグ
-  let manualScrolled = false;
-  let isAutoScrolling = false;
-
-  // アニメーションループの管理ID
-  let rafId = null;
-
   // 初回表示
   let currentIndex = 0;
   renderPart(currentIndex);
@@ -326,9 +319,6 @@ win.addEventListener('message', (event) => {
 
   win.addEventListener('scroll', () => {
     if (isSwitching) return;
-    if (rafId !== null && !isAutoScrolling) {
-      manualScrolled = true;
-    }
     updateSliderDisabled();
 
     const scrollBottom = win.scrollY + cachedViewportHeight;
@@ -402,16 +392,7 @@ win.addEventListener('message', (event) => {
     const scrollBottom = win.scrollY + cachedViewportHeight;
     const bodyHeight = cachedBodyHeight;
 
-    console.log('updateSliderDisabled', {
-      scrollY: win.scrollY,
-      cachedViewportHeight,
-      scrollBottom,
-      bodyHeight,
-      diff: bodyHeight - scrollBottom
-    });
-
     if (scrollBottom >= bodyHeight - 5) {
-      console.log('→ 最下部判定 resetScrollSliders実行');
       resetScrollSliders();
       scrollSliderRight.disabled = true;
       scrollSliderLeft.disabled = true;
@@ -520,6 +501,7 @@ win.addEventListener('message', (event) => {
   const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
   let lastTimestamp = null; // 前フレームの時刻
+  let rafId = null;         // アニメーションループの管理ID
   let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
@@ -537,23 +519,17 @@ win.addEventListener('message', (event) => {
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
 
-    // 手動スクロールされた場合だけ読み取り
-    if (manualScrolled) {
+    // ユーザーが手動スクロールした場合に基準を現在位置に更新
+    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
       preciseScroll = scroller.scrollTop;
-      manualScrolled = false;
     }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
-
-    isAutoScrolling = true;
     scroller.scrollTop = preciseScroll;
 
     lastTimestamp = timestamp;
 
-    rafId = requestAnimationFrame((ts) => {
-      isAutoScrolling = false;
-      forceScroll(ts);
-    });
+    rafId = requestAnimationFrame(forceScroll);
   }
 
   function startScrollLoop() {
