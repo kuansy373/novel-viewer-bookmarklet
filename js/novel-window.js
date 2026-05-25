@@ -298,18 +298,28 @@ win.addEventListener('message', (event) => {
     overlayElements.overlay.addEventListener('click', handleOverlayClick);
   }
 
-  // ページ高さキャッシュ（scrollイベント内でのレイアウト強制読み取りを避けるため）
-  let cachedBodyHeight = doc.documentElement.scrollHeight;
-  let cachedViewportHeight = win.visualViewport?.height ?? win.innerHeight;
-
-  function updateBodyHeight() {
-    cachedBodyHeight = doc.documentElement.scrollHeight;
-  }
-
   // 初回表示
   let currentIndex = 0;
   renderPart(currentIndex);
-  updateBodyHeight();
+
+  // ビューポート高さキャッシュ
+  let cachedViewportHeight = 0;
+  function updateViewportHeightCache() {
+    cachedViewportHeight = win.visualViewport?.height ?? win.innerHeight;
+  }
+  // body高さキャッシュ
+  let cachedBodyHeight = 0;
+  function updateBodyHeightCache() {
+    cachedBodyHeight = doc.body.offsetHeight;
+  }
+  win.requestAnimationFrame(() => {
+    win.requestAnimationFrame(() => {
+      updateViewportHeightCache();
+      updateBodyHeightCache();
+      updateSliderDisabled();
+      updateSliderThumbPosition();
+    });
+  });
 
   // ページ切り替え可能フラグ
   let promptShownForward = false;
@@ -338,7 +348,11 @@ win.addEventListener('message', (event) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
-        updateBodyHeight();
+        win.requestAnimationFrame(() => {
+          win.requestAnimationFrame(() => {
+            updateBodyHeightCache();
+          });
+        });
         win.scrollTo(0, 0);
         scrollSliderRight.disabled = false;
         scrollSliderLeft.disabled = false;
@@ -348,7 +362,7 @@ win.addEventListener('message', (event) => {
         promptShownForward = false;
         promptShownBackward = false;
       });
-    } else if (scrollBottom < bodyHeight - (cachedViewportHeight) / 4) {
+    } else if (scrollBottom < bodyHeight - cachedViewportHeight / 4) {
       // 最上部から（25%）離れたらフラグON
       promptShownForward = true;
     }
@@ -365,20 +379,22 @@ win.addEventListener('message', (event) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
-        updateBodyHeight();
         win.requestAnimationFrame(() => {
-          if (currentIndex === pageRanges.length - 1) {
-            win.scrollTo(0, 0);
-          } else {
-            win.scrollTo(0, 1e9);
-            scrollSliderRight.disabled = true;
-            scrollSliderLeft.disabled = true;
-          }
-          win.setTimeout(() => {
-            isSwitching = false;
-          }, 50);
-          promptShownForward = false;
-          promptShownBackward = false;
+          win.requestAnimationFrame(() => {
+            updateBodyHeightCache();
+            if (currentIndex === pageRanges.length - 1) {
+              win.scrollTo(0, 0);
+            } else {
+              win.scrollTo(0, 1e9);
+              scrollSliderRight.disabled = true;
+              scrollSliderLeft.disabled = true;
+            }
+            win.setTimeout(() => {
+              isSwitching = false;
+            }, 50);
+            promptShownForward = false;
+            promptShownBackward = false;
+          });
         });
       });
     } else if (scrollTop > (currentIndex === 0 ? cachedViewportHeight / 1.5625 : cachedViewportHeight / 4)) {
@@ -388,11 +404,16 @@ win.addEventListener('message', (event) => {
   }, { passive: true });
 
   // 最下部でスクロールスライダーリセットし、操作無効化
+  let isSliderDisabled = false;
+
   function updateSliderDisabled() {
     const scrollBottom = win.scrollY + cachedViewportHeight;
-    const bodyHeight = cachedBodyHeight;
+    const atBottom = scrollBottom >= cachedBodyHeight - 5;
 
-    if (scrollBottom >= bodyHeight - 5) {
+    if (atBottom === isSliderDisabled) return;
+
+    isSliderDisabled = atBottom;
+    if (atBottom) {
       resetScrollSliders();
       scrollSliderRight.disabled = true;
       scrollSliderLeft.disabled = true;
@@ -403,7 +424,7 @@ win.addEventListener('message', (event) => {
   }
 
   win.visualViewport?.addEventListener('resize', () => {
-    cachedViewportHeight = win.visualViewport?.height ?? win.innerHeight;
+    updateViewportHeightCache();
     updateSliderDisabled();
     updateSliderThumbPosition();
   });
@@ -445,11 +466,9 @@ win.addEventListener('message', (event) => {
 
   // スライダーthumb位置制御
   function updateSliderThumbPosition() {
-    const height = win.visualViewport?.height ?? win.innerHeight;
-    const marginTop = height * 0.9;
-
-    scrollSliderRight.style.height = `${height}px`;
-    scrollSliderLeft.style.height = `${height}px`;
+    const marginTop = cachedViewportHeight * 0.9;
+    scrollSliderRight.style.height = `${cachedViewportHeight}px`;
+    scrollSliderLeft.style.height = `${cachedViewportHeight}px`;
 
     let thumbStyle = doc.getElementById('slider-thumb-position');
     if (!thumbStyle) {
@@ -495,6 +514,7 @@ win.addEventListener('message', (event) => {
   // 左右スライダー作成
   const scrollSliderRight = createSlider('right');
   const scrollSliderLeft = createSlider('left', { direction: 'rtl' });
+  updateViewportHeightCache();
   updateSliderThumbPosition();
 
   // === スクロール処理 ===
@@ -1009,6 +1029,22 @@ win.addEventListener('message', (event) => {
     blockSize: '5px',
   });
 
+  // body高さ変化対応
+  let layoutRefreshPending = false;
+
+  function refreshBodyHeightLater() {
+    if (layoutRefreshPending) return;
+    layoutRefreshPending = true;
+
+    win.requestAnimationFrame(() => {
+      win.requestAnimationFrame(() => {
+        layoutRefreshPending = false;
+        updateBodyHeightCache();
+        updateSliderDisabled();
+      });
+    });
+  }
+
   // 更新処理
   function updateControls() {
     if (!target) return;
@@ -1022,6 +1058,7 @@ win.addEventListener('message', (event) => {
       slider.oninput = () => {
         target.style.fontSize = `${slider.value}px`;
         label.textContent = `Font size: ${slider.value}px`;
+        refreshBodyHeightLater();
       };
     }
     else if (currentMode === 'Font weight') {
@@ -1033,6 +1070,7 @@ win.addEventListener('message', (event) => {
       slider.oninput = () => {
         target.style.fontWeight = slider.value;
         label.textContent = `Font weight: ${slider.value}`;
+        refreshBodyHeightLater();
       };
     }
     else if (currentMode === 'Text shadow') {
@@ -1159,6 +1197,9 @@ win.addEventListener('message', (event) => {
       link.id = id;
       link.rel = "stylesheet";
       link.href = "https://fonts.googleapis.com/css2?family=" + font.replace(/ /g, '+') + "&display=swap";
+      link.onload = () => {
+        doc.fonts?.ready.then(refreshBodyHeightLater);
+      };
       doc.head.appendChild(link);
     }
     elements.forEach(el => {
@@ -3428,6 +3469,8 @@ win.addEventListener('message', (event) => {
     if (data.scrollSettings) {
       applyScrollSettings(data.scrollSettings);
     }
+
+    refreshBodyHeightLater();
 
     return true;
   }
