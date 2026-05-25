@@ -530,6 +530,7 @@
           font-size: 23px;
           display: block;
           padding: 2em;
+          content-visibility: auto;
         }
         ruby rt {
           font-size: 0.5em;
@@ -552,7 +553,7 @@
           window.makeDraggable = ${makeDraggable.toString()};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@55ad9421c455348ad5a283486a01dbf9f52e84bd/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@653764f111279e38eb6b79478e58a390a6c2eb5c/js/novel-window.js"></script>
         </body>
         </html>
       `;
