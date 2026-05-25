@@ -381,7 +381,7 @@ win.addEventListener('message', (event) => {
           promptShownBackward = false;
         });
       });
-    } else if (scrollTop > (currentIndex === 0 ? win.innerHeight / 1.5625 : win.innerHeight / 4)) {
+    } else if (scrollTop > (currentIndex === 0 ? cachedViewportHeight / 1.5625 : cachedViewportHeight / 4)) {
       // 最上部から（1ページ目:64%、それ以外:25%）離れたらフラグON
       promptShownBackward = true;
     }
