@@ -298,9 +298,17 @@ win.addEventListener('message', (event) => {
     overlayElements.overlay.addEventListener('click', handleOverlayClick);
   }
 
+  // ページ高さキャッシュ（scrollイベント内でのレイアウト強制読み取りを避けるため）
+  let cachedBodyHeight = doc.documentElement.scrollHeight;
+
+  function updateBodyHeight() {
+    cachedBodyHeight = doc.documentElement.scrollHeight;
+  }
+
   // 初回表示
   let currentIndex = 0;
   renderPart(currentIndex);
+  updateBodyHeight();
 
   // ページ切り替え可能フラグ
   let promptShownForward = false;
@@ -314,7 +322,7 @@ win.addEventListener('message', (event) => {
 
     const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
     const scrollTop = win.scrollY;
-    const bodyHeight = doc.body.offsetHeight;
+    const bodyHeight = cachedBodyHeight;
 
     // 下方向・最下部で次ページ
     if (
@@ -329,6 +337,7 @@ win.addEventListener('message', (event) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
+        updateBodyHeight();
         win.scrollTo(0, 0);
         scrollSliderRight.disabled = false;
         scrollSliderLeft.disabled = false;
@@ -355,6 +364,7 @@ win.addEventListener('message', (event) => {
         isSwitching = true;
         currentIndex = targetPage - 1;
         renderPart(currentIndex);
+        updateBodyHeight();
         win.requestAnimationFrame(() => {
           if (currentIndex === pageRanges.length - 1) {
             win.scrollTo(0, 0);
@@ -379,7 +389,7 @@ win.addEventListener('message', (event) => {
   // 最下部でスクロールスライダーリセットし、操作無効化
   function updateSliderDisabled() {
     const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
-    const bodyHeight = doc.body.offsetHeight;
+    const bodyHeight = cachedBodyHeight;
 
     if (scrollBottom >= bodyHeight - 5) {
       resetScrollSliders();
