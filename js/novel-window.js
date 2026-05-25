@@ -310,6 +310,9 @@ win.addEventListener('message', (event) => {
   let manualScrolled = false;
   let isAutoScrolling = false;
 
+  // アニメーションループの管理ID
+  let rafId = null;
+
   // 初回表示
   let currentIndex = 0;
   renderPart(currentIndex);
@@ -508,7 +511,6 @@ win.addEventListener('message', (event) => {
   const scroller = doc.scrollingElement || doc.documentElement;
   let scrollSpeed = 0;
   let lastTimestamp = null; // 前フレームの時刻
-  let rafId = null;         // アニメーションループの管理ID
   let preciseScroll = 0;    // 小数点以下も保持する正確なスクロール位置
 
   function forceScroll(timestamp) {
