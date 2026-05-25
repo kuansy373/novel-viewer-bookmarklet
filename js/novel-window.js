@@ -329,6 +329,11 @@ win.addEventListener('message', (event) => {
 
   win.addEventListener('scroll', () => {
     if (isSwitching) return;
+    // ユーザーが手動スクロールした場合に基準を現在位置に更新
+    if (rafId !== null && Math.abs(scroller.scrollTop - preciseScroll) > 2) {
+      preciseScroll = scroller.scrollTop;
+    }
+
     updateSliderDisabled();
 
     const scrollBottom = win.scrollY + cachedViewportHeight;
@@ -470,17 +475,17 @@ win.addEventListener('message', (event) => {
     scrollSliderRight.style.height = `${cachedViewportHeight}px`;
     scrollSliderLeft.style.height = `${cachedViewportHeight}px`;
 
-    let thumbStyle = doc.getElementById('slider-thumb-position');
-    if (!thumbStyle) {
-      thumbStyle = doc.createElement('style');
+    if (!doc.getElementById('slider-thumb-position')) {
+      const thumbStyle = doc.createElement('style');
       thumbStyle.id = 'slider-thumb-position';
+      thumbStyle.textContent = `
+        input.scroll-slider::-webkit-slider-thumb {
+          margin-top: var(--slider-thumb-top, 90vh);
+        }
+      `;
       doc.head.appendChild(thumbStyle);
     }
-    thumbStyle.textContent = `
-      input.scroll-slider::-webkit-slider-thumb {
-        margin-top: ${marginTop}px;
-      }
-    `;
+    doc.documentElement.style.setProperty('--slider-thumb-top', `${marginTop}px`);
   }
 
   // スライダー作成関数
@@ -538,11 +543,6 @@ win.addEventListener('message', (event) => {
 
     // 経過時間を最大32msに抑えて、タブ復帰時などの急激な飛びを防ぐ
     const elapsed = Math.min(timestamp - lastTimestamp, 32);
-
-    // ユーザーが手動スクロールした場合に基準を現在位置に更新
-    if (Math.abs(scroller.scrollTop - preciseScroll) > 2) {
-      preciseScroll = scroller.scrollTop;
-    }
 
     preciseScroll += (scrollSpeed * elapsed) / 1000;
     scroller.scrollTop = preciseScroll;
