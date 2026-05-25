@@ -402,7 +402,16 @@ win.addEventListener('message', (event) => {
     const scrollBottom = win.scrollY + cachedViewportHeight;
     const bodyHeight = cachedBodyHeight;
 
+    console.log('updateSliderDisabled', {
+      scrollY: win.scrollY,
+      cachedViewportHeight,
+      scrollBottom,
+      bodyHeight,
+      diff: bodyHeight - scrollBottom
+    });
+
     if (scrollBottom >= bodyHeight - 5) {
+      console.log('→ 最下部判定 resetScrollSliders実行');
       resetScrollSliders();
       scrollSliderRight.disabled = true;
       scrollSliderLeft.disabled = true;
