@@ -300,6 +300,7 @@ win.addEventListener('message', (event) => {
 
   // ページ高さキャッシュ（scrollイベント内でのレイアウト強制読み取りを避けるため）
   let cachedBodyHeight = doc.documentElement.scrollHeight;
+  let cachedViewportHeight = win.visualViewport?.height ?? win.innerHeight;
 
   function updateBodyHeight() {
     cachedBodyHeight = doc.documentElement.scrollHeight;
@@ -320,7 +321,7 @@ win.addEventListener('message', (event) => {
     if (isSwitching) return;
     updateSliderDisabled();
 
-    const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
+    const scrollBottom = win.scrollY + cachedViewportHeight;
     const scrollTop = win.scrollY;
     const bodyHeight = cachedBodyHeight;
 
@@ -347,7 +348,7 @@ win.addEventListener('message', (event) => {
         promptShownForward = false;
         promptShownBackward = false;
       });
-    } else if (scrollBottom < bodyHeight - (win.visualViewport?.height ?? win.innerHeight) / 4) {
+    } else if (scrollBottom < bodyHeight - (cachedViewportHeight) / 4) {
       // 最上部から（25%）離れたらフラグON
       promptShownForward = true;
     }
@@ -388,7 +389,7 @@ win.addEventListener('message', (event) => {
 
   // 最下部でスクロールスライダーリセットし、操作無効化
   function updateSliderDisabled() {
-    const scrollBottom = win.scrollY + (win.visualViewport?.height ?? win.innerHeight);
+    const scrollBottom = win.scrollY + cachedViewportHeight;
     const bodyHeight = cachedBodyHeight;
 
     if (scrollBottom >= bodyHeight - 5) {
@@ -402,6 +403,7 @@ win.addEventListener('message', (event) => {
   }
 
   win.visualViewport?.addEventListener('resize', () => {
+    cachedViewportHeight = win.visualViewport?.height ?? win.innerHeight;
     updateSliderDisabled();
     updateSliderThumbPosition();
   });
