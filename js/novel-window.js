@@ -391,7 +391,6 @@ win.addEventListener('message', (event) => {
   function updateSliderDisabled() {
     const scrollBottom = win.scrollY + cachedViewportHeight;
     const bodyHeight = cachedBodyHeight;
-    console.log('scrollBottom:', scrollBottom, 'bodyHeight:', bodyHeight, 'diff:', bodyHeight - scrollBottom);
 
     if (scrollBottom >= bodyHeight - 5) {
       resetScrollSliders();
