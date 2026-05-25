@@ -374,7 +374,7 @@ win.addEventListener('message', (event) => {
       // 最上部から（1ページ目:64%、それ以外:25%）離れたらフラグON
       promptShownBackward = true;
     }
-  });
+  }, { passive: true });
 
   // 最下部でスクロールスライダーリセットし、操作無効化
   function updateSliderDisabled() {
