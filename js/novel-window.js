@@ -3761,25 +3761,26 @@ win.addEventListener('message', (event) => {
 
   doc.addEventListener('selectionchange', () => {
     const sel = win.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) return;
 
-    if (!sel.rangeCount) return;
-
-    const range = sel.getRangeAt(0);
     const text = sel.toString().trim();
     if (!text) return;
 
-    // doc全体に反応してしまうためnovelTextかどうかチェック
+    const range = sel.getRangeAt(0);
+
+    // novelTextかどうかチェック
     const startNode = range.startContainer;
     const endNode = range.endContainer;
+    const isInsideNovel =
+      novelText.contains(startNode) &&
+      novelText.contains(endNode);
+    if (!isInsideNovel) return;
 
-    if (
-      !novelText.contains(startNode) ||
-      !novelText.contains(endNode)
-    ) {
-      return;
-    }
-
-    pendingSelection = text;
+    pendingSelection = {
+      text,
+      range: range.cloneRange(),
+      direction: getSelectionDirection(sel)
+    };
   });
 
   // divスタイル
@@ -3806,15 +3807,17 @@ win.addEventListener('message', (event) => {
     });
   }
 
+  const DEFAULT_SEARCH_ENGINE = 'https://www.google.com/search?q=';
+
   // メニュー初期設定
   const defaultConfigs = [
-    { label: '何者', side: 'left', offsetY: 0, query: '何者' , engine: 'https://www.google.com/search?q=' },
-    { label: '元ネタ', side: 'left', offsetY: 40, query: '元ネタ' , engine: 'https://www.google.com/search?q=' },
-    { label: '日本語訳', side: 'left', offsetY: 80, query: '日本語訳' , engine: 'https://www.google.com/search?q=' },
+    { label: '何者', side: 'left', offsetY: 0, query: '何者' , engine: DEFAULT_SEARCH_ENGINE },
+    { label: '元ネタ', side: 'left', offsetY: 40, query: '元ネタ' , engine: DEFAULT_SEARCH_ENGINE },
+    { label: '日本語訳', side: 'left', offsetY: 80, query: '日本語訳' , engine: DEFAULT_SEARCH_ENGINE },
 
-    { label: '意味', side: 'right', offsetY: 0, query: 'とは' , engine: 'https://www.google.com/search?q=' },
-    { label: '読み方', side: 'right', offsetY: 40, query: '読み方' , engine: 'https://www.google.com/search?q=' },
-    { label: '意味 読み方', side: 'right', offsetY: 80, query: '意味 読み方' , engine: 'https://www.google.com/search?q=' }
+    { label: '意味', side: 'right', offsetY: 0, query: 'とは' , engine: DEFAULT_SEARCH_ENGINE },
+    { label: '読み方', side: 'right', offsetY: 40, query: '読み方' , engine: DEFAULT_SEARCH_ENGINE },
+    { label: '意味 読み方', side: 'right', offsetY: 80, query: '意味 読み方' , engine: DEFAULT_SEARCH_ENGINE }
   ];
 
   // メニュー設定を受け取る関数
@@ -3834,11 +3837,11 @@ win.addEventListener('message', (event) => {
       .map(item => ({
         label: item.label,
         side: item.side === 'right' ? 'right' : 'left',
-        offsetY: Number(item.offsetY) || 0,
+        offsetY: Number.isFinite(Number(item.offsetY)) ? Number(item.offsetY) : 0,
         query: item.query,
         engine: typeof item.engine === 'string'
           ? item.engine
-          : 'https://www.google.com/search?q='
+          : DEFAULT_SEARCH_ENGINE
       }));
   }
 
@@ -3846,7 +3849,6 @@ win.addEventListener('message', (event) => {
 
   // div作成関数
   function createMenus() {
-    hideMenus();
 
     // 既存削除
     menus.forEach(({ div }) => div.remove());
@@ -3866,12 +3868,12 @@ win.addEventListener('message', (event) => {
       btn.onclick = () => {
         const text = div.dataset.text;
 
-        const base = cfg.engine || "https://www.google.com/search?q=";
+        const base = cfg.engine || DEFAULT_SEARCH_ENGINE;
         const query = encodeURIComponent(text + " " + cfg.query);
 
         const url = base + query;
 
-        win.open(url, '_blank');
+        win.open(url, '_blank', 'noopener,noreferrer');
         hideMenus();
       };
 
@@ -3885,16 +3887,12 @@ win.addEventListener('message', (event) => {
   createMenus();
 
   // 表示制御
-  function showMenus(text) {
-    const sel = win.getSelection();
-    const range = sel.getRangeAt(0);
+  function showMenus(selection) {
+    const { text, range, direction } = selection;
     const rect = range.getBoundingClientRect();
-
-    const direction = getSelectionDirection(sel);
 
     const fontSize = parseFloat(getComputedStyle(novelText).fontSize) || 20;
     const offset = fontSize + 10;
-
     const textRect = novelText.getBoundingClientRect();
     const centerX = textRect.left + textRect.width / 2;
 
@@ -3912,15 +3910,10 @@ win.addEventListener('message', (event) => {
       }
 
       // 縦位置
-      let top;
-
-      if (text.length === 1) {
-        top = rect.bottom - height - 40;
-      } else if (direction === 'forward') {
-        top = rect.bottom - height - 80;
-      } else {
-        top = rect.top;
-      }
+      const top =
+        text.length === 1 || direction === 'forward'
+          ? rect.bottom - height - (text.length === 1 ? 40 : 80)
+          : rect.top;
 
       div.style.top = (top + cfg.offsetY + win.scrollY) + 'px';
       div.dataset.text = text;
@@ -3935,10 +3928,7 @@ win.addEventListener('message', (event) => {
 
     const pos = sel.anchorNode.compareDocumentPosition(sel.focusNode);
 
-    if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return 'forward';
-    if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 'backward';
-
-    return 'none';
+    return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? 'forward' : 'backward';
   }
 
   function hideMenus() {
@@ -3949,9 +3939,9 @@ win.addEventListener('message', (event) => {
 
   doc.addEventListener('mouseup', () => {
     if (!pendingSelection) return;
-
-    showMenus(pendingSelection);
+    const selection = pendingSelection;
     pendingSelection = null;
+    showMenus(selection);
   });
 
   doc.addEventListener('mousedown', (e) => {
