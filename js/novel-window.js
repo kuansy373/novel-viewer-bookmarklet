@@ -105,22 +105,25 @@ win.addEventListener('message', (event) => {
            pageCharCounts[pageIndex] > 0;
   }
 
+  const overlayBaseStyle = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10005;
+  `;
+
   // ページ切り替えオーバーレイ作成関数
   function createOverlay() {
     const overlay = doc.createElement('div');
     overlay.id = 'page-switch-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10005;
-    `;
+    overlay.style.cssText = overlayBaseStyle;
+    overlay.style.display = 'none';
 
     const dialog = doc.createElement('div');
     dialog.style.cssText = `
@@ -2754,18 +2757,7 @@ win.addEventListener('message', (event) => {
     return new Promise((resolve) => {
       // オーバーレイ
       const overlay = doc.createElement('div');
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10005;
-      `;
+      overlay.style.cssText = overlayBaseStyle;
 
       // コンテンツボックス
       const box = doc.createElement('div');
