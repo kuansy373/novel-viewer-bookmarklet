@@ -560,7 +560,7 @@
           window.tagResult = ${JSON.stringify(tagResult)};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@943b9f7a6959d3bac3c3d9b1da6c1525b39b924d/js/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@85be4b456328e82cd5989e114d14daebd0833dcc/js/novel-window.js"></script>
         </body>
         </html>
       `;
