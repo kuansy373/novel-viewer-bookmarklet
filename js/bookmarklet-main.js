@@ -306,66 +306,107 @@
       .replace(/\n/g, '　')
       .replace(/　{2,}/g, '　');
 
-    // HTMLタグ解析関数
+    const fullHTML = text;
+
+    const CC_LT = 60;  // '<'
+    // 62='>', 47='/', 32=' '
+
+    const tagResult = { end: 0, name: '', isClosing: false };
+
     function parseTag(html, start) {
       const end = html.indexOf('>', start + 1);
       if (end === -1) return null;
 
-      const content = html.slice(start + 1, end);
-      const isClosing = /^\s*\//.test(content);
-      const nameMatch = content.replace(/^\s*\//, '').match(/^([a-zA-Z0-9-]+)/);
+      let i = start + 1;
+      while (i < end && html.charCodeAt(i) === 32) i++;
 
-      return {
-        end,
-        name: nameMatch ? nameMatch[1].toLowerCase() : '',
-        isClosing
-      };
-    }
+      const isClosing = html.charCodeAt(i) === 47;
+      if (isClosing) i++;
 
-    // テキスト全体から可視文字位置と対応するHTML位置のマップを作成
-    function buildPositionMap(html) {
-      const capacity = html.length + 1;
-      const htmlPosMap = new Uint32Array(capacity);
-
-      let visiblePos = 0;
-      let htmlPos = 0;
-      let skipDepth = 0;
-
-      while (htmlPos < html.length) {
-        const ch = html[htmlPos];
-        if (ch === '<') {
-          const tag = parseTag(html, htmlPos);
-          if (!tag) break;
-          if (tag.name === 'rt') {
-            if (!tag.isClosing) skipDepth++;
-            else if (skipDepth > 0) skipDepth--;
-          }
-          htmlPos = tag.end + 1;
-          continue;
-        }
-        if (skipDepth === 0) {
-          htmlPosMap[visiblePos] = htmlPos;
-          visiblePos++;
-        }
-        htmlPos++;
+      let nameStart = i;
+      while (i < end) {
+        const c = html.charCodeAt(i);
+        if (c === 32 || c === 62 || c === 47) break;
+        i++;
       }
 
-      htmlPosMap[visiblePos] = html.length;
-      return {
-        htmlPosMap: htmlPosMap.slice(0, visiblePos + 1),
-        visibleLength: visiblePos,
-      };
+      tagResult.end = end;
+      tagResult.name = html.slice(nameStart, i);
+      tagResult.isClosing = isClosing;
+      return tagResult;
     }
 
-    // 可視文字位置からHTML位置を取得
-    function getHtmlPos(posMap, visiblePos) {
-      return posMap.htmlPosMap[visiblePos];
+    function consumeTag(html, h, state) {
+      const tag = parseTag(html, h);
+      if (!tag) return null;
+      if (tag.name === 'rt') {
+        state.skipDepth += tag.isClosing ? -1 : 1;
+        state.skipDepth = Math.max(0, state.skipDepth);
+      }
+      if (tag.name === 'ruby') {
+        state.rubyDepth += tag.isClosing ? -1 : 1;
+        state.rubyDepth = Math.max(0, state.rubyDepth);
+      }
+      return tag.end + 1;
     }
 
-    const fullHTML = text;
+    function advancePastRuby(html, h, rubyDepth) {
+      while (rubyDepth > 0 && h < html.length) {
+        if (html.charCodeAt(h) === CC_LT) {
+          const tag = parseTag(html, h);
+          if (!tag) break;
+          if (tag.name === 'ruby') {
+            rubyDepth += tag.isClosing ? -1 : 1;
+            rubyDepth = Math.max(0, rubyDepth);
+          }
+          h = tag.end + 1;
+        } else {
+          h++;
+        }
+      }
+      return h;
+    }
 
-    const posMap = buildPositionMap(fullHTML);
-    const totalVisibleChars = posMap.visibleLength;
+    function scan(html, startHtmlPos, limit, stopOnDelimiter = false) {
+      let h = startHtmlPos;
+      let count = 0;
+      const state = { skipDepth: 0, rubyDepth: 0 };
+
+      while (h < html.length && count < limit) {
+        if (html.charCodeAt(h) === CC_LT) {
+          const next = consumeTag(html, h, state);
+          if (next === null) break;
+          h = next;
+          continue;
+        }
+        if (state.skipDepth === 0) {
+          count++;
+          if (stopOnDelimiter) {
+            const c = html.charCodeAt(h);
+            if (
+              c === 12288 || // 　
+              c === 12290 || // 。
+              c === 12301 || // 」
+              c === 8230     // …
+            ) {
+              h++;
+              return { htmlPos: advancePastRuby(html, h, state.rubyDepth), visibleCount: count };
+            }
+          }
+        }
+        h++;
+      }
+
+      // stopOnDelimiter で区切りが見つからなかった場合は元の位置を返す
+      if (stopOnDelimiter) {
+        return { htmlPos: startHtmlPos, visibleCount: 0 };
+      }
+
+      return { htmlPos: advancePastRuby(html, h, state.rubyDepth), visibleCount: count };
+    }
+
+    // 全文の可視文字数
+    const totalVisibleChars = scan(fullHTML, 0, Infinity).visibleCount;
     console.log('総文字数:', totalVisibleChars);
 
     // 1ページあたりの上限文字数
@@ -403,88 +444,53 @@
       document
     );
 
-    const DELIMITERS = new Set(['　', '。', '」', '…']);
-
-    // 区切り文字探索
-    function findDelimiterVisiblePos(html, posMap, searchStart, searchEnd, fallback) {
-      const { htmlPosMap, visibleLength } = posMap;
-
-      for (let v = searchStart; v < Math.min(searchEnd, visibleLength); v++) {
-        const h = htmlPosMap[v];
-        const ch = html[h];
-        if (DELIMITERS.has(ch)) return v + 1;
-      }
-      return fallback;
-    }
-
-    // 各ページを作成する関数
-    function createPagePart({
-      pageIndex,
-      numPages,
-      prevEndVisiblePos,
-      charsPerPage,
-      fullHTML,
-      posMap
-    }) {
-      const startVisiblePos = prevEndVisiblePos;
-      let endVisiblePos = startVisiblePos + charsPerPage;
-
-      if (pageIndex === numPages - 1) {
-        endVisiblePos = posMap.visibleLength;
-      } else {
-        endVisiblePos = findDelimiterVisiblePos(
-          fullHTML,
-          posMap,
-          endVisiblePos,
-          endVisiblePos + Math.floor(charsPerPage * 0.05),
-          endVisiblePos
-        );
-      }
-
-      const startHtmlPos = getHtmlPos(posMap, startVisiblePos);
-      const endHtmlPos =
-        pageIndex === numPages - 1
-          ? fullHTML.length
-          : getHtmlPos(posMap, endVisiblePos);
-
-      // 末尾10文字のHTMLだけ別途保持（半透明で次ページに追加）
-      const tailVisibleStart = Math.max(startVisiblePos, endVisiblePos - 10);
-      const tailHtmlStart = getHtmlPos(posMap, tailVisibleStart);
-
-      return {
-        startHtmlPos,
-        endHtmlPos,
-        tailHtmlStart,
-        endVisiblePos,
-        actualLen: endVisiblePos - startVisiblePos
-      };
-    }
-
-    // 均等分割でパート作成
+    // ページ分割ループ（逐次スキャン）
     const pageRanges = [];
-
-    let prevEndVisiblePos = 0;  // 前ページの終わり位置を保持
-    const pageCharCounts = [];  // 各ページの実際の文字数を保存する配列
+    const pageCharCounts = [];
+    let curHtmlPos = 0;
+    let accumulatedChars = 0;
 
     for (let i = 0; i < numPages; i++) {
-      const { startHtmlPos, endHtmlPos, tailHtmlStart, endVisiblePos, actualLen } = createPagePart({
-        pageIndex: i,
-        numPages,
-        prevEndVisiblePos,
-        charsPerPage,
-        fullHTML,
-        posMap
-      });
+      const startHtmlPos = curHtmlPos;
+      const isLast = i === numPages - 1;
+
+      let endHtmlPos;
+      let actualLen;
+
+      if (isLast) {
+        endHtmlPos = fullHTML.length;
+        actualLen = totalVisibleChars - accumulatedChars;
+      } else {
+        // charsPerPage 文字分スキャン
+        const { htmlPos: rawEndHtmlPos, visibleCount: scanned } =
+          scan(fullHTML, startHtmlPos, charsPerPage);
+
+        // 区切り文字まで最大5%延長（1回のスキャンで完結）
+        const maxExtra = Math.floor(charsPerPage * 0.05);
+        const { htmlPos: delimHtmlPos, visibleCount: extra } =
+          scan(fullHTML, rawEndHtmlPos, maxExtra, true);
+
+        endHtmlPos = delimHtmlPos;
+        actualLen = scanned + extra;
+      }
+
+      // tailHtmlStart：このページの末尾10可視文字のHTML開始位置
+      const { htmlPos: tailHtmlStart } =
+        scan(fullHTML, startHtmlPos, Math.max(0, actualLen - 10));
 
       pageRanges.push({ startHtmlPos, endHtmlPos, tailHtmlStart });
       pageCharCounts.push(actualLen);
-      console.log(`ページ${i + 1}: ${actualLen}文字`);
-      prevEndVisiblePos = endVisiblePos;
+      accumulatedChars += actualLen;
 
-      const partInfo = document.createElement('div');
-      partInfo.style.cssText = panelStyles.partInfo;
-      partInfo.innerHTML = createPartInfoHTML(i + 1, actualLen);
-      partsList.appendChild(partInfo);
+      // パネルのページ一覧に追加
+      const div = document.createElement('div');
+      div.style.cssText = panelStyles.partInfo;
+      div.innerHTML = createPartInfoHTML(i + 1, actualLen);
+      partsList.appendChild(div);
+
+      console.log(`ページ${i + 1}: ${actualLen}文字`);
+
+      curHtmlPos = endHtmlPos;
     }
 
     // 有効なページ数を計算
@@ -551,6 +557,7 @@
           <script>
           window.createEqualsIcon = ${createEqualsIcon.toString()};
           window.makeDraggable = ${makeDraggable.toString()};
+          window.tagResult = ${JSON.stringify(tagResult)};
           window.parseTag = ${parseTag.toString()};
           </script>
           <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@943b9f7a6959d3bac3c3d9b1da6c1525b39b924d/js/novel-window.js"></script>

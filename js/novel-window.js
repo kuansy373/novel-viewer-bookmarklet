@@ -30,15 +30,17 @@ win.addEventListener('message', (event) => {
 
   // 長文の負荷軽減のため50文字毎にspan分割する関数
   // タグ内<>とエンティティ内&;は避ける
+  const CC_LT = 60;  // '<'
+  const CC_AMP = 38; // '&'
+
   function chunkHTMLSafe(html, chunkSize) {
     const chunks = [];
     const len = html.length;
     let i = 0, last = 0, count = 0, rubyDepth = 0;
 
     while (i < len) {
-      const ch = html[i];
 
-      if (ch === '<') {
+      if (html.charCodeAt(i) === CC_LT) {
         const tag = parseTag(html, i);
         if (!tag) {
           i = len;
@@ -52,7 +54,7 @@ win.addEventListener('message', (event) => {
         continue;
       }
 
-      if (ch === '&') {
+      if (html.charCodeAt(i) === CC_AMP) {
         const semi = html.indexOf(';', i + 1);
         i = semi !== -1 ? semi + 1 : len;
       } else {
