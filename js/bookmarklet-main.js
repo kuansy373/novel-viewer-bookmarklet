@@ -308,8 +308,7 @@
 
     const fullHTML = text;
 
-    const CC_LT = 60;  // '<'
-    // 62='>', 47='/', 32=' '
+    // 60= '<', 62='>', 47='/', 32=' '
 
     const tagResult = { end: 0, name: '', isClosing: false };
 
@@ -352,7 +351,7 @@
 
     function advancePastRuby(html, h, rubyDepth) {
       while (rubyDepth > 0 && h < html.length) {
-        if (html.charCodeAt(h) === CC_LT) {
+        if (html.charCodeAt(h) === 60) {
           const tag = parseTag(html, h);
           if (!tag) break;
           if (tag.name === 'ruby') {
@@ -373,7 +372,7 @@
       const state = { skipDepth: 0, rubyDepth: 0 };
 
       while (h < html.length && count < limit) {
-        if (html.charCodeAt(h) === CC_LT) {
+        if (html.charCodeAt(h) === 60) {
           const next = consumeTag(html, h, state);
           if (next === null) break;
           h = next;
