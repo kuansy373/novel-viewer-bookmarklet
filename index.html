@@ -3,16 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" >
-  <meta name="description" content="スマホで使えるJavaScriptツール配布ページ">
+  <meta name="description" content="スマホでWeb小説を大きな文字・縦一行で快適に読めるJavaScriptツール">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WEB小説を縦一行にするブックマークレット</title>
+  <title>Web小説を縦一行にするブックマークレット</title>
   <style>
     * {
       box-sizing: border-box;
-    }
-
-    html {
-      overscroll-behavior: none;
     }
 
     body {
@@ -71,7 +67,7 @@
     .code-section {
       background: #f8f9fa;
       border-radius: 8px;
-      padding: 20px;
+      padding: 10px 15px;
       margin: 20px 0;
       border: 2px solid #e0e0e0;
     }
@@ -89,11 +85,11 @@
     }
 
     .copy-btn {
-      background: #254f28;
+      background: #306663;
       color: white;
       border: none;
-      padding: 8px 15px;
-      border-radius: 6px;
+      padding: 5px 8px;
+      border-radius: 2px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
@@ -144,11 +140,15 @@
       border-radius: 6px;
     }
 
+    ol {
+      padding-inline-start: 15px;
+    }
+
     .note {
-      background: #fff9e6;
-      border-left: 4px solid #ffc107;
-      padding: 12px 18px;
-      margin: 10px 0 10px 20px;
+      background: #fff;
+      border-left: 4px solid #8e825e;
+      padding: 10px 16px;
+      margin: 10px 0 10px 0px;
       border-radius: 4px;
       font-size: 14px;
     }
@@ -161,20 +161,12 @@
       h1 {
         font-size: 22px;
       }
-
-      .code-header {
-        align-items: flex-start;
-      }
-
-      .copy-btn {
-        align-self: flex-end;
-      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>WEB小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（デフォルト対応：青空文庫、小説家になろう、カクヨム、アルファポリス）</small></h1>
+    <h1>Web小説一行化ブックマークレット<br><small style="font-size: 16px; color: #666;">（デフォルト対応：青空文庫、小説家になろう、カクヨム、アルファポリス）</small></h1>
 
     <div class="section">
       <div class="section-title">- リポジトリ</div>
@@ -187,60 +179,46 @@
 
     <div class="section">
       <div class="section-title">- ブックマークレット</div>
-      <div class="code-section">
-        <div class="code-header">
-          <span class="code-label">ブックマークレットコード</span>
-          <button class="copy-btn">コピー</button>
+        <div class="code-section">
+          <div class="code-header">
+            <span class="code-label">ブックマークレットコード</span>
+            <button class="copy-btn">コピー</button>
+          </div>
+          <div class="code-container">
+            <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@408d08242d8cb14b68d519289d605a54259154e8/js/bookmarklet-main.js';document.body.appendChild(s)})()</code>
+          </div>
         </div>
-        <div class="code-container">
-          <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@408d08242d8cb14b68d519289d605a54259154e8/js/bookmarklet-main.js';document.body.appendChild(s)})()</code>
-        </div>
-      </div>
 
       <ul>
-      <li>
-
-      <ol>
-        <li>任意のページを<strong>ブラウザのブックマークに追加</strong>します。（どのページでもOK）
-          <div class="note">
-            ※ Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなるので、「ブックマーク バー」へ分類しましょう。
-          </div>
+        <li>
+          <ol>
+            <li>任意のページを<strong>ブラウザのブックマークに追加</strong>します。（どのページでもOK）
+              <div class="note">
+                Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなるので、「ブックマーク バー」へ分類しましょう。
+              </div>
+            </li>
+            <li>「ブックマークを管理」などからブックマークに追加したページの<strong>名前を変更</strong>します。（自由な名前でOK）
+              <div class="note">
+                モバイルChromeではアドレス欄に<strong>名前を入力し呼び出してから実行する</strong>ため、短めがおすすめです。ただし短すぎると他の検索候補に埋もれるため、<strong>一意なワード</strong>（例：「たてよみ」など）にしましょう。
+              </div>
+            </li>
+            <li>登録したブックマークの<strong>URLを削除</strong>し、上記ブックマークレットコードを<strong>貼り付け</strong>ます。
+              <div class="note">
+                この時点で「ブックマークレットの作成」は完了です。
+              </div>
+            </li>
+            <li>実行したいページ（小説本文があるページ）にいる状態で、作成したブックマークレットを「ブックマーク一覧」等から探したり、アドレス欄から呼び出したりして、タップで実行です。</li>
+          </ol>
         </li>
-
-        <li>「ブックマークを管理」 等からブックマークに追加したページの<strong>名前を変更</strong>します。（自由な名前でOK）
-          <div class="note">
-            ※ モバイルChromeではアドレス欄に<strong>名前を入力し呼び出してから実行する</strong>ため、短めがおすすめです。ただし短すぎると他の検索候補に埋もれるため、<strong>一意なワード</strong>（例：「たてよみ」など）にしましょう。
-          </div>
-        </li>
-
-        <li>登録したブックマークの<strong>URLを削除</strong>し、上記ブックマークレットコードを<strong>貼り付け</strong>ます。
-          <div class="note">
-            この時点で「ブックマークレットの作成」は完了です。
-          </div>
-        </li>
-
-        <li>実行したいページ（本文テキストがあるページ）にいる状態で、作成したブックマークレットを「ブックマーク一覧」等から探したり、アドレス欄から呼び出したりして、タップで実行です。</li>
-      </ol>
-
-      </li>
       </ul>
-
     </div>
 
     <div class="section">
-      <div class="section-title">- 使用上の注意点</div>
+      <div class="section-title">- ライセンス</div>
       <ul>
-
         <li>
-          <strong>ライセンス：</strong>Unlicenseなので、表記・報告無しで改変、配布、商用利用などしてOKです。<br>
-          ただし、使用しているサードパーティ・ライブラリはそれらのライセンスに帰属します。
-        </li>
-
-        <li>
-          不具合の発見・修正などしてくれた方は、以下のYoutubeの動画のコメント欄またはPull requestsに報告してくれると助かります。<br>
-          <a class="youtube-link" href="https://youtu.be/b3lUvSqFgrY?si=kkOKjSWiztQuUQWl" target="_blank">
-            Youtubeの動画
-          </a>
+          Unlicenseなので、著作権表示や報告なしで改変、配布、商用利用などしてOKです。<br>
+            ただし、使用しているサードパーティ・ライブラリには、それぞれのライセンスが適用されます。
         </li>
       </ul>
     </div>
@@ -258,7 +236,7 @@
         copyBtn.style.boxShadow = '0 0 0px';
         setTimeout(() => {
           copyBtn.innerText = 'コピー';
-          copyBtn.style.background = '#254f28';
+          copyBtn.style.background = '';
           copyBtn.disabled = false;
         }, 1500);
       }).catch(err => {
