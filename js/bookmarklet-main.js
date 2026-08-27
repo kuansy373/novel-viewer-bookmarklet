@@ -29,6 +29,13 @@
         overflow-y: auto;
         padding: 15px 15px 0px;
       `,
+      bookmarkBtn: `
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-size: 16px;
+      `,
       partsList: `
         max-height: 270px;
         overflow-y: auto;
@@ -61,10 +68,6 @@
       valueSpan: `
         float: right;
       `,
-      infoRow: `
-        overflow: hidden;
-        margin-bottom: 3px;
-      `,
       divider: `
         margin-top: 10px;
         padding-top: 10px;
@@ -94,7 +97,7 @@
       return `
         <div id="contentContainer" style="${panelStyles.contentContainer}">
           <div style="${panelStyles.header}">
-            🔖 テキスト情報
+            <button id="bookmarkBtn" style="${panelStyles.bookmarkBtn}">🔖</button> テキスト情報
             <div id="dragHandle" style="${panelStyles.dragHandle}">${createEqualsIcon()}</div>
           </div>
           <div>
@@ -270,45 +273,60 @@
       return result.join('');
     }
 
-    const textParts = [];
+    const SETTING_ITEMS = [
+      { key: 'includeTitle',    label: 'タイトル' },
+      { key: 'includeAuthor',   label: '作者名' },
+      { key: 'includeForeword', label: '作者まえがき' },
+      { key: 'includeBody',     label: '小説本文' },
+      { key: 'includeAfterword',label: '作者あとがき' },
+    ];
 
-    document.querySelectorAll(
-      // 青空文庫
-      'body > h1, ' +
-      'body > h2, ' +
-      'body > h3, ' +
-      '.metadata, ' +
-      '.main_text, ' +
-      // 小説家になろう
-      '.p-novel__title, ' +
-      '.p-novel__text, ' +
-      // カクヨム
-      '.widget-episodeTitle, ' +
-      '.widget-episodeBody p, ' +
-      // アルファポリス
-      '.novel-title, ' +
-      '.novel-body p, ' +
-      '.chapter-title, ' +
-      '.episode-title, ' +
-      '#novelBody'
-    )
-    .forEach(node => {
-      textParts.push(extractWithRubyTags(node));
-    });
+    const SETTINGS_KEY = 'tateichigyo_bm_extract';
 
-    let text = textParts.join('');
-    textParts.length = 0;
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      // デフォルト：サイトに存在するセレクタのdefault値を使う
+      return Object.fromEntries(SETTING_ITEMS.map(item => {
+        const entries = SELECTOR_MAP[item.key] ?? [];
+        const matched = entries.find(e => document.querySelector(e.selector));
+        return [item.key, matched ? matched.default : true];
+      }));
+    }
 
-    // 改行の処理
-    text = text.trim()
-      .replace(/(\r\n|\r)+/g, '\n')
-      .replace(/\n{2,}/g, '\n')
-      .replace(/\n/g, '　')
-      .replace(/　{2,}/g, '　');
+    function saveSettings(settings) {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      } catch (e) {}
+    }
 
-    const fullHTML = text;
-
-    // 60= '<', 62='>', 47='/', 32=' '
+    const SELECTOR_MAP = {
+      includeTitle: [
+        { selector: '.metadata .title',                default: true  }, // 青空文庫
+        { selector: '.p-novel__title',                 default: true  }, // なろう
+        { selector: '.widget-episodeTitle',            default: true  }, // カクヨム
+        { selector: '.p-novel-episode__episode-title', default: true  }, // アルファポリス
+      ],
+      includeAuthor: [
+        { selector: '.metadata .author',          default: true  }, // 青空文庫
+        { selector: '.contentMain-header-author', default: false }, // カクヨム
+        { selector: '.p-novel-episode__author',   default: false }, // アルファポリス
+      ],
+      includeForeword: [
+        { selector: '.p-novel__text--preface', default: false }, // なろう
+      ],
+      includeBody: [
+        { selector: '.main_text',                default: true }, // 青空文庫
+        { selector: '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)', default: true }, // なろう
+        { selector: '.widget-episodeBody p',     default: true }, // カクヨム
+        { selector: '.p-novel-episode__text',    default: true }, // アルファポリス
+      ],
+      includeAfterword: [
+        { selector: '.p-novel__text--afterword', default: false }, // なろう
+      ],
+    };
 
     const tagResult = { end: 0, name: '', isClosing: false };
 
@@ -404,96 +422,295 @@
       return { htmlPos: advancePastRuby(html, h, state.rubyDepth), visibleCount: count };
     }
 
-    // 全文の可視文字数
-    const totalVisibleChars = scan(fullHTML, 0, Infinity).visibleCount;
-    console.log('総文字数:', totalVisibleChars);
+    let fullHTML = '';
+    let totalVisibleChars = 0;
+    let numPages = 0;
+    let charsPerPage = 0;
+    let pageRanges = [];
+    let pageCharCounts = [];
+    let validPageCount = 0;
 
-    // 1ページあたりの上限文字数
-    const MAX_PER_PAGE = 10000;
+    function buildText() {
+      const settings = loadSettings();
 
-    // 必要なページ数を計算
-    const numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
-    const charsPerPage = Math.ceil(totalVisibleChars / numPages);
-    console.log('ページ数:', numPages);
-    console.log('1ページあたりの目標文字数:', charsPerPage);
+      const activeSelectors = Object.entries(SELECTOR_MAP)
+        .filter(([key]) => settings[key] !== false)
+        .flatMap(([, entries]) => entries.map(e => e.selector));
 
-    // パネル作成
-    textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
-    const partsList = textInfoPanel.querySelector('#partsList');
+      const allSelectors = [...new Set(activeSelectors)];
 
-    // 小説タブを開く
-    const popupRetry = textInfoPanel.querySelector('#popupRetry');
-
-    if (popupRetry) {
-      popupRetry.addEventListener('click', () => openNovelWindow());
-
-      ['mouseenter', 'mouseleave'].forEach(evtType => {
-        popupRetry.addEventListener(evtType, () => {
-          popupRetry.style.color = evtType === 'mouseenter' ? '#000' : '#444';
-          popupRetry.style.background = evtType === 'mouseenter' ? '#faf6ef' : '#fffbf2';
-          popupRetry.style.textDecoration = evtType === 'mouseenter' ? 'underline' : 'none';
-        });
-      });
-    }
-
-    // ドラッグ関数呼び出し
-    makeDraggable(
-      textInfoPanel.querySelector('#dragHandle'),
-      textInfoPanel,
-      document
-    );
-
-    // ページ分割ループ（逐次スキャン）
-    const pageRanges = [];
-    const pageCharCounts = [];
-    let curHtmlPos = 0;
-    let accumulatedChars = 0;
-
-    for (let i = 0; i < numPages; i++) {
-      const startHtmlPos = curHtmlPos;
-      const isLast = i === numPages - 1;
-
-      let endHtmlPos;
-      let actualLen;
-
-      if (isLast) {
-        endHtmlPos = fullHTML.length;
-        actualLen = totalVisibleChars - accumulatedChars;
-      } else {
-        // charsPerPage 文字分スキャン
-        const { htmlPos: rawEndHtmlPos, visibleCount: scanned } =
-          scan(fullHTML, startHtmlPos, charsPerPage);
-
-        // 区切り文字まで最大5%延長（1回のスキャンで完結）
-        const maxExtra = Math.floor(charsPerPage * 0.05);
-        const { htmlPos: delimHtmlPos, visibleCount: extra } =
-          scan(fullHTML, rawEndHtmlPos, maxExtra, true);
-
-        endHtmlPos = delimHtmlPos;
-        actualLen = scanned + extra;
+      const parts = [];
+      if (allSelectors.length > 0) {
+        document.querySelectorAll(allSelectors.join(', '))
+          .forEach(node => {
+            const part = extractWithRubyTags(node).trim();
+            if (part) parts.push(part);
+          });
       }
 
-      // tailHtmlStart：このページの末尾10可視文字のHTML開始位置
-      const { htmlPos: tailHtmlStart } =
-        scan(fullHTML, startHtmlPos, Math.max(0, actualLen - 10));
+      let text = parts.join('　');
 
-      pageRanges.push({ startHtmlPos, endHtmlPos, tailHtmlStart });
-      pageCharCounts.push(actualLen);
-      accumulatedChars += actualLen;
+      text = text.trim()
+        .replace(/(\r\n|\r)+/g, '\n')
+        .replace(/\n{2,}/g, '\n')
+        .replace(/\n/g, '　')
+        .replace(/　{2,}/g, '　');
 
-      // パネルのページ一覧に追加
-      const div = document.createElement('div');
-      div.style.cssText = panelStyles.partInfo;
-      div.innerHTML = createPartInfoHTML(i + 1, actualLen);
-      partsList.appendChild(div);
+      fullHTML = text;
+      totalVisibleChars = scan(fullHTML, 0, Infinity).visibleCount;
+      console.log('総文字数:', totalVisibleChars);
 
-      console.log(`ページ${i + 1}: ${actualLen}文字`);
-
-      curHtmlPos = endHtmlPos;
+      const MAX_PER_PAGE = 10000;
+      numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
+      charsPerPage = Math.ceil(totalVisibleChars / numPages);
+      console.log('ページ数:', numPages);
+      console.log('1ページあたりの目標文字数:', charsPerPage);
     }
 
-    // 有効なページ数を計算
-    const validPageCount = pageCharCounts.filter(count => count > 0).length;
+    function buildPanel() {
+      textInfoPanel.innerHTML = createPanelHTML(totalVisibleChars, numPages, charsPerPage);
+      const partsList = textInfoPanel.querySelector('#partsList');
+
+      pageRanges = [];
+      pageCharCounts = [];
+      let curHtmlPos = 0;
+      let accumulatedChars = 0;
+
+      for (let i = 0; i < numPages; i++) {
+        const startHtmlPos = curHtmlPos;
+        const isLast = i === numPages - 1;
+
+        let endHtmlPos;
+        let actualLen;
+
+        if (isLast) {
+          endHtmlPos = fullHTML.length;
+          actualLen = totalVisibleChars - accumulatedChars;
+        } else {
+          const { htmlPos: rawEndHtmlPos, visibleCount: scanned } =
+            scan(fullHTML, startHtmlPos, charsPerPage);
+          const maxExtra = Math.floor(charsPerPage * 0.05);
+          const { htmlPos: delimHtmlPos, visibleCount: extra } =
+            scan(fullHTML, rawEndHtmlPos, maxExtra, true);
+          endHtmlPos = delimHtmlPos;
+          actualLen = scanned + extra;
+        }
+
+        const { htmlPos: tailHtmlStart } =
+          scan(fullHTML, startHtmlPos, Math.max(0, actualLen - 10));
+
+        pageRanges.push({ startHtmlPos, endHtmlPos, tailHtmlStart });
+        pageCharCounts.push(actualLen);
+        accumulatedChars += actualLen;
+
+        const div = document.createElement('div');
+        div.style.cssText = panelStyles.partInfo;
+        div.innerHTML = createPartInfoHTML(i + 1, actualLen);
+        partsList.appendChild(div);
+
+        console.log(`ページ${i + 1}: ${actualLen}文字`);
+
+        curHtmlPos = endHtmlPos;
+      }
+
+      validPageCount = pageCharCounts.filter(count => count > 0).length;
+
+      // 🔖ボタン
+      const bookmarkBtn = textInfoPanel.querySelector('#bookmarkBtn');
+      bookmarkBtn.addEventListener('click', openSettingsUI);
+
+      // 小説タブを開く
+      const popupRetry = textInfoPanel.querySelector('#popupRetry');
+      if (popupRetry) {
+        popupRetry.addEventListener('click', () => openNovelWindow());
+        ['mouseenter', 'mouseleave'].forEach(evtType => {
+          popupRetry.addEventListener(evtType, () => {
+            popupRetry.style.color = evtType === 'mouseenter' ? '#000' : '#444';
+            popupRetry.style.background = evtType === 'mouseenter' ? '#faf6ef' : '#fffbf2';
+            popupRetry.style.textDecoration = evtType === 'mouseenter' ? 'underline' : 'none';
+          });
+        });
+      }
+
+      // ドラッグ
+      makeDraggable(
+        textInfoPanel.querySelector('#dragHandle'),
+        textInfoPanel,
+        document
+      );
+    }
+
+    buildText();
+    buildPanel();
+
+    function openSettingsUI() {
+      // 既に開いていたら閉じる
+      const existing = document.getElementById('novelBmSettingsOverlay');
+      if (existing) { existing.remove(); return; }
+
+      const current = loadSettings();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'novelBmSettingsOverlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgb(40, 40, 40, 0.5)
+      `;
+
+      const box = document.createElement('div');
+      box.style.cssText = `
+        background: #faf6ef;
+        border-radius: 8px;
+        padding: 20px 24px;
+        font-family: 'Hiragino Mincho ProN', serif;
+        font-size: 14px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        min-width: 240px;
+        color: #000;
+      `;
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font-weight: bold; margin-bottom: 14px; font-size: 15px; display: flex; align-items: center; gap: 8px;';
+
+      const titleText = document.createTextNode('縦一行に含める内容を選択');
+      title.appendChild(titleText);
+
+      const helpBtn = document.createElement('span');
+      helpBtn.textContent = '？';
+      helpBtn.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid #5f4fac;
+        color: #5f4fac;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        flex-shrink: 0;
+      `;
+
+      const helpTooltip = document.createElement('div');
+      helpTooltip.textContent = 'この設定は localStorage に保存され、小説サイトごとに適用されます。また、二回目以降の保存は上書き保存されます。';
+      helpTooltip.style.cssText = `
+        display: none;
+        position: absolute;
+        background: #fff;
+        border: 2px solid #ccc;
+        padding: 8px 10px;
+        font-size: 16px;
+        font-weight: normal;
+        color: #333;
+        max-width: 225px;
+        z-index: 10002;
+      `;
+
+      helpBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isVisible = helpTooltip.style.display === 'block';
+        helpTooltip.style.display = isVisible ? 'none' : 'block';
+      });
+
+      // オーバーレイ背景クリック
+      overlay.addEventListener('click', e => {
+        if (helpTooltip.style.display === 'block') {
+          helpTooltip.style.display = 'none';
+          e.preventDefault();
+          return;
+        }
+        if (e.target === overlay) overlay.remove();
+      });
+
+      title.style.position = 'relative';
+      title.appendChild(helpBtn);
+      title.appendChild(helpTooltip);
+      box.appendChild(title);
+
+      const checkboxes = {};
+      SETTING_ITEMS.forEach(item => {
+        const entries = SELECTOR_MAP[item.key] ?? [];
+        const supported = entries.length === 0 || entries.some(e => document.querySelector(e.selector));
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'margin-bottom: 10px;';
+
+        const label = document.createElement('label');
+        label.style.cssText = `display: flex; align-items: center; gap: 8px; cursor: ${supported ? 'pointer' : 'default'};`;
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = supported && current[item.key] !== false;
+        cb.disabled = !supported;
+        cb.style.cssText = `width: 16px; height: 16px; cursor: ${supported ? 'pointer' : 'default'};`;
+        checkboxes[item.key] = cb;
+
+        const labelText = document.createElement('span');
+        labelText.textContent = item.label;
+        labelText.style.cssText = `color: ${supported ? '#000' : '#bbb'};`;
+
+        label.appendChild(cb);
+        label.appendChild(labelText);
+        wrapper.appendChild(label);
+
+        if (!supported) {
+          wrapper.addEventListener('click', () => {
+            if (helpTooltip.style.display === 'block') return;
+            alert(`現在のページから「${item.label}」を取得できないため、選択できません`);
+          });
+        }
+
+        box.appendChild(wrapper);
+      });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = '保存する';
+      saveBtn.style.cssText = `
+        margin-top: 8px;
+        width: 100%;
+        padding: 8px;
+        background: #5f4fac;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: 'Hiragino Mincho ProN', serif;
+        cursor: pointer;
+      `;
+      saveBtn.addEventListener('mouseenter', () => saveBtn.style.background = '#4a3c8a');
+      saveBtn.addEventListener('mouseleave', () => saveBtn.style.background = '#5f4fac');
+      saveBtn.addEventListener('click', () => {
+        const newSettings = {};
+        SETTING_ITEMS.forEach(item => {
+          newSettings[item.key] = checkboxes[item.key].checked;
+        });
+        const anyChecked = Object.values(newSettings).some(v => v);
+        if (!anyChecked) {
+          saveBtn.textContent = '最低1つ選択してください';
+          saveBtn.style.background = '#a94442';
+          setTimeout(() => {
+            saveBtn.textContent = '保存する';
+            saveBtn.style.background = '#5f4fac';
+          }, 2000);
+          return;
+        }
+        saveSettings(newSettings);
+        overlay.remove();
+        buildText();
+        buildPanel();
+      });
+
+      box.appendChild(saveBtn);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+    }
 
     // 新しいウィンドウを開く関数
     function openNovelWindow() {
