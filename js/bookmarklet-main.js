@@ -1,7 +1,12 @@
 (() => {
 
-  // webページのDOM完成を待って実行
+  // WebページのDOM完成を待って実行
   function run() {
+
+    // PC幅でレンダリングされたページがスマホで縮小表示される場合のパネルサイズ補正
+    const scale = Math.max(1, window.innerWidth / window.outerWidth);
+    const baseFontSize = Math.round(13 * scale);
+    const s = n => Math.round(n * scale);
 
     // テキスト情報パネル
     const panelStyles = {
@@ -13,16 +18,14 @@
         color: #000;
         border-radius: 8px;
         font-family: 'Hiragino Mincho ProN', serif;
-        font-size: 13px;
+        font-size: ${baseFontSize}px;
         z-index: 10000;
-        min-height: 35vh;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         box-shadow: 0 6px 10px rgba(0,0,0,0.15);
         line-height: 1.6;
-        min-width: max-content;
-        max-width: max-content;
+        width: max-content;
       `,
       contentContainer: `
         flex: 1;
@@ -34,10 +37,10 @@
         border: none;
         padding: 0;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 1.3em;
       `,
       partsList: `
-        max-height: 270px;
+        max-height: 245px;
         overflow-y: auto;
         margin-top: 5px;
         scrollbar-width: thin;
@@ -51,19 +54,20 @@
         margin-bottom: 10px;
         border-bottom: 1px solid;
         padding-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 1px;
       `,
-      dragHandle:`
-        float: right;
+      dragHandle: `
         border: 1px solid #aaa;
         border-radius: 4px;
         background: #F4F4F4;
-        font-size: 14px;
         padding: 1px 2px;
-        margin-top: -4px;
         cursor: move;
         color: #8578c1;
-        width: 22px;
-        height: 24px;
+        width: ${s(22)}px;
+        height: ${s(24)}px;
+        flex-shrink: 0;
       `,
       valueSpan: `
         float: right;
@@ -75,7 +79,7 @@
       `,
       popupRetry: `
         padding: 4px;
-        font-size: 12px;
+        font-size: 1em;
         text-indent: 11px;
         background: #fffbf2;
         border-top: 1px solid #aaa;
@@ -84,9 +88,10 @@
       `
     };
 
-    function createEqualsIcon({ bg = 'transparent', color = '#5f4fac' } = {}) {
+    function createEqualsIcon({ bg = 'transparent', color = '#5f4fac', scale = 1 } = {}) {
+      const w = Math.round(22 * scale), h = Math.round(24 * scale);
       return `
-      <svg width="22" height="24" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${w}" height="${h}" viewBox="0 0 22 24" xmlns="http://www.w3.org/2000/svg">
         <rect width="22" height="24" rx="4" fill="${bg}"/>
         <rect x="3.3" y="6.5" width="16" height="3.3" rx="2" fill="${color}"/>
         <rect x="3.3" y="14" width="16" height="3.3" rx="2" fill="${color}"/>
@@ -96,10 +101,11 @@
     function createPanelHTML(totalChars, numPages, charsPerPage) {
       return `
         <div id="contentContainer" style="${panelStyles.contentContainer}">
-          <div style="${panelStyles.header}">
-            <button id="bookmarkBtn" style="${panelStyles.bookmarkBtn}">🔖</button> テキスト情報
-            <div id="dragHandle" style="${panelStyles.dragHandle}">${createEqualsIcon()}</div>
-          </div>
+        <div style="${panelStyles.header}">
+          <button id="bookmarkBtn" style="${panelStyles.bookmarkBtn}">🔖</button>
+          <span style="flex: 1;">テキスト情報</span>
+          <div id="dragHandle" style="${panelStyles.dragHandle}">${createEqualsIcon({ scale })}</div>
+        </div>
           <div>
             <strong>総文字数:</strong>
             <span style="${panelStyles.valueSpan}">
@@ -288,11 +294,10 @@
         const saved = localStorage.getItem(SETTINGS_KEY);
         if (saved) return JSON.parse(saved);
       } catch (e) {}
-      // デフォルト：サイトに存在するセレクタのdefault値を使う
       return Object.fromEntries(SETTING_ITEMS.map(item => {
         const entries = SELECTOR_MAP[item.key] ?? [];
         const matched = entries.find(e => document.querySelector(e.selector));
-        return [item.key, matched ? matched.default : true];
+        return [item.key, matched ? matched.default : false];
       }));
     }
 
@@ -304,14 +309,18 @@
 
     const SELECTOR_MAP = {
       includeTitle: [
-        { selector: '.metadata .title',                default: true  }, // 青空文庫
-        { selector: '.p-novel__title',                 default: true  }, // なろう
-        { selector: '.widget-episodeTitle',            default: true  }, // カクヨム
-        { selector: '.p-novel-episode__episode-title', default: true  }, // アルファポリス
+        { selector: '.title', default: true },                          // 青空文庫
+        { selector: 'body > h1 ', default: true },                      // 青空文庫
+        { selector: '.p-novel__title',                 default: true }, // なろう
+        { selector: '.p-novel__subtitle-episode',      default: true }, // なろう（スマホ）
+        { selector: '.widget-episodeTitle',            default: true }, // カクヨム
+        { selector: '.p-novel-episode__episode-title', default: true }, // アルファポリス
       ],
       includeAuthor: [
-        { selector: '.metadata .author',          default: true  }, // 青空文庫
-        { selector: '.contentMain-header-author', default: false }, // カクヨム
+        { selector: '.author', default: true },                     // 青空文庫
+        { selector: '.editor', default: true },                     // 青空文庫
+        { selector: 'body > h2', default: true },                   // 青空文庫
+        { selector: '#contentMain-header-author', default: false }, // カクヨム（PCのみ）
         { selector: '.p-novel-episode__author',   default: false }, // アルファポリス
       ],
       includeForeword: [
@@ -448,23 +457,20 @@
           });
       }
 
-      let text = parts.join('　');
+      let text = parts.join('　　');
 
       text = text.trim()
         .replace(/(\r\n|\r)+/g, '\n')
         .replace(/\n{2,}/g, '\n')
         .replace(/\n/g, '　')
-        .replace(/　{2,}/g, '　');
+        .replace(/　{3,}/g, '　');
 
       fullHTML = text;
       totalVisibleChars = scan(fullHTML, 0, Infinity).visibleCount;
-      console.log('総文字数:', totalVisibleChars);
 
       const MAX_PER_PAGE = 10000;
       numPages = Math.ceil(totalVisibleChars / MAX_PER_PAGE);
       charsPerPage = Math.ceil(totalVisibleChars / numPages);
-      console.log('ページ数:', numPages);
-      console.log('1ページあたりの目標文字数:', charsPerPage);
     }
 
     function buildPanel() {
@@ -508,8 +514,6 @@
         div.innerHTML = createPartInfoHTML(i + 1, actualLen);
         partsList.appendChild(div);
 
-        console.log(`ページ${i + 1}: ${actualLen}文字`);
-
         curHtmlPos = endHtmlPos;
       }
 
@@ -543,10 +547,17 @@
     buildText();
     buildPanel();
 
+    /* ここから localStorage */
+
+    const onceTrueSet = new Set();
+
     function openSettingsUI() {
-      // 既に開いていたら閉じる
       const existing = document.getElementById('novelBmSettingsOverlay');
       if (existing) { existing.remove(); return; }
+
+      Object.entries(JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}'))
+        .filter(([, v]) => v === true)
+        .forEach(([k]) => onceTrueSet.add(k));
 
       const current = loadSettings();
 
@@ -568,14 +579,14 @@
         border-radius: 8px;
         padding: 20px 24px;
         font-family: 'Hiragino Mincho ProN', serif;
-        font-size: 14px;
+        font-size: ${baseFontSize}px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        min-width: 240px;
         color: #000;
+        transform: scale(1.2);
       `;
 
       const title = document.createElement('div');
-      title.style.cssText = 'font-weight: bold; margin-bottom: 14px; font-size: 15px; display: flex; align-items: center; gap: 8px;';
+      title.style.cssText = 'font-weight: bold; margin-bottom: 14px; font-size: 1.1em; display: flex; align-items: center; gap: 8px;';
 
       const titleText = document.createTextNode('縦一行に含める内容を選択');
       title.appendChild(titleText);
@@ -586,84 +597,67 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 16px;
-        height: 16px;
+        width: 1.1em;
+        height: 1.1em;
         border-radius: 50%;
         border: 1px solid #5f4fac;
         color: #5f4fac;
-        font-size: 11px;
-        font-weight: bold;
+        font-size: 0.9em;
+        font-weight: normal;
         cursor: pointer;
         user-select: none;
         flex-shrink: 0;
       `;
 
-      const helpTooltip = document.createElement('div');
-      helpTooltip.textContent = 'この設定は localStorage に保存され、小説サイトごとに適用されます。また、二回目以降の保存は上書き保存されます。';
-      helpTooltip.style.cssText = `
-        display: none;
-        position: absolute;
-        background: #fff;
-        border: 2px solid #ccc;
-        padding: 8px 10px;
-        font-size: 16px;
-        font-weight: normal;
-        color: #333;
-        max-width: 225px;
-        z-index: 10002;
-      `;
-
-      helpBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        const isVisible = helpTooltip.style.display === 'block';
-        helpTooltip.style.display = isVisible ? 'none' : 'block';
+      helpBtn.addEventListener('click', () => {
+        alert(`この設定は ${window.location.hostname} の localStorage に保存され、適用されます。キー名: ${SETTINGS_KEY}`);
       });
 
       // オーバーレイ背景クリック
       overlay.addEventListener('click', e => {
-        if (helpTooltip.style.display === 'block') {
-          helpTooltip.style.display = 'none';
-          e.preventDefault();
-          return;
-        }
         if (e.target === overlay) overlay.remove();
       });
 
-      title.style.position = 'relative';
       title.appendChild(helpBtn);
-      title.appendChild(helpTooltip);
       box.appendChild(title);
 
       const checkboxes = {};
       SETTING_ITEMS.forEach(item => {
         const entries = SELECTOR_MAP[item.key] ?? [];
         const supported = entries.length === 0 || entries.some(e => document.querySelector(e.selector));
+        const onceTrue = onceTrueSet.has(item.key);
+        const disabled = !supported && !onceTrue;
 
         const wrapper = document.createElement('div');
         wrapper.style.cssText = 'margin-bottom: 10px;';
 
         const label = document.createElement('label');
-        label.style.cssText = `display: flex; align-items: center; gap: 8px; cursor: ${supported ? 'pointer' : 'default'};`;
+        label.style.cssText = `display: flex; align-items: center; gap: 8px; cursor: ${disabled ? 'default' : 'pointer'};`;
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.checked = supported && current[item.key] !== false;
-        cb.disabled = !supported;
-        cb.style.cssText = `width: 16px; height: 16px; cursor: ${supported ? 'pointer' : 'default'};`;
+        cb.checked = supported ? current[item.key] !== false : current[item.key] === true;
+        cb.disabled = disabled;
+        cb.style.cssText = `
+          width: ${s(15)}px;
+          height: ${s(15)}px;
+          cursor: ${disabled ? 'default' : 'pointer'};
+          accent-color: brown;
+          -webkit-appearance: auto !important;
+        `;
         checkboxes[item.key] = cb;
 
         const labelText = document.createElement('span');
         labelText.textContent = item.label;
-        labelText.style.cssText = `color: ${supported ? '#000' : '#bbb'};`;
+        labelText.style.cssText = `color: ${disabled ? '#bbb' : '#000'};`;
 
         label.appendChild(cb);
         label.appendChild(labelText);
         wrapper.appendChild(label);
 
-        if (!supported) {
+        if (disabled) {
           wrapper.addEventListener('click', () => {
-            if (helpTooltip.style.display === 'block') return;
-            alert(`現在のページから「${item.label}」を取得できないため、選択できません`);
+            alert(`現在のページから「${item.label}」を取得できないため、変更できません`);
           });
         }
 
@@ -680,22 +674,28 @@
         color: #fff;
         border: none;
         border-radius: 6px;
-        font-size: 14px;
+        font-size: 0.95em;
         font-family: 'Hiragino Mincho ProN', serif;
         cursor: pointer;
       `;
-      saveBtn.addEventListener('mouseenter', () => saveBtn.style.background = '#4a3c8a');
-      saveBtn.addEventListener('mouseleave', () => saveBtn.style.background = '#5f4fac');
+      let isNoneSelected = false;
+      saveBtn.addEventListener('mouseenter', () => saveBtn.style.background = isNoneSelected ? '#a94442' : '#4a3c8a');
+      saveBtn.addEventListener('mouseleave', () => saveBtn.style.background = isNoneSelected ? '#a94442' : '#5f4fac');
       saveBtn.addEventListener('click', () => {
         const newSettings = {};
         SETTING_ITEMS.forEach(item => {
           newSettings[item.key] = checkboxes[item.key].checked;
         });
+        Object.entries(newSettings).forEach(([key, val]) => {
+          if (val) onceTrueSet.add(key);
+        });
         const anyChecked = Object.values(newSettings).some(v => v);
         if (!anyChecked) {
+          isNoneSelected = true;
           saveBtn.textContent = '最低1つ選択してください';
           saveBtn.style.background = '#a94442';
           setTimeout(() => {
+            isNoneSelected = false;
             saveBtn.textContent = '保存する';
             saveBtn.style.background = '#5f4fac';
           }, 2000);
