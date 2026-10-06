@@ -839,9 +839,9 @@ win.addEventListener('message', (event) => {
     opacity:    100,
     border:     true,
     colorIn:    false,
-    position:   30,
-    width:      80,
-    speedScale: 10,
+    position:   10,
+    width:      70,
+    speedScale: 15,
     showThumb:   true
   });
 
