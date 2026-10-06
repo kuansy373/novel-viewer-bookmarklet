@@ -39,7 +39,7 @@
   - 実行方法はブラウザや端末によって異なるので、詳しくは調べてみてください。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザ、端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@408d08242d8cb14b68d519289d605a54259154e8/js/bookmarklet-main.js';document.body.appendChild(s)})()
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@cfe1f386eca08dc0df7d46abfb0e8d1681a2a54f/js/bookmarklet-main.js';document.body.appendChild(s)})()
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -77,9 +77,9 @@
     "opacity": 100,
     "border": true,
     "colorIn": false,
-    "position": 30,
-    "width": 80,
-    "speedScale": 10,
+    "position": 10,
+    "width": 70,
+    "speedScale": 15,
     "showThumb": true
   },
   "searchConfigs": [
@@ -144,15 +144,16 @@
 - v1.5.0: テキスト選択時に検索ショートカットメニューを表示。
 - v1.6.0: onetapUI内を充実。
 - v2.0.0: ブックマークレットを実行したページが再読み込みされても小説タブを操作可能にした。
+- v2.1.0: 縦一行にする対象（作者名、タイトルなど）を選択できるようにした。栞のemojiから。
 
 ### 注意点
 - ソースコードが長く、モバイル端末ではブックマークのURL欄に入りきらないため、jsDelivr（CDN）での読み込みになっています。
   - タグでバージョン管理していますが、読み込むファイルの指定にはコミットハッシュを使用しています。ブックマークレットコードが bookmarklet-main.js を読み込み、 bookmarklet-main.js が novel-window.js を読み込みます。なのでソースコードを確認する場合は、ブックマークレットコードが直接参照しているbookmarklet-main.js と、 bookmarklet-main.js が`<script src>`で読み込んでいる novel-window.js を確認する必要があります。
-  - ※ 現在、このREADMEからコピーした「javascript:」で読み込まれるのは、 bookmarklet-main.js が [@408d082][hash1]、 novel-window.js が [@f2c1f7f][hash2]、タグは [v2.0.5][tag] です。
+  - ※ 現在、このREADMEからコピーした「javascript:」で読み込まれるのは、 bookmarklet-main.js が [@cfe1f38][hash1]、 novel-window.js が [@2704268][hash2]、タグは [v2.1.0][tag] です。
 
-  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/408d082/js/bookmarklet-main.js
-  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/f2c1f7f/js/novel-window.js
-  [tag]: https://github.com/kuansy373/novel-viewer-bookmarklet/releases/tag/v2.0.5
+  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/cfe1f38/js/bookmarklet-main.js
+  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/2704268/js/novel-window.js
+  [tag]: https://github.com/kuansy373/novel-viewer-bookmarklet/releases/tag/v2.1.0
 
 - このリポジトリの名前は最初「bookmarklet-release」でしたが、「novel-viewer-bookmarklet」に変更しました。（2025.12）
 
