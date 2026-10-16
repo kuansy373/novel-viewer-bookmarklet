@@ -51,6 +51,7 @@
 ## デフォルト設定 JSON
 <details>
 <summary>JSONを表示する</summary>
+
 ```json
 {
   "color": "#000000",
@@ -117,6 +118,7 @@
   ]
 }
 ```
+
 </details>
 
 ※ テキスト選択時の検索ショートカットの表示を無くすには、`"searchConfigs": []` と、中身を空にすることで可能です。
