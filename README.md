@@ -30,7 +30,7 @@
 - ブックマークレットによる実行です。
   - [こちら](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明はしていますが、ブラウザや端末(OS)のバージョンが変わると方法も変わることがあると思います。
 
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@/js/bookmarklet-main.js';document.body.appendChild(s)})()
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@20ffd694b71e2566e49dd4178d69e6b04aa2142f/js/bookmarklet-main.js';document.body.appendChild(s)})()
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -132,13 +132,13 @@
 
 > [!NOTE]
 > - 現在の `javascript:` で読み込まれるのは、
->   - bookmarklet-main.js が [][hash1]
->   - novel-window.js が [][hash2]
+>   - bookmarklet-main.js が [20ffd69][hash1]
+>   - novel-window.js が [3cbd701][hash2]
   です。
 > - リリースは [v1.0.0][tag] です。
 
-  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob//js/bookmarklet-main.js
-  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob//js/novel-window.js
+  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/20ffd69/js/bookmarklet-main.js
+  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/3cbd701/js/novel-window.js
   [tag]: https://github.com/kuansy373/novel-viewer-bookmarklet/releases/tag/v1.0.0
 
 ## 免責
