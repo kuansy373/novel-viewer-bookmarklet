@@ -29,7 +29,7 @@
 ## 実行
 - ブックマークレットによる実行です。
   - [index.html ](https://kuansy373.github.io/novel-viewer-bookmarklet/)で一応の説明をしていますが、ブラウザや端末(OS)のバージョンが変わると方法も変わることがあると思います。
-<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@eb9db3bf/src/bookmarklet-main.js';s.onerror=function(){alert('読み込みに失敗しました。\nCDNへの反映が完了していない可能性があります。\nしばらく待ってから再試行してください。');};document.body.appendChild(s)})()
+<pre><code>javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@c8c9a419/src/bookmarklet-main.js';s.onerror=function(){alert('読み込みに失敗しました。\nCDNへの反映が完了していない可能性があります。\nしばらく待ってから再試行してください。');};document.body.appendChild(s)})()
 </code></pre>
 <br>
 最初実行したときは、このような感じです。
@@ -131,12 +131,12 @@
 
 > [!NOTE]
 > - 現在の `javascript:` で読み込まれるもの
->   - bookmarklet-main.js:  [eb9db3bf][hash1]
+>   - bookmarklet-main.js:  [c8c9a419][hash1]
 >   - novel-window.js:  [1480ca17][hash2]
 >   - pickr.js: [1480ca17][hash3]
 >   - classic.css: [1480ca17][hash4]
 
-  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/eb9db3bf/src/bookmarklet-main.js
+  [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/c8c9a419/src/bookmarklet-main.js
   [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/1480ca17/src/novel-window.js
   [hash3]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/1480ca17/src/pickr.js
   [hash4]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/1480ca17/src/classic.css
