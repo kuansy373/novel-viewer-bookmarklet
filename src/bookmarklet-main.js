@@ -776,7 +776,7 @@
           window.tagResult = ${JSON.stringify(tagResult)};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@791ed8ee/src/novel-window.js"></script>
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@1480ca17/src/novel-window.js"></script>
         </body>
         </html>
       `;

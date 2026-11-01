@@ -1274,10 +1274,10 @@ win.addEventListener('message', (event) => {
   Promise.all([
     load('link', {
       rel: 'stylesheet',
-      href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@791ed8ee/src/pickr/classic.css',
+      href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@1480ca17/src/pickr/classic.css',
     }),
     load('script', {
-      src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@791ed8ee/src/pickr/pickr.js',
+      src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@1480ca17/src/pickr/pickr.js',
     })
   ]).then(() => {
     const style = doc.createElement('style');
