@@ -133,9 +133,13 @@
 > - 現在の `javascript:` で読み込まれるもの
 >   - bookmarklet-main.js:  [eb9db3bf][hash1]
 >   - novel-window.js:  [791ed8ee][hash2]
+>   - pickr.js: [791ed8ee][hash3]
+>   - classic.css: [791ed8ee][hash4]
 
   [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/eb9db3bf/src/bookmarklet-main.js
   [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/791ed8ee/src/novel-window.js
+  [hash3]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/791ed8ee/src/pickr.js
+  [hash4]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/791ed8ee/src/classic.css
 
 ## 免責
 - 本ツールは現状有姿で提供されます。動作を保証するものではありません。
