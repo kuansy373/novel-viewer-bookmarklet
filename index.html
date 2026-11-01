@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google-site-verification" content="gTSLncYy092PCzUl-3VTapFQ-XrjVWXffuhhikM9adg" >
+  <meta name="description" content="スマホでWeb小説を大きな文字・縦一行で快適に読めるJavaScriptツール">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web小説を縦一行にするブックマークレット</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+      background: #1f2321;
+      color: #ecffee;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #121212;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 28px;
+      border-bottom: 3px solid #515751;
+      padding-bottom: 15px;
+    }
+
+    .section {
+      margin: 30px 0;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .github-link, .youtube-link {
+      color: #6bb9ba;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .github-link:hover, .youtube-link:hover {
+      color: #a6cd9f;
+      border-bottom-color: #a6cd9f;
+    }
+
+    .code-section {
+      background: #1f2021;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin: 20px 0;
+      border: 2px solid #e0e0e0;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .code-label {
+      font-weight: 600;
+    }
+
+    .copy-btn {
+      background: #306663;
+      color: white;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .copy-btn:hover {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .code-container {
+      background: black;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      white-space: nowrap;
+      scrollbar-width: thin;
+      scrollbar-color: #c4e9e9 #1f1b1b;
+    }
+
+    .code-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .code-container::-webkit-scrollbar-track {
+      background: #1f1b1b;
+      border-radius: 4px;
+    }
+
+    .code-container::-webkit-scrollbar-thumb {
+      background: #009688;
+      border-radius: 4px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul > li {
+      background: #1f2021;
+      margin: 15px 0;
+      padding: 18px;
+      border-left: 4px solid #009688;
+      border-radius: 6px;
+    }
+
+    ol {
+      padding-inline-start: 15px;
+    }
+
+    .note {
+      background: black;
+      border-left: 4px solid #8e825e;
+      padding: 10px 16px;
+      margin: 10px 0 10px 0px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 25px 20px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Web小説一行化ブックマークレット<br><small style="font-size: 16px; color: #aeaeae;">（対応：青空文庫、小説家になろう、カクヨム、アルファポリス）</small></h1>
+
+    <div class="section">
+      <div class="section-title">- リポジトリ</div>
+      <p>
+        <a class="github-link" href="https://github.com/kuansy373/novel-viewer-bookmarklet" target="_blank">
+          https://github.com/kuansy373/novel-viewer-bookmarklet
+        </a>
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">- ブックマークレット</div>
+        <div class="code-section">
+          <div class="code-header">
+            <span class="code-label">ブックマークのURL欄に貼り付け</span>
+            <button class="copy-btn">コピー</button>
+          </div>
+          <div class="code-container">
+            <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/bookmarklet-main.js';s.onerror=function(){alert('読み込みに失敗しました。\nCDNへの反映が完了していない可能性があります。\nしばらく待ってから再試行してください。');};document.body.appendChild(s)})()</code>
+          </div>
+        </div>
+
+      <ul>
+        <li>
+          <ol>
+            <li>任意のページを<strong>ブラウザのブックマークに追加</strong>します。（どのページでもOK）
+              <div class="note">
+                Chromeでは追加したブックマークが「リーディング リスト」に分類されるとURLを編集できなくなるので、「ブックマーク バー」へ分類しましょう。
+              </div>
+            </li>
+            <li>「ブックマークを管理」などからブックマークに追加したページの<strong>名前を変更</strong>します。（自由な名前でOK）
+              <div class="note">
+                モバイルChromeではアドレス欄に<strong>名前を入力し呼び出してから実行する</strong>ため、短めがおすすめです。ただし短すぎると他の検索候補に埋もれるため、<strong>一意なワード</strong>（例：「たてよみ」など）にしましょう。
+              </div>
+            </li>
+            <li>登録したブックマークの<strong>URLを削除</strong>し、上記ブックマークレットコードを<strong>貼り付け</strong>ます。
+              <div class="note">
+                この時点で「ブックマークレットの作成」は完了です。
+              </div>
+            </li>
+            <li>実行したいページ（小説本文があるページ）にいる状態で、作成したブックマークレットを「ブックマーク一覧」等から探したり、アドレス欄から呼び出したりして、タップで実行です。</li>
+          </ol>
+        </li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">- ライセンス</div>
+      <ul>
+        <li>
+          Unlicenseなので、著作権表示や報告なしで改変、配布、商用利用などしてOKです。<br>
+            ただし、使用しているサードパーティ・ライブラリには、それぞれのライセンスが適用されます。
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const copyBtn = document.querySelector('.copy-btn');
+    const code = document.getElementById('bookmarklet-code');
+
+    copyBtn.addEventListener('click', () => {
+      copyBtn.disabled = true;
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        copyBtn.innerText = 'コピー完了!';
+        copyBtn.style.background = '#009688';
+        copyBtn.style.boxShadow = '0 0 0px';
+        setTimeout(() => {
+          copyBtn.innerText = 'コピー';
+          copyBtn.style.background = '';
+          copyBtn.disabled = false;
+        }, 1500);
+      }).catch(err => {
+        alert('コピーに失敗しました: ' + err);
+        copyBtn.disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
