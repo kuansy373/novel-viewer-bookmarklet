@@ -132,10 +132,10 @@
 > [!NOTE]
 > - 現在の `javascript:` で読み込まれるもの
 >   - bookmarklet-main.js:  [commitHash][hash1]
->   - novel-window.js:  [commitHash][hash2]
+>   - novel-window.js:  [791ed8ee][hash2]
 
   [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/commitHash/src/bookmarklet-main.js
-  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/commitHash/src/novel-window.js
+  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/791ed8ee/src/novel-window.js
 
 ## 免責
 - 本ツールは現状有姿で提供されます。動作を保証するものではありません。
