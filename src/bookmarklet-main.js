@@ -809,8 +809,7 @@
           window.tagResult = ${JSON.stringify(tagResult)};
           window.parseTag = ${parseTag.toString()};
           </script>
-          <script src="http://localhost:8000/src/novel-window.js"></script>
-          <!--<script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/novel-window.js"></script>-->
+          <script src="https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@40be8f5c3f6830b08ffeecbf849dba8e5336db7c/src/novel-window.js"></script>
         </body>
         </html>
       `;
