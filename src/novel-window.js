@@ -1177,12 +1177,10 @@ win.addEventListener('message', (event) => {
   Promise.all([
     load('link', {
       rel: 'stylesheet',
-      href: 'http://localhost:8000/src/pickr/classic.css',
-      // href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/pickr/classic.css',
+      href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@999dc6fa53f75f91d9358623098c00176bf88588/src/pickr/classic.css',
     }),
     load('script', {
-      src: 'http://localhost:8000/src/pickr/pickr.js'
-      // src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/pickr/pickr.js',
+      src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@999dc6fa53f75f91d9358623098c00176bf88588/src/pickr/pickr.js',
     })
   ]).then(() => {
     const style = doc.createElement('style');
