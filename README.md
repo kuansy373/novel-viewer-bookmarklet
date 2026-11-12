@@ -131,12 +131,12 @@
 > [!NOTE]
 > - 現在の `javascript:` で読み込まれるもの
 >   - bookmarklet-main.js:  [commitHash][hash1]
->   - novel-window.js:  [commitHash][hash2]
+>   - novel-window.js:  [967e0386][hash2]
 >   - pickr.js: [fc58bce8][hash3]
 >   - classic.css: [fc58bce8][hash4]
 
   [hash1]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/commitHash/src/bookmarklet-main.js
-  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/commitHash/src/novel-window.js
+  [hash2]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/967e0386/src/novel-window.js
   [hash3]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/fc58bce8/src/pickr.js
   [hash4]: https://github.com/kuansy373/novel-viewer-bookmarklet/blob/fc58bce8/src/classic.css
 
