@@ -1154,12 +1154,10 @@ win.addEventListener('message', (event) => {
   Promise.all([
     load('link', {
       rel: 'stylesheet',
-      href: 'http://localhost:8000/src/pickr/classic.css',
-      // href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/pickr/classic.css',
+      href: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@fc58bce8180d64d00ef19060e4c453b81018d8d9/src/pickr/classic.css',
     }),
     load('script', {
-      src: 'http://localhost:8000/src/pickr/pickr.js'
-      // src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/src/pickr/pickr.js',
+      src: 'https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@fc58bce8180d64d00ef19060e4c453b81018d8d9/src/pickr/pickr.js',
     })
   ]).then(() => {
     const PickrClass = win.Pickr;
