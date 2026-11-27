@@ -24,7 +24,7 @@
 
 </details>
 
-<pre><code>javascript:(()=>{var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@commitHash/dist/bookmarklet.js';s.onerror=()=>alert('読み込みに失敗しました');document.body.appendChild(s)})()
+<pre><code>javascript:(()=>{var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/kuansy373/novel-viewer-bookmarklet@ed60858ea678e06c3c40d4da052104070ff66532/dist/bookmarklet.js';s.onerror=()=>alert('読み込みに失敗しました');document.body.appendChild(s)})()
 </code></pre>
 
 ## スタイルのJSONについて
