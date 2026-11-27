@@ -1,0 +1,30 @@
+<!-- @template pickr -->
+<div class="pickr">
+  <button type="button" class="pcr-button" aria-label="toggle color picker dialog"></button>
+
+  <div class="pcr-app" aria-label="color picker dialog" role="dialog">
+    <div class="pcr-selection">
+      <div class="pcr-color-preview">
+        <button type="button" class="pcr-last-color" aria-label="use previous color"></button>
+        <div class="pcr-current-color"></div>
+      </div>
+
+      <div class="pcr-color-palette">
+        <div class="pcr-picker"></div>
+        <div class="pcr-palette" tabindex="0" aria-label="color selection area" role="listbox"></div>
+      </div>
+
+      <div class="pcr-color-chooser">
+        <div class="pcr-picker"></div>
+        <div class="pcr-hue pcr-slider" tabindex="0" aria-label="hue selection slider" role="slider"></div>
+      </div>
+    </div>
+
+    <div class="pcr-interaction">
+      <input class="pcr-result" type="text" spellcheck="false" aria-label="color input field">
+      <button type="button" class="pcr-copy">Copy</button>
+      <input class="pcr-save" value="Save" type="button" aria-label="save and close">
+      <button type="button" class="pcr-drag-handle" aria-label="drag to move"></button>
+    </div>
+  </div>
+</div>

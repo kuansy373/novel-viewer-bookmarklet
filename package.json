@@ -1,0 +1,28 @@
+{
+  "name": "novel-viewer-dev",
+  "version": "1.0.0",
+  "description": "- 小説本文を縦一行に表示し、自動スクロールで読むことができます。 - 文字サイズや色の変更ができます。",
+  "main": "bookmarklet.js",
+  "scripts": {
+    "build:html": "node scripts/build-html.js",
+    "build:css": "for f in src/styles/*.css; do esbuild \"$f\" --minify --outfile=\"build/$(basename \"${f%.css}\").min.css\"; done",
+    "build:window": "esbuild src/novel-window.js --bundle --minify --format=iife --loader:.css=text --outfile=build/novel-window.bundle.txt",
+    "build:main": "esbuild src/bookmarklet-main.js --bundle --minify --format=iife --loader:.txt=text --loader:.css=text --outfile=dist/bookmarklet.js",
+    "build:finalize": "node scripts/finalize.js",
+    "build": "npm run build:html && npm run build:css && npm run build:window && npm run build:main && npm run build:finalize"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kuansy373/novel-viewer-dev.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kuansy373/novel-viewer-dev/issues"
+  },
+  "homepage": "https://github.com/kuansy373/novel-viewer-dev#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "html-minifier-terser": "^7.2.0"
+  }
+}

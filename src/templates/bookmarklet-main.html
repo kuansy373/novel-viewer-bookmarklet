@@ -1,0 +1,50 @@
+<!-- @template panel -->
+<div id="contentContainer" class="content-container">
+  <div class="header">
+    <button id="settingsBtn" class="settings-btn">🔖</button>
+    <span class="t-title">テキスト情報</span>
+    <div id="dragHandle" class="drag-handle">{{equalsIcon}}</div>
+  </div>
+  <div>
+    <strong>総文字数:</strong>
+    <span class="value">{{totalChars}}</span>
+  </div>
+  <div>
+    <strong>分割ページ数:</strong>
+    <span class="value">{{numPages}}</span>
+  </div>
+  <div>
+    <strong>目標文字数/ページ:&#12288;</strong>
+    <span class="value">{{charsPerPage}}</span>
+  </div>
+  <div class="divider">
+    <strong>各ページの文字数</strong>
+  </div>
+  <div id="partsList" class="parts-list"></div>
+</div>
+<div id="openNovelBtn" class="open-novel-btn">
+  小説タブを開く
+</div>
+
+<!-- @template settings -->
+<div class="box">
+  <div class="s-title">
+    縦一行に含める内容を選択
+    <span id="helpBtn" class="help-btn">？</span>
+  </div>
+  {{items}}
+  <button id="saveBtn" class="save-btn">保存する</button>
+</div>
+
+<!-- @template settingsItem -->
+<div class="item" data-key="{{key}}" data-disabled="{{disabled}}">
+  <label class="label{{labelClass}}">
+    <input type="checkbox" class="extract-checkbox" data-key="{{key}}" {{extractAttrs}}>
+    <span class="label-text">{{label}}</span>
+  </label>{{notice}}
+</div>
+
+<!-- @template settingsNotice -->
+<label class="notice">（通知:
+  <input type="checkbox" class="notice-checkbox" data-key="{{key}}" {{checked}}>）
+</label>

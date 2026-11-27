@@ -1,0 +1,23 @@
+<!-- @template jsonWindow -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>保存済みJSON</title>
+</head>
+<body>
+  <div class="controls">
+    <div class="controls-left">
+      <label id="prettyPrintLabel">
+        <input type="checkbox" id="prettyPrintCheckbox"> プリティプリント
+      </label>
+      <button id="compressJsonBtn">展開する</button>
+      <button id="jsonWinCopyBtn">コピー</button>
+    </div>
+    <button id="allJsonEditBtn">編集</button>
+  </div>
+  <textarea id="jsonDisplay" readonly></textarea>
+  <textarea id="trashDisplay" readonly></textarea>
+</body>
+</html>
